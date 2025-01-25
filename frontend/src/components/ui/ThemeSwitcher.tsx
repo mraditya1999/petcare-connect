@@ -13,7 +13,7 @@ const ThemeSwitcher: React.FC = () => {
   };
 
   return (
-    <div>
+    <div className="text-xl">
       {currentTheme === "light" ? (
         <button
           onClick={() => handleThemeChange("dark")}

@@ -1,11 +1,14 @@
-import { Footer, Header } from "@/components";
+import { Footer, } from "@/components";
+import Navbar from "@/components/shared/Navbar";
 import { Outlet } from "react-router-dom";
 
 const LayoutPage = () => {
   return (
     <main>
-      <Header />
-      <Outlet />
+      <Navbar />
+      <div className="min-h-screen">
+        <Outlet />
+      </div>
       <Footer />
     </main>
   );

@@ -7,4 +7,5 @@ export enum ROUTES {
   HOME = "/",
   ABOUT = "about",
   SERVICE = "service",
+  FORUM = "forum",
 }
