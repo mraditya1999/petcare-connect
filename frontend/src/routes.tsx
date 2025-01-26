@@ -6,6 +6,7 @@ import {
 import {
   HomePage,
   AboutPage,
+  ForumPage,
   ServicePage,
   LayoutPage,
   AuthLayoutPage,
@@ -41,6 +42,7 @@ const router = createBrowserRouter(
         <Route index path={ROUTES.HOME} element={<HomePage />} />
         <Route path={ROUTES.ABOUT} element={<AboutPage />} />
         <Route path={ROUTES.SERVICE} element={<ServicePage />} />
+        <Route path={ROUTES.FORUM} element={<ForumPage />} />
       </Route>
 
       <Route element={<AuthLayoutPage />} errorElement={<ErrorPage />}>
