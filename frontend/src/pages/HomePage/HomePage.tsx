@@ -39,11 +39,11 @@ const HomePage = () => {
                 </p>
               </div>
             </div>
-            <div className="flex w-1/2 justify-center overflow-hidden rounded-lg p-4">
+            <div className="flex w-1/2 justify-center overflow-hidden p-4">
               <img
                 src={catImg}
                 alt="Content"
-                className={`h-auto w-full max-w-80 rounded-md object-cover shadow-lg`}
+                className={`h-auto w-full max-w-80 object-cover shadow-[6rem]`}
               />
             </div>
           </div>
@@ -62,7 +62,7 @@ const HomePage = () => {
                 className="h-full w-full object-cover"
               />
               <div className="absolute inset-0 h-full bg-black opacity-30 transition-opacity duration-300 group-hover:opacity-0"></div>
-              <CardContent className="absolute bottom-10 left-5 z-10 flex justify-center rounded-full bg-white px-3 py-2.5">
+              <CardContent className="absolute bottom-10 left-5 z-10 flex justify-center rounded-full bg-white px-5 py-2.5">
                 <CardTitle className="text-md font-bold">
                   Professional Team
                 </CardTitle>
@@ -76,7 +76,7 @@ const HomePage = () => {
                 className="h-full w-full object-cover"
               />
               <div className="absolute inset-0 h-full bg-black opacity-30 transition-opacity duration-300 group-hover:opacity-0"></div>
-              <CardContent className="absolute bottom-10 left-5 z-10 flex justify-center rounded-full bg-white px-3 py-2.5">
+              <CardContent className="absolute bottom-10 left-5 z-10 flex justify-center rounded-full bg-white px-5 py-2.5">
                 <CardTitle className="text-md font-bold">
                   Treat with <FaHeart className="inline text-red-500" />
                 </CardTitle>
@@ -90,7 +90,7 @@ const HomePage = () => {
                 className="h-full w-full object-cover"
               />
               <div className="absolute inset-0 h-full bg-black opacity-30 transition-opacity duration-300 group-hover:opacity-0"></div>
-              <CardContent className="absolute bottom-10 left-5 z-10 flex justify-center rounded-full bg-white px-3 py-2.5">
+              <CardContent className="absolute bottom-10 left-5 z-10 flex justify-center rounded-full bg-white px-5 py-2.5">
                 <CardTitle className="text-md font-bold">
                   Emergency Care
                 </CardTitle>
@@ -105,10 +105,10 @@ const HomePage = () => {
         <div className="section-width px-4">
           <div className="mx-auto flex items-center items-stretch justify-between rounded-3xl bg-[#182559] p-20 text-white">
             <div className="flex-1 px-12 py-12">
-              <h1 className="mb-8 text-3xl capitalize">
+              <h1 className="mb-8 text-3xl capitalize lg:text-4xl">
                 Our experts are available for you 24/7
               </h1>
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-2 lg:text-lg">
                 <p className="flex items-center gap-3">
                   <FaPhoneVolume className="text-red-500" /> 62 21345 8888
                 </p>
@@ -126,7 +126,7 @@ const HomePage = () => {
               <img
                 src={doctor4}
                 alt="doctor smiling"
-                className="w-md max-w-[20rem]"
+                className="w-md max-w-[25rem]"
               />
             </div>
           </div>

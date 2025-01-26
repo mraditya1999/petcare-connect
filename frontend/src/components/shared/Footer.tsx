@@ -40,7 +40,7 @@ const Footer = () => {
           <p className="mt-4 text-gray-600">
             Our services are wide open for you
           </p>
-          <button className="mt-4 rounded-xl border border-gray-300 bg-white px-4 py-2 shadow-sm transition duration-300 ease-in-out hover:bg-primary hover:text-white">
+          <button className="mt-4 rounded-xl border border-gray-300 bg-primary px-4 py-2 text-white shadow-sm transition duration-300 ease-in-out hover:bg-white hover:text-gray-600">
             Be Petfamily
           </button>
         </div>

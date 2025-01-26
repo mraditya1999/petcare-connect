@@ -19,10 +19,10 @@ const NavLinks: React.FC = () => {
     <>
       {links.map(({ id, url, text }) => {
         return (
-          <li key={id}>
+          <li key={id} className="relative">
             <NavLink
               className={({ isActive }) =>
-                `capitalize ${isActive ? "text-primary" : "text-black"}`
+                `capitalize ${isActive ? "text-blue-500" : "text-primary"}`
               }
               to={url}
             >

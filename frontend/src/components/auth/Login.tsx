@@ -103,7 +103,7 @@ const Login = () => {
           </Link>
         </div>
 
-        <Button type="submit" className="px-4 py-2">
+        <Button type="submit" className="px-4 py-2" variant={"default"}>
           {loading ? <LoadingSpinner /> : "Login now"}
         </Button>
 
