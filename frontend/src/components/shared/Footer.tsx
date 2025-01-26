@@ -4,43 +4,50 @@ import NavLinks from "./NavLinks";
 
 const Footer = () => {
   return (
-    <footer className="bg-primary-light py-8">
-      <div className="container mx-auto flex justify-between">
+    <footer className="bg-gray-50 py-16">
+      <div className="container mx-auto flex justify-between px-20">
         <div>
-          <h2 className="text-lg font-medium">PetCare</h2>
+          <h2 className="text-xl font-medium">PetCare</h2>
           <ul className="mt-4 space-y-2">
             <NavLinks />
           </ul>
         </div>
         <div>
-          <h2 className="text-lg font-medium">Stay Connected</h2>
-          <p className="mt-4 text-gray-600">
-            Contact: <br /> hi.petpeople@petcare.com
+          <h2 className="text-xl font-medium">Stay Connected</h2>
+          <p className="mb-2 mt-4 text-gray-600">
+            <span className="font-medium">Contact:</span> <br />{" "}
+            hi.petpeople@petcare.com
           </p>
-          <div className="mt-2 flex gap-2">
-            <a href="#" className="text-gray-600 hover:text-gray-800">
+          <div className="mt-2 flex gap-3">
+            <a
+              href="#"
+              className="transform text-2xl text-gray-600 duration-300 hover:text-primary"
+            >
               <FaFacebook />
             </a>
-            <a href="#" className="text-gray-600 hover:text-gray-800">
+            <a
+              href="#"
+              className="transform text-2xl text-gray-600 duration-300 hover:text-primary"
+            >
               <FaInstagram />
             </a>
           </div>
         </div>
         <div>
-          <h2 className="text-lg font-medium">
+          <h2 className="text-xl font-medium">
             Join as petfamily and get 10% OFF
           </h2>
           <p className="mt-4 text-gray-600">
             Our services are wide open for you
           </p>
-          <button className="mt-4 rounded-full border border-gray-300 bg-white px-4 py-2 transition duration-150 ease-in-out hover:bg-primary hover:text-white">
+          <button className="mt-4 rounded-xl border border-gray-300 bg-white px-4 py-2 shadow-sm transition duration-300 ease-in-out hover:bg-primary hover:text-white">
             Be Petfamily
           </button>
         </div>
       </div>
-      <div className="container mx-auto mt-8 flex justify-between text-sm text-gray-600">
+      <div className="container mx-auto mt-8 flex items-center gap-6 text-sm text-gray-600">
         <p>© PetCare.co</p>
-        <a href="#" className="hover:text-gray-800">
+        <a href="#" className="hover:text-primary">
           Terms and Privacy Policy
         </a>
       </div>

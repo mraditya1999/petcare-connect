@@ -1,4 +1,4 @@
-import ThemeSwitcher from "../ui/ThemeSwitcher";
+// import ThemeSwitcher from "../ui/ThemeSwitcher";
 import NavLinks from "./NavLinks";
 
 const Navbar = () => {
@@ -13,7 +13,7 @@ const Navbar = () => {
           <button className="rounded-full bg-primary px-6 py-2 text-white hover:bg-blue-600">
             Join
           </button>
-          <ThemeSwitcher />
+          {/* <ThemeSwitcher /> */}
         </div>
       </nav>
     </div>
