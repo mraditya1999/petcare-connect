@@ -1,7 +1,6 @@
 import headerImg from "@/assets/images/servicepage/header.png";
 import image2 from "@/assets/images/servicepage/image2.png";
 import image3 from "@/assets/images/servicepage/image3.png";
-// import image4 from "@/assets/images/servicepage/image4.png";
 import { FaArrowRight } from "react-icons/fa";
 import { ContentCard, Header } from "@/components";
 

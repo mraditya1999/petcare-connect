@@ -17,10 +17,10 @@ const AboutPage = () => {
       />
 
       {/* Services */}
-      <section className="bg-gray-50 py-20">
-        <div className="section-width">
-          <article className="mb-8 flex gap-8 px-32">
-            <h2 className="flex-1 text-3xl font-semibold">
+      <section className="flex items-center justify-center bg-gray-50 py-16">
+        <div className="section-width flex flex-col items-center justify-between gap-4">
+          <article className="flex flex-col gap-4 p-4 md:flex-row md:px-16">
+            <h2 className="flex-1 text-3xl font-semibold md:text-4xl">
               Providing best services for your pets
             </h2>
             <p className="flex-1 text-gray-400">
@@ -31,7 +31,7 @@ const AboutPage = () => {
               to your pet’s unique needs.
             </p>
           </article>
-          <article className="h-80 overflow-hidden rounded-xl px-32">
+          <article className="h-64 w-full md:h-96 md:px-16">
             <img
               src={img1}
               alt="Vet checking dog"
@@ -44,18 +44,22 @@ const AboutPage = () => {
       {/* Clini llocation */}
       <section className="py-16">
         <div className="section-width mx-auto">
-          <div className="px-20">
-            <h1 className="mb-8 text-4xl font-semibold">Clinic Location</h1>
-            <div className="flex gap-16">
+          <div className="px-6 md:px-20">
+            <h1 className="mb-8 text-3xl font-semibold lg:text-4xl">
+              Clinic Location
+            </h1>
+            <div className="flex flex-col gap-8 md:flex-row">
               <article className="flex">
                 <img
                   src={img2}
                   alt="Veterinarian examining a dog"
-                  className="h-80 rounded-xl"
+                  className="h-80 w-full rounded-xl object-cover"
                 />
               </article>
               <article className="flex flex-1 flex-col">
-                <h1 className="mb-6 text-4xl font-semibold">Pawsville</h1>
+                <h1 className="mb-6 text-3xl font-semibold md:text-4xl">
+                  Pawsville
+                </h1>
                 <p className="mb-6 max-w-xl text-gray-400">
                   Located at the heart of Pawsville, our clinic at 123 Pet Care
                   Lane offers a warm and welcoming environment for you and your

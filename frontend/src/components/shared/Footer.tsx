@@ -7,14 +7,14 @@ import { Link } from "react-router-dom";
 const Footer = () => {
   return (
     <footer className="bg-gray-50 py-16">
-      <div className="container mx-auto flex justify-between px-20">
-        <div>
+      <div className="section-width mx-auto flex flex-col justify-between gap-16 p-6 md:flex-row lg:px-20">
+        <article>
           <h2 className="text-xl font-medium">PetCare</h2>
-          <ul className="mt-4 space-y-2">
+          <ul className="mt-2 space-y-2">
             <NavLinks />
           </ul>
-        </div>
-        <div>
+        </article>
+        <article>
           <h2 className="text-xl font-medium">Stay Connected</h2>
           <p className="mb-2 mt-4 text-gray-600">
             <span className="font-medium">Contact:</span> <br />{" "}
@@ -34,8 +34,8 @@ const Footer = () => {
               <FaInstagram />
             </a>
           </div>
-        </div>
-        <div>
+        </article>
+        <article>
           <h2 className="text-xl font-medium">
             Join as petfamily and get 10% OFF
           </h2>
@@ -48,9 +48,9 @@ const Footer = () => {
           >
             Be Petfamily
           </Link>
-        </div>
+        </article>
       </div>
-      <div className="container mx-auto mt-8 flex items-center gap-6 text-sm text-gray-600">
+      <div className="section-width flex flex-col gap-2 p-6 text-sm text-gray-600 md:flex-row md:items-center">
         <p>© PetCare.co</p>
         <a href="#" className="hover:text-primary">
           Terms and Privacy Policy

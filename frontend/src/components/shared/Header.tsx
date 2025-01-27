@@ -14,9 +14,11 @@ const Header: React.FC<HeaderProps> = ({ headerImage, headerText }) => {
           alt="Person holding a dog"
           className="absolute inset-0 h-full w-full object-cover"
         />
-        <div className="absolute inset-0 h-full bg-black opacity-50"></div>
-        <div className="absolute bottom-24 left-20 z-10 flex w-[50rem] justify-center p-4">
-          <h2 className="text-center text-7xl text-white">{headerText}</h2>
+        <div className="absolute inset-0 h-full w-full bg-black opacity-50"></div>
+        <div className="absolute bottom-24 left-6 z-10 flex max-w-[50rem] justify-center p-4 sm:bottom-24 sm:left-20">
+          <h2 className="text-3xl text-white sm:text-5xl md:text-7xl">
+            {headerText}
+          </h2>
         </div>
       </header>
     </>
