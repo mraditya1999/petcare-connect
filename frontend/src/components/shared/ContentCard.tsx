@@ -38,7 +38,7 @@ const ContentCard: React.FC<ContentCardProps> = ({
           <p className="text-gray-400">{text}</p>
         </div>
         <Link
-          to={ROUTES.ABOUT}
+          to={`/${ROUTES.ABOUT}`}
           className="text-md flex items-center gap-3 self-start rounded-full bg-primary px-6 py-3 py-4 text-white"
         >
           {buttonText} {icon && <span className="mr-2">{icon}</span>}

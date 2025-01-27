@@ -1,6 +1,8 @@
 import { FaFacebook } from "react-icons/fa6";
 import { FaInstagram } from "react-icons/fa6";
 import NavLinks from "./NavLinks";
+import { ROUTES } from "@/utils/constants";
+import { Link } from "react-router-dom";
 
 const Footer = () => {
   return (
@@ -37,12 +39,15 @@ const Footer = () => {
           <h2 className="text-xl font-medium">
             Join as petfamily and get 10% OFF
           </h2>
-          <p className="mt-4 text-gray-600">
+          <p className="mb-4 mt-4 text-gray-600">
             Our services are wide open for you
           </p>
-          <button className="mt-4 rounded-xl border border-gray-300 bg-primary px-4 py-2 text-white shadow-sm transition duration-300 ease-in-out hover:bg-white hover:text-gray-600">
+          <Link
+            to={`${ROUTES.LOGIN}`}
+            className="mt-4 rounded-lg bg-primary px-4 py-2 text-white shadow-sm transition duration-300 ease-in-out hover:bg-primary/90"
+          >
             Be Petfamily
-          </button>
+          </Link>
         </div>
       </div>
       <div className="container mx-auto mt-8 flex items-center gap-6 text-sm text-gray-600">
