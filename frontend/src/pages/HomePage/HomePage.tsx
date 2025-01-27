@@ -23,22 +23,20 @@ const HomePage = () => {
       <section className="bg-gray-50 py-8">
         <div className="container mx-auto px-4">
           <div className="section-width flex items-center justify-between">
-            <div className="flex w-1/2 justify-center p-4">
-              <div className="w-3/4">
-                <h2 className="mb-4 text-4xl font-medium text-gray-800">
-                  Prioritizing your pet companion
-                </h2>
-                <p className="text-md text-gray-600">
-                  At pawcare, our primary goal is to ensure that every pet we
-                  care for leads a happy, healthy life. We are dedicated to
-                  providing the highest standard of veterinary care, delivered
-                  with compassion and professionalism. Our team of experienced
-                  veterinarians and support staff work tirelessly to promote
-                  preventive care for your lovely pet, providing comprehensive
-                  treatments and supporting through all life stages
-                </p>
-              </div>
-            </div>
+            <article className="flex w-1/2 flex-col justify-center p-4">
+              <h2 className="mb-4 text-4xl font-medium text-gray-800">
+                Prioritizing your pet companion
+              </h2>
+              <p className="text-md max-w-xl text-gray-600">
+                At pawcare, our primary goal is to ensure that every pet we care
+                for leads a happy, healthy life. We are dedicated to providing
+                the highest standard of veterinary care, delivered with
+                compassion and professionalism. Our team of experienced
+                veterinarians and support staff work tirelessly to promote
+                preventive care for your lovely pet, providing comprehensive
+                treatments and supporting through all life stages
+              </p>
+            </article>
             <div className="flex w-1/2 justify-center overflow-hidden p-4">
               <img
                 src={catImg}

@@ -14,7 +14,7 @@ const ServicePage = () => {
         headerText={"Online and Offline Veterinary Services"}
       />
 
-      <section className="py-16">
+      <section className="bg-gray-50 py-16">
         <ContentCard
           image={image2}
           imageClass="rounded-xl"

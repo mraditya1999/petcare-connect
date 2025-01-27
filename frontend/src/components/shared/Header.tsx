@@ -8,7 +8,7 @@ interface HeaderProps {
 const Header: React.FC<HeaderProps> = ({ headerImage, headerText }) => {
   return (
     <>
-      <header className="relative h-screen overflow-hidden bg-white shadow-lg">
+      <header className="relative h-screen overflow-hidden shadow-lg">
         <img
           src={headerImage}
           alt="Person holding a dog"
