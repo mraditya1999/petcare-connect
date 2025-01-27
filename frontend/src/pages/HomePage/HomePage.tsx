@@ -20,40 +20,40 @@ const HomePage = () => {
       />
 
       {/* Introduction */}
-      <section className="bg-gray-50 py-8">
-        <div className="container mx-auto px-4">
-          <div className="section-width flex items-center justify-between">
-            <article className="flex w-1/2 flex-col justify-center p-4">
-              <h2 className="mb-4 text-4xl font-medium text-gray-800">
-                Prioritizing your pet companion
-              </h2>
-              <p className="text-md max-w-xl text-gray-600">
-                At pawcare, our primary goal is to ensure that every pet we care
-                for leads a happy, healthy life. We are dedicated to providing
-                the highest standard of veterinary care, delivered with
-                compassion and professionalism. Our team of experienced
-                veterinarians and support staff work tirelessly to promote
-                preventive care for your lovely pet, providing comprehensive
-                treatments and supporting through all life stages
-              </p>
-            </article>
-            <div className="flex w-1/2 justify-center overflow-hidden p-4">
-              <img
-                src={catImg}
-                alt="Content"
-                className={`h-auto w-full max-w-80 object-cover shadow-[6rem]`}
-              />
-            </div>
-          </div>
+      <section className="flex items-center justify-center bg-gray-50 py-16">
+        <div className="section-width flex flex-col items-center justify-between gap-4 md:flex-row">
+          <article className="flex flex-1 flex-col justify-center px-4">
+            <h2 className="mb-4 text-3xl font-medium text-gray-800 sm:text-4xl">
+              Prioritizing your pet companion
+            </h2>
+            <p className="text-md max-w-xl text-gray-600">
+              At pawcare, our primary goal is to ensure that every pet we care
+              for leads a happy, healthy life. We are dedicated to providing the
+              highest standard of veterinary care, delivered with compassion and
+              professionalism. Our team of experienced veterinarians and support
+              staff work tirelessly to promote preventive care for your lovely
+              pet, providing comprehensive treatments and supporting through all
+              life stages
+            </p>
+          </article>
+          <article className="mx-4 flex max-h-64 w-full flex-1 items-center justify-center overflow-hidden rounded-lg">
+            <img
+              src={catImg}
+              alt="Content"
+              className={`block h-full w-full overflow-hidden rounded-lg object-cover shadow-xl`}
+            />
+          </article>
         </div>
       </section>
 
       {/* Benefits */}
       <section className="bg-white py-16">
-        <div className="section-width mx-auto flex flex-col justify-center px-16">
-          <h1 className="mb-4 text-3xl font-bold uppercase">BENEFITS</h1>
-          <div className="flex-between mx-auto h-96 w-full gap-6">
-            <Card className="group relative h-full w-full overflow-hidden rounded-2xl">
+        <div className="section-width mx-auto flex flex-col justify-center">
+          <h1 className="mb-4 text-4xl font-bold uppercase md:text-3xl">
+            BENEFITS
+          </h1>
+          <div className="flex-between mx-auto w-full flex-col gap-3 md:h-96 md:flex-row">
+            <Card className="group relative h-72 w-full overflow-hidden rounded-2xl md:h-full">
               <img
                 src={doctor1}
                 alt="Professional Team"
@@ -67,7 +67,7 @@ const HomePage = () => {
               </CardContent>
             </Card>
 
-            <Card className="group relative h-full w-full overflow-hidden rounded-2xl">
+            <Card className="group relative h-72 w-full overflow-hidden rounded-2xl md:h-full">
               <img
                 src={doctor2}
                 alt="Professional Team"
@@ -81,7 +81,7 @@ const HomePage = () => {
               </CardContent>
             </Card>
 
-            <Card className="group relative h-full w-full overflow-hidden rounded-2xl">
+            <Card className="group relative h-72 w-full overflow-hidden rounded-2xl md:h-full">
               <img
                 src={doctor3}
                 alt="Professional Team"
@@ -100,10 +100,10 @@ const HomePage = () => {
 
       {/* Contact  */}
       <section className="bg-white py-16">
-        <div className="section-width px-4">
-          <div className="mx-auto flex items-center items-stretch justify-between rounded-3xl bg-[#182559] p-20 text-white">
-            <div className="flex-1 px-12 py-12">
-              <h1 className="mb-8 text-3xl capitalize lg:text-4xl">
+        <div className="section-width">
+          <div className="flex flex-col items-center justify-between gap-8 rounded-3xl bg-[#182559] p-8 text-white sm:p-16 md:flex-row">
+            <article className="flex-1 self-start">
+              <h1 className="mb-8 text-2xl capitalize md:text-3xl lg:text-4xl">
                 Our experts are available for you 24/7
               </h1>
               <div className="flex flex-col gap-2 lg:text-lg">
@@ -119,14 +119,14 @@ const HomePage = () => {
                   <MdEmail /> mail@petcare.com
                 </p>
               </div>
-            </div>
-            <div className="flex flex-1 items-center px-12">
+            </article>
+            <article className="flex max-h-96 flex-1 items-center justify-center overflow-hidden rounded-2xl">
               <img
                 src={doctor4}
                 alt="doctor smiling"
-                className="w-md max-w-[25rem]"
+                className="h-full w-72 rounded-2xl object-cover md:w-full"
               />
-            </div>
+            </article>
           </div>
         </div>
       </section>
