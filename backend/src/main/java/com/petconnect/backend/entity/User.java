@@ -5,17 +5,19 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Size;
 import lombok.*;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 
+import java.util.Collection;
 import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+@Builder
 @Entity
 @Table(name = "users")
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
-@Data
-public class User {
+public class User implements UserDetails {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -26,9 +28,9 @@ public class User {
     @Column(nullable = false, length = 50)
     private String firstName;
 
-    @NotEmpty(message = "Last name is required")
+//    @NotEmpty(message = "Last name is required")
     @Size(max = 50, message = "Last name cannot exceed 50 characters")
-    @Column(nullable = false, length = 50)
+//    @Column(nullable = false, length = 50)
     private String lastName;
 
     @NotEmpty(message = "Email is required")
@@ -48,12 +50,20 @@ public class User {
     @Column(nullable = false)
     private String password; // Hashed password (for traditional login)
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private Role role; // User role: USER, SPECIALIST, ADMIN
+    @Column
+    private String verificationToken; // Token used for account verification
+
+    @Column
+    private String resetToken; // Token used for password reset
+
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(name = "user_roles",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "role_id"))
+    private Set<Role> roles = new HashSet<>();
 
     @Column(nullable = false)
-    private boolean isVerified; // Tracks whether the user's email is verified
+    private boolean isVerified = false; // Tracks whether the user's email is verified
 
     @Column(nullable = false)
     private boolean isTwoFactorEnabled; // Tracks whether user enabled 2FA
@@ -64,79 +74,229 @@ public class User {
     @Column(nullable = false)
     private Date updatedAt; // Last updated timestamp
 
-    /**
-     * Automatically set createdAt and updatedAt values before persisting.
-     */
     @PrePersist
     public void onPersist() {
         this.createdAt = new Date();
         this.updatedAt = new Date();
-        if (this.role == null) {
-            this.role = Role.USER; // Default role (USER) if not explicitly assigned.
-        }
         this.isVerified = false; // Default: Email is unverified initially.
         this.isTwoFactorEnabled = false; // Default: 2FA is disabled.
     }
 
-    /**
-     * Automatically update updatedAt value before updating.
-     */
     @PreUpdate
     public void onUpdate() {
         this.updatedAt = new Date();
     }
 
-    public void setVerificationToken(Object o) {
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return roles.stream().map(role -> (GrantedAuthority) role).collect(Collectors.toList());
     }
 
-    public void setResetToken(String resetToken) {
-
+    @Override
+    public boolean isAccountNonExpired() {
+        return true;
     }
 
-    /**
-     * User Roles: USER, SPECIALIST, ADMIN
-     */
-    public enum Role {
-        USER,       // Default role for standard users.
-        SPECIALIST, // Specialist role for domain experts.
-        ADMIN       // Administrator role with highest privileges.
+    @Override
+    public boolean isAccountNonLocked() {
+        return true;
     }
 
-    // Additional methods, like custom logic with roles, can go here if needed in future.
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return true;
+    }
 
-    public boolean hasRole(Role role) {
-        // Check if the user has the specified role
-        return this.role.equals(role);
+    @Override
+    public boolean isEnabled() {
+        return isVerified; // Return true if the user's email is verified
+    }
+
+    public User() {
+    }
+
+    public User(Long userId, String firstName, String lastName, String email, String oauthProvider, String oauthProviderId, String password, String verificationToken, String resetToken, Set<Role> roles, boolean isVerified, boolean isTwoFactorEnabled, Date createdAt, Date updatedAt) {
+        this.userId = userId;
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.email = email;
+        this.oauthProvider = oauthProvider;
+        this.oauthProviderId = oauthProviderId;
+        this.password = password;
+        this.verificationToken = verificationToken;
+        this.resetToken = resetToken;
+        this.roles = roles;
+        this.isVerified = isVerified;
+        this.isTwoFactorEnabled = isTwoFactorEnabled;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
+    }
+
+    // Custom methods for role handling and verification status
+    public boolean hasRole(Role.RoleName roleName) {
+        return roles.stream().anyMatch(role -> role.getAuthority().equals(roleName));
     }
 
     public boolean isAdmin() {
-        // Shortcut method to check if the user is an ADMIN
-        return this.role == Role.ADMIN;
+        return hasRole(Role.RoleName.ADMIN);
     }
 
     public boolean isSpecialist() {
-        // Shortcut method to check if the user is a SPECIALIST
-        return this.role == Role.SPECIALIST;
+        return hasRole(Role.RoleName.SPECIALIST);
     }
 
     public boolean isRegularUser() {
-        // Shortcut method to check if the user is a regular USER
-        return this.role == Role.USER;
+        return hasRole(Role.RoleName.USER);
     }
 
     public boolean canAccessSpecialistFeatures() {
-        // Determine if the user has access to features intended for SPECIALIST or higher roles
-        return this.role == Role.SPECIALIST || this.role == Role.ADMIN;
+        return isAdmin() || isSpecialist();
     }
 
     public boolean isVerifiedAndEnabled() {
-        // Check if the user is verified and also has two-factor authentication enabled
         return this.isVerified && this.isTwoFactorEnabled;
     }
 
+    public void setVerificationToken(String verificationToken) {
+        this.verificationToken = verificationToken;
+    }
+
+    public void setResetToken(String resetToken) {
+        this.resetToken = resetToken;
+    }
+
     public boolean updateVerificationStatus(boolean isVerified) {
-        // Update the `isVerified` field for the user
         this.isVerified = isVerified;
-        return this.isVerified; // Return the updated status
+        return this.isVerified;
+    }
+
+    public Long getUserId() {
+        return userId;
+    }
+
+    public void setUserId(Long userId) {
+        this.userId = userId;
+    }
+
+    public String getFirstName() {
+        return firstName;
+    }
+
+    public void setFirstName(String firstName) {
+        this.firstName = firstName;
+    }
+
+    public String getLastName() {
+        return lastName;
+    }
+
+    public void setLastName(String lastName) {
+        this.lastName = lastName;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    @Override
+    public String getUsername() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public String getOauthProvider() {
+        return oauthProvider;
+    }
+
+    public void setOauthProvider(String oauthProvider) {
+        this.oauthProvider = oauthProvider;
+    }
+
+    public String getOauthProviderId() {
+        return oauthProviderId;
+    }
+
+    public void setOauthProviderId(String oauthProviderId) {
+        this.oauthProviderId = oauthProviderId;
+    }
+
+    @Override
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public String getVerificationToken() {
+        return verificationToken;
+    }
+
+    public String getResetToken() {
+        return resetToken;
+    }
+
+    public Set<Role> getRoles() {
+        return roles;
+    }
+
+    public void setRoles(Set<Role> roles) {
+        this.roles = roles;
+    }
+
+    public boolean isVerified() {
+        return isVerified;
+    }
+
+    public void setVerified(boolean isVerified) {
+        this.isVerified = isVerified;
+    }
+
+    public boolean isTwoFactorEnabled() {
+        return isTwoFactorEnabled;
+    }
+
+    public void setTwoFactorEnabled(boolean twoFactorEnabled) {
+        isTwoFactorEnabled = twoFactorEnabled;
+    }
+
+    public Date getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(Date createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public Date getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(Date updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+
+    @Override
+    public String toString() {
+        return "User{" +
+                "userId=" + userId +
+                ", firstName='" + firstName + '\'' +
+                ", lastName='" + lastName + '\'' +
+                ", email='" + email + '\'' +
+                ", oauthProvider='" + oauthProvider + '\'' +
+                ", oauthProviderId='" + oauthProviderId + '\'' +
+                ", password='" + password + '\'' +
+                ", verificationToken='" + verificationToken + '\'' +
+                ", resetToken='" + resetToken + '\'' +
+                ", roles=" + roles +
+                ", isVerified=" + isVerified +
+                ", isTwoFactorEnabled=" + isTwoFactorEnabled +
+                ", createdAt=" + createdAt +
+                ", updatedAt=" + updatedAt +
+                '}';
     }
 }

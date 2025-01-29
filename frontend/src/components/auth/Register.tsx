@@ -23,9 +23,9 @@ const Register = () => {
 
   const [registerFormCredentials, setRegisterFormCredentials] =
     useState<IRegisterCredentials>({
-      name: "",
-      email: "",
-      password: "",
+      name: "Aditya yadav",
+      email: "dbadaditya@gmail.com",
+      password: "@mrAditya1999",
     });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
