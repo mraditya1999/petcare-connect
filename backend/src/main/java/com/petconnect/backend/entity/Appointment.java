@@ -17,7 +17,7 @@ public class Appointment {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer appointmentId;
+    private Long appointmentId;
 
     @Temporal(TemporalType.TIMESTAMP)
     @Column(nullable = false)

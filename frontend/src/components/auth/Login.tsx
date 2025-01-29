@@ -20,7 +20,7 @@ const Login = () => {
   const [rememberMe, setRememberMe] = useState(false);
   const [loginFormCredentials, setLoginFormCredentials] =
     useState<ILoginCredentials>({
-      email: "ay5480620@gmail.com",
+      email: "dbadaditya@gmail.com",
       password: "@mrAditya1999",
     });
 

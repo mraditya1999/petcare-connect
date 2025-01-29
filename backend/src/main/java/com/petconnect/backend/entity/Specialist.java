@@ -18,7 +18,7 @@ public class Specialist extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer specialistId;
+    private Long specialistId;
 
     private String avatarUrl;
     private String about;
