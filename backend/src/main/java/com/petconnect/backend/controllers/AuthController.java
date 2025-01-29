@@ -2,6 +2,8 @@ package com.petconnect.backend.controllers;
 
 import com.petconnect.backend.entity.User;
 import com.petconnect.backend.services.UserService;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -38,16 +40,6 @@ public class AuthController {
         return "contact";
     }
 
-//    @PostMapping("/register")
-//    public ResponseEntity<String> registerUser(@RequestBody User user) {
-//        // Log registration attempt
-//        logger.info("Registering user: {}", user);
-//        System.out.println("Registering user: " + user);
-//        // Register the user
-//        userService.registerUser(user);
-//        // Return successful response
-//        return ResponseEntity.ok("User registered successfully. Please check your email for the verification link.");
-//    }
 @PostMapping("/register")
 public ResponseEntity<String> registerUser(@RequestBody Map<String, String> userRequest) {
     // Create a new User instance
@@ -60,7 +52,6 @@ public ResponseEntity<String> registerUser(@RequestBody Map<String, String> user
 
     // Log registration attempt
     logger.info("Registering user: {}", user);
-    System.out.println("Registering user: " + user);
 
     // Register the user
     userService.registerUser(user);
@@ -69,13 +60,29 @@ public ResponseEntity<String> registerUser(@RequestBody Map<String, String> user
     return ResponseEntity.ok("User registered successfully. Please check your email for the verification link.");
 }
 
-
-
     @PostMapping("/login")
-    public ResponseEntity<String> loginUser(@RequestParam String email, @RequestParam String password) {
+    public ResponseEntity<String> loginUser(@RequestBody Map<String, String> loginRequest) {
+        String email = loginRequest.get("email");
+        String password = loginRequest.get("password");
+
         Optional<User> authenticatedUser = userService.authenticateUser(email, password);
-        return authenticatedUser.map(user -> ResponseEntity.ok("User logged in successfully: " + user.getUsername())).orElseGet(() -> ResponseEntity.status(401).body("Invalid email or password"));
+
+        return authenticatedUser.map(user -> ResponseEntity.ok("User logged in successfully: " + user.getUsername()))
+                .orElseGet(() -> ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid email or password"));
     }
+
+    @PostMapping("/logout")
+    public ResponseEntity<String> logoutUser(HttpServletResponse response) {
+        Cookie cookie = new Cookie("token", null);
+        cookie.setHttpOnly(true);
+        cookie.setSecure(true);
+        cookie.setPath("/");
+        cookie.setMaxAge(0); // Set expiry to immediate
+        response.addCookie(cookie);
+
+        return ResponseEntity.ok("User logged out successfully");
+    }
+
 
     @GetMapping("/profile")
     public ResponseEntity<User> getProfile(@AuthenticationPrincipal User user) {
@@ -83,7 +90,10 @@ public ResponseEntity<String> registerUser(@RequestBody Map<String, String> user
     }
 
     @PostMapping("/verify-email")
-    public ResponseEntity<String> verifyUser(@RequestParam String token) {
+    public ResponseEntity<String> verifyUser(@RequestBody Map<String, String> request) {
+        String token = request.get("verificationToken");
+        String email = request.get("email");
+
         boolean isVerified = userService.verifyUser(token);
 
         if (isVerified) {

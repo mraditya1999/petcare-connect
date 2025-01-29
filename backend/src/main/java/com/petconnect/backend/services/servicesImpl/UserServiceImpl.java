@@ -64,6 +64,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public boolean verifyUser(String verificationToken) {
+        System.out.println("verificationToken: "+verificationToken);
         User tempUser = tempUserStore.getTemporaryUser(verificationToken);
         if (tempUser != null) {
             tempUser.setVerified(true);
@@ -131,7 +132,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void sendVerificationEmail(User user) {
-        String verificationLink = "http://localhost:8080/auth/verify-email?token=" + user.getVerificationToken();
+        String verificationLink = "http://localhost:5173/user/verify-email?token=" + user.getVerificationToken()+"&email="+user.getEmail();
         SimpleMailMessage message = new SimpleMailMessage();
         message.setTo(user.getEmail());
         message.setSubject("Email Verification");

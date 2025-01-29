@@ -41,7 +41,9 @@ const Register = () => {
       const parsedData = registerFormSchema.parse(registerFormCredentials);
       const resultAction = await dispatch(registerUser({ parsedData }));
       if (registerUser.fulfilled.match(resultAction)) {
-        showToast("Registration Successful! Redirecting to Login...🎉");
+        showToast(
+          "Please check your email to verify your account. Redirecting to login... 🚀",
+        );
         setTimeout(() => {
           navigate(ROUTES.LOGIN);
         }, 5000);
