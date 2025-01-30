@@ -1,6 +1,7 @@
 import { ReactNode, useEffect } from "react";
 import { useAppSelector } from "@/app/hooks";
 import { useNavigate } from "react-router-dom";
+import { ROUTES } from "@/utils/constants";
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -12,7 +13,7 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
 
   useEffect(() => {
     if (!user) {
-      navigate("/login");
+      navigate(ROUTES.HOME);
     }
   }, [user, navigate]);
 

@@ -42,28 +42,6 @@ const AuthLayoutPage = () => {
         <Outlet />
       </section>
     </div>
-
-    // <div
-    //   className="grid min-h-screen md:grid-cols-2"
-    //   style={{
-    //     backgroundImage: `url(${dogImg})`,
-    //     backgroundSize: "cover",
-    //     backgroundPosition: "center",
-    //     backgroundRepeat: "no-repeat",
-    //   }}
-    // >
-    //   <div className="hidden md:block"></div>
-    //   <section className="h-full w-full place-items-center md:col-span-1 md:grid">
-    //     <div className="h-3/5">
-    //       <img
-    //         src={dogImg}
-    //         alt="dog holding teddy in his mouth"
-    //         className="hidden"
-    //       />
-    //     </div>
-    //     <Outlet />
-    //   </section>
-    // </div>
   );
 };
 export default AuthLayoutPage;

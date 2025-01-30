@@ -11,11 +11,13 @@ import {
   LayoutPage,
   AuthLayoutPage,
   ErrorPage,
+  ProfilePage,
 } from "@/pages";
 import { ROUTES } from "@/utils/constants";
 import {
   ForgetPassword,
   Login,
+  ProtectedRoute,
   // ProtectedRoute,
   Register,
   ResetPassword,
@@ -25,7 +27,8 @@ import {
 const router = createBrowserRouter(
   createRoutesFromElements(
     <>
-      {/* <Route
+      {/* Protected Route  */}
+      <Route
         element={
           <ProtectedRoute>
             <LayoutPage />
@@ -33,18 +36,18 @@ const router = createBrowserRouter(
         }
         errorElement={<ErrorPage />}
       >
-        <Route index path={ROUTES.HOME} element={<HomePage />} />
-        <Route path={ROUTES.ABOUT} element={<AboutPage />} />
-        <Route path={ROUTES.SERVICE} element={<ServicePage />} />
-      </Route> */}
+        <Route path={ROUTES.FORUM} element={<ForumPage />} />
+        <Route path={ROUTES.PROFILE} element={<ProfilePage />} />
+      </Route>
 
+      {/* Public Route */}
       <Route element={<LayoutPage />}>
         <Route index path={ROUTES.HOME} element={<HomePage />} />
         <Route path={ROUTES.ABOUT} element={<AboutPage />} />
         <Route path={ROUTES.SERVICE} element={<ServicePage />} />
-        <Route path={ROUTES.FORUM} element={<ForumPage />} />
       </Route>
 
+      {/* Auth Route */}
       <Route element={<AuthLayoutPage />} errorElement={<ErrorPage />}>
         <Route path={ROUTES.LOGIN} element={<Login />} />
         <Route path={ROUTES.REGISTER} element={<Register />} />

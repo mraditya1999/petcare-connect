@@ -1,80 +1,110 @@
 package com.petconnect.backend.controllers;
 
+import com.petconnect.backend.dto.ApiResponse;
+import com.petconnect.backend.dto.UserLoginRequest;
+import com.petconnect.backend.dto.UserLoginResponse;
+import com.petconnect.backend.dto.UserRegistrationRequest;
+import com.petconnect.backend.entity.Role;
 import com.petconnect.backend.entity.User;
+import com.petconnect.backend.exceptions.ResourceNotFoundException;
+import com.petconnect.backend.services.EmailService;
 import com.petconnect.backend.services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 @RestController
 @RequestMapping("/auth")
 public class AuthController {
 
     private final UserService userService;
-    private final JavaMailSender mailSender;
-
-    @Autowired
-    public AuthController(UserService userService, JavaMailSender mailSender) {
-        this.userService = userService;
-        this.mailSender = mailSender;
-    }
-
-    // Inside your AuthController
+    private final EmailService emailService;
     private static final Logger logger = LoggerFactory.getLogger(AuthController.class);
 
-    @GetMapping("/contact")
-    public String getContact() {
-        return "contact";
+    @Autowired
+    public AuthController(UserService userService, EmailService emailService) {
+        this.userService = userService;
+        this.emailService = emailService;
     }
 
-//    @PostMapping("/register")
-//    public ResponseEntity<String> registerUser(@RequestBody User user) {
-//        // Log registration attempt
-//        logger.info("Registering user: {}", user);
-//        System.out.println("Registering user: " + user);
-//        // Register the user
-//        userService.registerUser(user);
-//        // Return successful response
-//        return ResponseEntity.ok("User registered successfully. Please check your email for the verification link.");
-//    }
-@PostMapping("/register")
-public ResponseEntity<String> registerUser(@RequestBody Map<String, String> userRequest) {
-    // Create a new User instance
-    User user = new User();
+    @PostMapping("/register")
+    public ResponseEntity<ApiResponse<Void>> registerUser(@RequestBody UserRegistrationRequest userRequest) {
+        try {
+            String email = userRequest.getEmail();
 
-    // Map the 'name' attribute to 'firstName'
-    user.setFirstName(userRequest.get("name"));
-    user.setEmail(userRequest.get("email"));
-    user.setPassword(userRequest.get("password"));
+            if (userService.existsByEmail(email)) {
+                ApiResponse<Void> response = new ApiResponse<>("User already exists with this email.");
+                return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+            }
 
-    // Log registration attempt
-    logger.info("Registering user: {}", user);
-    System.out.println("Registering user: " + user);
+            User user = new User();
+            user.setFirstName(userRequest.getFirstName());
+            user.setLastName(userRequest.getLastName());
+            user.setEmail(email);
+            user.setPassword(userRequest.getPassword());
+            userService.registerUser(user);
 
-    // Register the user
-    userService.registerUser(user);
+            ApiResponse<Void> response = new ApiResponse<>("User registered successfully. Please check your email for the verification link.");
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            ApiResponse<Void> errorResponse = new ApiResponse<>("An error occurred: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
 
-    // Return successful response
-    return ResponseEntity.ok("User registered successfully. Please check your email for the verification link.");
-}
-
-
+        }
+    }
 
     @PostMapping("/login")
-    public ResponseEntity<String> loginUser(@RequestParam String email, @RequestParam String password) {
-        Optional<User> authenticatedUser = userService.authenticateUser(email, password);
-        return authenticatedUser.map(user -> ResponseEntity.ok("User logged in successfully: " + user.getUsername())).orElseGet(() -> ResponseEntity.status(401).body("Invalid email or password"));
+    public ResponseEntity<ApiResponse<UserLoginResponse>> loginUser(@RequestBody UserLoginRequest loginRequest) {
+        try {
+            String email = loginRequest.getEmail();
+            String password = loginRequest.getPassword();
+
+            Optional<User> authenticatedUser = userService.authenticateUser(email, password);
+            if (authenticatedUser.isPresent()) {
+                User user = authenticatedUser.get();
+                String token = userService.generateJwtToken(user);
+
+                UserLoginResponse userLoginResponse = new UserLoginResponse(
+                        user.getUserId(),
+                        user.getEmail(),
+                        user.getRoles().stream().map(Role::getRoleName).findFirst().orElse("user"),
+                        token
+                );
+
+                ApiResponse<UserLoginResponse> response = new ApiResponse<>("User logged in successfully", userLoginResponse);
+                return ResponseEntity.ok(response);
+            } else {
+                ApiResponse<UserLoginResponse> response = new ApiResponse<>("Invalid email or password");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+            }
+        } catch (Exception e) {
+            ApiResponse<UserLoginResponse> errorResponse = new ApiResponse<>("An error occurred: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        }
+    }
+
+
+    @PostMapping("/logout")
+    public ResponseEntity<String> logoutUser(HttpServletResponse response) {
+        Cookie cookie = new Cookie("token", null);
+        cookie.setHttpOnly(true);
+        cookie.setSecure(true);
+        cookie.setPath("/");
+        cookie.setMaxAge(0); // Set expiry to immediate
+        response.addCookie(cookie);
+
+        return ResponseEntity.ok("User logged out successfully");
     }
 
     @GetMapping("/profile")
@@ -83,13 +113,15 @@ public ResponseEntity<String> registerUser(@RequestBody Map<String, String> user
     }
 
     @PostMapping("/verify-email")
-    public ResponseEntity<String> verifyUser(@RequestParam String token) {
-        boolean isVerified = userService.verifyUser(token);
+    public ResponseEntity<String> verifyUser(@RequestBody Map<String, String> request) {
+        String token = request.get("verificationToken");
+        String email = request.get("email");
 
+        boolean isVerified = userService.verifyUser(token);
         if (isVerified) {
             return ResponseEntity.ok("User verified and registered successfully.");
         } else {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid or expired verification token.");
+            throw new ResourceNotFoundException("Invalid or expired verification token.");
         }
     }
 
@@ -99,7 +131,7 @@ public ResponseEntity<String> registerUser(@RequestBody Map<String, String> user
         if (isReset) {
             return ResponseEntity.ok("Password reset successfully");
         } else {
-            return ResponseEntity.status(400).body("Invalid reset token");
+            throw new ResourceNotFoundException("Invalid reset token");
         }
     }
 
@@ -113,27 +145,10 @@ public ResponseEntity<String> registerUser(@RequestBody Map<String, String> user
             String resetToken = UUID.randomUUID().toString();
             user.setResetToken(resetToken);
             userService.updateUser(user);
-
-            sendResetEmail(user);
+            emailService.sendResetEmail(user);
             return ResponseEntity.ok("Password reset email sent successfully");
         } else {
-            return ResponseEntity.status(404).body("Email address not found");
+            throw new ResourceNotFoundException("Email address not found");
         }
     }
-
-    private void sendResetEmail(User user) {
-        String resetLink = "http://localhost:8080/auth/reset-password?token=" + user.getResetToken();
-        SimpleMailMessage message = new SimpleMailMessage();
-        message.setTo(user.getEmail());
-        message.setSubject("Password Reset Request");
-        message.setText("To reset your password, click the following link: " + resetLink);
-        message.setFrom("noreply@example.com");
-
-        try {
-            mailSender.send(message);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
 }

@@ -28,9 +28,9 @@ public class User implements UserDetails {
     @Column(nullable = false, length = 50)
     private String firstName;
 
-//    @NotEmpty(message = "Last name is required")
+   @NotEmpty(message = "Last name is required")
     @Size(max = 50, message = "Last name cannot exceed 50 characters")
-//    @Column(nullable = false, length = 50)
+   @Column(nullable = false, length = 50)
     private String lastName;
 
     @NotEmpty(message = "Email is required")
