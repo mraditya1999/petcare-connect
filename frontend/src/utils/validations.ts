@@ -19,11 +19,16 @@ export const loginFormSchema = z.object({
 });
 
 export const registerFormSchema = z.object({
-  name: z
+  firstName: z
     .string()
-    .nonempty("Name is required")
-    .min(3, "Name must be at least 3 characters")
-    .max(50, "Name must be at most 50 characters long"),
+    .nonempty("First Name is required")
+    .min(3, "First Name must be at least 3 characters")
+    .max(50, "First Name must be at most 50 characters long"),
+  lastName: z
+    .string()
+    .nonempty("Last Name is required")
+    .min(3, "Last Name must be at least 3 characters")
+    .max(50, "Last Name must be at most 50 characters long"),
   email: z
     .string()
     .nonempty("Email is required")

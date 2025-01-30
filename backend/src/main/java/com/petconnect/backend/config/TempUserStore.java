@@ -9,7 +9,7 @@ public class TempUserStore {
     private final ConcurrentHashMap<String, User> tempUserStore = new ConcurrentHashMap<>();
 
     public void saveTemporaryUser(String token, User user) {
-        tempUserStore.put(token, user);
+        tempUserStore. put(token, user);
     }
 
     public User getTemporaryUser(String token) {

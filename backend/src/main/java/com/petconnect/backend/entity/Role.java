@@ -21,7 +21,7 @@ public class Role implements GrantedAuthority {
     private RoleName roleName;
 
     public enum RoleName {
-        USER, SPECIALIST, ADMIN
+        ADMIN, SPECIALIST, USER
     }
 
     @ManyToMany(mappedBy = "roles")

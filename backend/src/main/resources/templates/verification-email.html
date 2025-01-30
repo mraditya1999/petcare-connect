@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+
+        .email-container {
+            max-width: 600px;
+            margin: auto;
+            background-color: #ffffff;
+            padding: 20px;
+            box-shadow: 0 2px 3px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+
+        .header {
+            background-color: #007bff;
+            color: #ffffff;
+            padding: 20px;
+            text-align: center;
+            border-top-left-radius: 8px;
+            border-top-right-radius: 8px;
+        }
+
+        .header h1 {
+            margin: 0;
+        }
+
+        .content {
+            padding: 20px;
+            line-height: 1.6;
+            color: #333333;
+        }
+
+        .content p {
+            margin: 10px 0;
+        }
+
+        .verification-button {
+            display: inline-block;
+            background-color: #007bff;
+            color: #ffffff;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            border-radius: 4px;
+            margin: 20px 0;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 20px;
+            font-size: 12px;
+            color: #aaaaaa;
+            border-bottom-left-radius: 8px;
+            border-bottom-right-radius: 8px;
+        }
+
+        .contact-info {
+            margin-top: 20px;
+            font-size: 14px;
+            color: #666666;
+        }
+
+        .contact-info a {
+            color: #007bff;
+            text-decoration: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="email-container">
+        <div class="header">
+            <h1>Email Verification</h1>
+        </div>
+        <div class="content">
+            <p>Dear [[${user.firstName}]],</p>
+            <p>Thank you for registering with our service. To complete your registration, please verify your email
+                address by clicking the link below:</p>
+            <p><a th:href="${verificationLink}" class="verification-button">Verify Email</a></p>
+            <p>If the above button does not work, copy and paste the following link into your web browser:</p>
+            <p><a th:href="${verificationLink}">${verificationLink}</a></p>
+            <p>If you did not register for this account, please ignore this email.</p>
+            <p class="contact-info">If you have any questions, feel free to contact our support team at <a
+                    href="mailto:support@petcare_connect.com">support@petcare_connect.com</a>.</p>
+            <p class="contact-info">Make sure to check your spam or junk folder if you do not see the email in your
+                inbox.</p>
+        </div>
+        <div class="footer">
+            <p>© 2025 Your Company. All rights reserved.</p>
+            <p><a href="https://petcare_connect.com/privacy-policy">Privacy Policy</a> | <a
+                    href="https://petcare_connect/terms-of-service">Terms of Service</a></p>
+        </div>
+    </div>
+</body>
+
+</html>

@@ -23,7 +23,8 @@ const Register = () => {
 
   const [registerFormCredentials, setRegisterFormCredentials] =
     useState<IRegisterCredentials>({
-      name: "Aditya yadav",
+      firstName: "Honey",
+      lastName: "Singh",
       email: "dbadaditya@gmail.com",
       password: "@mrAditya1999",
     });
@@ -66,18 +67,32 @@ const Register = () => {
             className="flex flex-col gap-5"
             onSubmit={handleSubmit}
           >
-            {/* Name */}
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="name" className="text-gray-700">
-                Name
-              </Label>
-              <Input
-                placeholder="John Doe"
-                name="name"
-                value={registerFormCredentials.name}
-                onChange={handleChange}
-                // required
-              />
+            <div className="flex justify-between gap-2">
+              {/* First Name */}
+              <div className="flex flex-1 flex-col gap-2">
+                <Label htmlFor="name" className="text-gray-700">
+                  First Name
+                </Label>
+                <Input
+                  placeholder="John Doe"
+                  name="firstName"
+                  value={registerFormCredentials.firstName}
+                  onChange={handleChange}
+                />
+              </div>
+
+              {/* Last Name */}
+              <div className="flex flex-1 flex-col gap-2">
+                <Label htmlFor="name" className="text-gray-700">
+                  Last Name
+                </Label>
+                <Input
+                  placeholder="John Doe"
+                  name="lastName"
+                  value={registerFormCredentials.lastName}
+                  onChange={handleChange}
+                />
+              </div>
             </div>
 
             {/* Email */}

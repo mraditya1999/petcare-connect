@@ -1,7 +1,7 @@
 export interface IUser {
   userId: string;
   email: string;
-  role: "user" | "admin";
+  role: "USER" | "ADMIN" | "SPECIALIST";
 }
 
 export interface IUserState {
@@ -17,7 +17,8 @@ export type ILoginCredentials = {
 };
 
 export interface IRegisterCredentials {
-  name: string;
+  firstName: string;
+  lastName: string;
   email: string;
   password: string;
 }
