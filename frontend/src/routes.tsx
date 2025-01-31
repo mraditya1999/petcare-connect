@@ -36,7 +36,6 @@ const router = createBrowserRouter(
         }
         errorElement={<ErrorPage />}
       >
-        <Route path={ROUTES.FORUM} element={<ForumPage />} />
         <Route path={ROUTES.PROFILE} element={<ProfilePage />} />
       </Route>
 
@@ -44,6 +43,7 @@ const router = createBrowserRouter(
       <Route element={<LayoutPage />}>
         <Route index path={ROUTES.HOME} element={<HomePage />} />
         <Route path={ROUTES.ABOUT} element={<AboutPage />} />
+        <Route path={ROUTES.FORUM} element={<ForumPage />} />
         <Route path={ROUTES.SERVICE} element={<ServicePage />} />
       </Route>
 

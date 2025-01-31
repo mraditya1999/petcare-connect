@@ -1,6 +1,7 @@
 package com.petconnect.backend.dto;
 
 public class UserLoginResponse {
+
     private Long userId;
     private String email;
     private String role;
