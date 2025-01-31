@@ -1,16 +1,26 @@
 package com.petconnect.backend.dto;
 
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+
 public class UserRegistrationRequest {
+
+    @NotBlank(message = "First name is mandatory")
     private String firstName;
+
+    @NotBlank(message = "Last name is mandatory")
     private String lastName;
+
+    @NotBlank(message = "Email is mandatory")
+    @Email(message = "Email should be valid")
     private String email;
+
+    @NotBlank(message = "Password is mandatory")
     private String password;
 
-    // Default no-argument constructor
     public UserRegistrationRequest() {
     }
 
-    // Parameterized constructor
     public UserRegistrationRequest(String firstName, String lastName, String email, String password) {
         this.firstName = firstName;
         this.lastName = lastName;

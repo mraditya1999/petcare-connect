@@ -27,7 +27,7 @@ const HomePage = () => {
               Prioritizing your pet companion
             </h2>
             <p className="text-md max-w-xl text-gray-600">
-              At pawcare, our primary goal is to ensure that every pet we care
+              At petcare, our primary goal is to ensure that every pet we care
               for leads a happy, healthy life. We are dedicated to providing the
               highest standard of veterinary care, delivered with compassion and
               professionalism. Our team of experienced veterinarians and support

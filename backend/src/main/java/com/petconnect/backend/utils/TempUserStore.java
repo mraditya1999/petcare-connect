@@ -1,4 +1,4 @@
-package com.petconnect.backend.config;
+package com.petconnect.backend.utils;
 
 import com.petconnect.backend.entity.User;
 import org.springframework.stereotype.Component;
