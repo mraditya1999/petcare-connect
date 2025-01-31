@@ -53,11 +53,12 @@ public class EmailService {
     }
 
     public void sendResetEmail(User user) {
-        String resetLink = backendUrl + "/auth/reset-password?token=" + user.getResetToken();
+        String resetLink = frontendUrl + "/user/reset-password?token=" + user.getResetToken();
+        System.out.println(resetLink);
         Context context = new Context();
         context.setVariable("user", user);
         context.setVariable("resetLink", resetLink);
-        String htmlContent = templateEngine.process("reset-email", context);
+        String htmlContent = templateEngine.process("reset-password", context);
         try {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true);

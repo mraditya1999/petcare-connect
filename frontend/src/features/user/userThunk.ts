@@ -123,7 +123,7 @@ export const resetPassword = createAsyncThunk<
   ) => {
     try {
       const response = await customFetch.post("/auth/reset-password", {
-        ...parsedData,
+        newPassword: parsedData.password,
         token,
         email,
       });
