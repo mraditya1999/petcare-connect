@@ -146,12 +146,7 @@ public class AuthController {
     }
 
     @PostMapping("/reset-password")
-    public ResponseEntity<ApiResponse<String>> resetPassword(@RequestBody ResetPasswordRequest request) {
-        String token = request.getToken();
-        String newPassword = request.getNewPassword();
-
-        System.out.println(token);
-        System.out.println(newPassword);
+    public ResponseEntity<ApiResponse<String>> resetPassword(@RequestParam String token, @RequestParam String newPassword) {
 
         boolean isReset = authService.resetPassword(token, newPassword);
         if (isReset) {
@@ -163,6 +158,4 @@ public class AuthController {
             throw new ResourceNotFoundException("Invalid reset token");
         }
     }
-
-
-}
+   }

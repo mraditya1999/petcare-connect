@@ -40,6 +40,11 @@ public class User implements UserDetails {
     @Column(nullable = false, unique = true, length = 100)
     private String email; // User login email
 
+    @OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "address_id", referencedColumnName = "addressId")
+    @JsonManagedReference
+    private Address address; // New address field
+
     @Column
     private String oauthProvider; // OAuth provider name (e.g., "google", "facebook")
 
@@ -118,21 +123,27 @@ public class User implements UserDetails {
     public User() {
     }
 
-    public User(Long userId, String firstName, String lastName, String email, String oauthProvider, String oauthProviderId, String password, String verificationToken, String resetToken, Set<Role> roles, boolean isVerified, boolean isTwoFactorEnabled, Date createdAt, Date updatedAt) {
+    public User(Long userId, String firstName, String lastName, String email, Address address, String oauthProvider, String oauthProviderId, String password, String verificationToken, String resetToken, Set<Role> roles, boolean isVerified, boolean isTwoFactorEnabled, Date createdAt, Date updatedAt) {
         this.userId = userId;
         this.firstName = firstName;
         this.lastName = lastName;
         this.email = email;
-        this.oauthProvider = oauthProvider;
-        this.oauthProviderId = oauthProviderId;
+        this.address = address;
         this.password = password;
         this.verificationToken = verificationToken;
         this.resetToken = resetToken;
         this.roles = roles;
         this.isVerified = isVerified;
-        this.isTwoFactorEnabled = isTwoFactorEnabled;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
+    }
+
+    public Address getAddress() {
+        return address;
+    }
+
+    public void setAddress(Address address) {
+        this.address = address;
     }
 
     // Custom methods for role handling and verification status
