@@ -125,23 +125,10 @@ public class AuthController {
         }
     }
 
-    @PostMapping("/reset-password")
-    public ResponseEntity<ApiResponse<String>> resetPassword(@RequestParam String token, @RequestParam String newPassword) {
-        boolean isReset = authService.resetPassword(token, newPassword);
-        if (isReset) {
-            logger.info("Password reset successfully with token: {}", token);
-            ApiResponse<String> apiResponse = new ApiResponse<>("Password reset successfully");
-            return ResponseEntity.ok(apiResponse);
-        } else {
-            logger.warn("Invalid reset token: {}", token);
-            throw new ResourceNotFoundException("Invalid reset token");
-        }
-    }
-
     @PostMapping("/forget-password")
     public ResponseEntity<ApiResponse<String>> forgetPassword(@Validated @RequestBody Map<String, String> request) {
         String email = request.get("email");
-
+        System.out.println(email);
         Optional<User> userOptional = userService.findByEmail(email);
         if (userOptional.isPresent()) {
             User user = userOptional.get();
@@ -157,4 +144,25 @@ public class AuthController {
             throw new ResourceNotFoundException("Email address not found");
         }
     }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<ApiResponse<String>> resetPassword(@RequestBody ResetPasswordRequest request) {
+        String token = request.getToken();
+        String newPassword = request.getNewPassword();
+
+        System.out.println(token);
+        System.out.println(newPassword);
+
+        boolean isReset = authService.resetPassword(token, newPassword);
+        if (isReset) {
+            logger.info("Password reset successfully with token: {}", token);
+            ApiResponse<String> apiResponse = new ApiResponse<>("Password reset successfully");
+            return ResponseEntity.ok(apiResponse);
+        } else {
+            logger.warn("Invalid reset token: {}", token);
+            throw new ResourceNotFoundException("Invalid reset token");
+        }
+    }
+
+
 }
