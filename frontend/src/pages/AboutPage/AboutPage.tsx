@@ -24,7 +24,7 @@ const AboutPage = () => {
               Providing best services for your pets
             </h2>
             <p className="flex-1 text-gray-400">
-              At Pawcare, our in-clinic consultations offer comprehensive care
+              At Petcare, our in-clinic consultations offer comprehensive care
               to ensure your pet's health and well-being. Our experienced
               veterinarians conduct thorough physical examinations, use advanced
               diagnostic tools, and create personalized treatment plans tailored
@@ -58,10 +58,10 @@ const AboutPage = () => {
               </article>
               <article className="flex flex-1 flex-col">
                 <h1 className="mb-6 text-3xl font-semibold md:text-4xl">
-                  Pawsville
+                  Petsville
                 </h1>
                 <p className="mb-6 max-w-xl text-gray-400">
-                  Located at the heart of Pawsville, our clinic at 123 Pet Care
+                  Located at the heart of Petsville, our clinic at 123 Pet Care
                   Lane offers a warm and welcoming environment for you and your
                   pet. With convenient access and ample parking, we’ve designed
                   our space to be as comfortable and stress-free as possible.
