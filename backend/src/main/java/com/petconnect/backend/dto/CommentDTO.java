@@ -1,52 +1,29 @@
-package com.petconnect.backend.entity;
+package com.petconnect.backend.dto;
 
-import jakarta.persistence.EntityListeners;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.Id;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
-import org.springframework.data.mongodb.core.index.Indexed;
-import org.springframework.data.mongodb.core.mapping.Document;
-import org.springframework.data.mongodb.core.mapping.Field;
-import org.springframework.data.mongodb.core.mapping.DBRef;
 
 import java.util.Date;
 
-@EntityListeners(AuditingEntityListener.class)
-@Document(collection = "comments")
-public class Comment {
-    @Id
+public class CommentDTO {
     private String commentId;
-
     @NotNull
-    @Indexed
     private String forumId;
-
     @NotNull
-    @Indexed
     private String userId;
-
     @NotBlank
     private String text;
-
-    @CreatedDate
-    @Field("created_at")
     private Date createdAt;
 
-    @DBRef
-    private Forum forum;
-
-    public Comment() {
+    public CommentDTO() {
     }
 
-    public Comment(String commentId, String forumId, String userId, String text, Date createdAt, Forum forum) {
+    public CommentDTO(String commentId, String forumId, String userId, String text, Date createdAt) {
         this.commentId = commentId;
         this.forumId = forumId;
         this.userId = userId;
         this.text = text;
         this.createdAt = createdAt;
-        this.forum = forum;
     }
 
     public String getCommentId() {
@@ -87,13 +64,5 @@ public class Comment {
 
     public void setCreatedAt(Date createdAt) {
         this.createdAt = createdAt;
-    }
-
-    public Forum getForum() {
-        return forum;
-    }
-
-    public void setForum(Forum forum) {
-        this.forum = forum;
     }
 }

@@ -25,12 +25,12 @@ public class EmailService {
     private final JavaMailSender mailSender;
     private static final Logger logger = LoggerFactory.getLogger(EmailService.class);
 
-    @Autowired
-    private TemplateEngine templateEngine;
+    private final TemplateEngine templateEngine;
 
     @Autowired
-    public EmailService(JavaMailSender mailSender) {
+    public EmailService(JavaMailSender mailSender, TemplateEngine templateEngine) {
         this.mailSender = mailSender;
+        this.templateEngine = templateEngine;
     }
 
     public void sendVerificationEmail(User user) {

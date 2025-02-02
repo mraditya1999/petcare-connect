@@ -1,11 +1,78 @@
+//package com.petconnect.backend.security;
+//
+//import org.springframework.beans.factory.annotation.Autowired;
+//import org.springframework.context.annotation.Bean;
+//import org.springframework.context.annotation.Configuration;
+//import org.springframework.security.authentication.AuthenticationManager;
+//import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+//import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+//import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+//import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+//import org.springframework.security.config.http.SessionCreationPolicy;
+//import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+//import org.springframework.security.crypto.password.PasswordEncoder;
+//import org.springframework.security.web.SecurityFilterChain;
+//import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+//import static org.springframework.security.config.Customizer.withDefaults;
+//
+//@EnableWebSecurity
+//@Configuration
+//public class SecurityConfig {
+//
+//    private final JwtRequestFilter jwtRequestFilter;
+//    private final UserDetailsServiceImpl userDetailsService;
+//
+//    @Autowired
+//    public SecurityConfig(JwtRequestFilter jwtRequestFilter, UserDetailsServiceImpl userDetailsService) {
+//        this.jwtRequestFilter = jwtRequestFilter;
+//        this.userDetailsService = userDetailsService;
+//    }
+//
+//    private static final String[] AUTH_WHITELIST = {
+//            "/auth/**",
+//            "/forums/**",
+//            "/appointments/**",
+//    };
+//
+//    @Bean
+//    SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
+//        http.cors(withDefaults())
+//                .authorizeHttpRequests((requests) -> requests
+//                        .requestMatchers(AUTH_WHITELIST).permitAll()
+//                        .requestMatchers("/profile/**").authenticated()
+////                        .requestMatchers("/forums/create", "/forums/update/**", "/forums/delete/**").authenticated()
+////                        .requestMatchers("/comments/**").authenticated()
+////                        .requestMatchers("/likes/**").authenticated()
+////                        .requestMatchers("/profile/users/**", "/profile/users/role/**").hasRole("ADMIN")
+//                        .anyRequest().authenticated())
+//                .csrf(AbstractHttpConfigurer::disable)
+//                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+//                .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
+//        http.httpBasic(withDefaults());
+//        return http.build();
+//    }
+//
+//    @Bean
+//    public PasswordEncoder passwordEncoder() {
+//        return new BCryptPasswordEncoder();
+//    }
+//
+//    @Bean
+//    public AuthenticationManager authenticationManagerBean(HttpSecurity http) throws Exception {
+//        AuthenticationManagerBuilder auth = http.getSharedObject(AuthenticationManagerBuilder.class);
+//        auth.userDetailsService(userDetailsService).passwordEncoder(passwordEncoder());
+//        return auth.build();
+//    }
+//}
+//
 package com.petconnect.backend.security;
 
-import com.petconnect.backend.config.AppConfig;
+import com.petconnect.backend.services.AuthService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.web.embedded.tomcat.TomcatServletWebServerFactory;
-import org.springframework.boot.web.server.WebServerFactoryCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -14,29 +81,26 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.CorsConfigurationSource;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import static org.springframework.security.config.Customizer.withDefaults;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-
-@Configuration
 @EnableWebSecurity
+@Configuration
 public class SecurityConfig {
 
     private final JwtRequestFilter jwtRequestFilter;
+    private final AuthService authService;
 
     @Autowired
-    public SecurityConfig(JwtRequestFilter jwtRequestFilter) {
+    public SecurityConfig(JwtRequestFilter jwtRequestFilter, AuthService authService) {
         this.jwtRequestFilter = jwtRequestFilter;
+        this.authService = authService;
     }
 
     private static final String[] AUTH_WHITELIST = {
             "/auth/**",
+            "/forums/**",
+            "/appointments/**",
     };
 
     @Bean
@@ -44,7 +108,10 @@ public class SecurityConfig {
         http.cors(withDefaults())
                 .authorizeHttpRequests((requests) -> requests
                         .requestMatchers(AUTH_WHITELIST).permitAll()
-                        .requestMatchers("/profile/*").authenticated()
+                        .requestMatchers("/profile/**").authenticated()
+                        .requestMatchers("/comments/**").authenticated()
+                        .requestMatchers("/likes/**").authenticated()
+                        .requestMatchers("/profile/users/**", "/profile/users/role/**").hasRole("ADMIN")
                         .anyRequest().authenticated())
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -58,4 +125,10 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
+    @Bean
+    public AuthenticationManager authenticationManagerBean(HttpSecurity http) throws Exception {
+        AuthenticationManagerBuilder auth = http.getSharedObject(AuthenticationManagerBuilder.class);
+        auth.userDetailsService(authService).passwordEncoder(passwordEncoder());
+        return auth.build();
+    }
 }

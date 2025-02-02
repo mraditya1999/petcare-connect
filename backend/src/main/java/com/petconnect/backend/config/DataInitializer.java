@@ -8,8 +8,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
+import org.springframework.data.mongodb.core.MongoTemplate;
 
-import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -21,7 +21,7 @@ public class DataInitializer implements CommandLineRunner {
     private final PasswordEncoder passwordEncoder;
 
     @Autowired
-    public DataInitializer(RoleRepository roleRepository, UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public DataInitializer(RoleRepository roleRepository, UserRepository userRepository, PasswordEncoder passwordEncoder, MongoTemplate mongoTemplate) {
         this.roleRepository = roleRepository;
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
@@ -45,15 +45,11 @@ public class DataInitializer implements CommandLineRunner {
 
     private void initializeDefaultUsers() {
         if (!userRepository.existsByEmail("ay5480620@gmail.com")) {
-            createUser("Aditya","Yadav","ay5480620@gmail.com", "@mrAditya1999", Role.RoleName.ADMIN, true, false);
+            createUser("Aditya", "Yadav", "ay5480620@gmail.com", "@mrAditya1999", Role.RoleName.ADMIN, true, false);
         }
-
-//        if (!userRepository.existsByEmail("ay5480620@gmail.com")) {
-//            createUser("Honey","Singh","dbadaditya@gmail.com", "@mrAditya1999", Role.RoleName.USER, true, true);
-//        }
     }
 
-    private void createUser(String firstName,String lastName,String email, String password, Role.RoleName role, boolean isVerified, boolean isAdmin) {
+    private void createUser(String firstName, String lastName, String email, String password, Role.RoleName role, boolean isVerified, boolean isAdmin) {
         User user = new User();
         user.setFirstName(firstName);
         user.setLastName(lastName);
