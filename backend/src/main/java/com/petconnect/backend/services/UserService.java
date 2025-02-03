@@ -6,21 +6,29 @@ import com.petconnect.backend.entity.User;
 import com.petconnect.backend.exceptions.ResourceNotFoundException;
 import com.petconnect.backend.repositories.RoleRepository;
 import com.petconnect.backend.repositories.UserRepository;
-import com.petconnect.backend.mappers.UserConverter;
+import com.petconnect.backend.mappers.UserMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 @Service
 public class UserService {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
+    private final UserMapper userMapper;
 
     @Autowired
-    public UserService(UserRepository userRepository, RoleRepository roleRepository) {
+    public UserService(UserRepository userRepository, RoleRepository roleRepository, UserMapper userMapper) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
+        this.userMapper = userMapper;
+    }
+
+    public List<User> getAllUsers() {
+        return userRepository.findAll();
     }
 
     public Optional<User> findByEmail(String email) {
@@ -66,6 +74,8 @@ public class UserService {
         if (userOptional.isEmpty()) {
             throw new ResourceNotFoundException("User not found with email: " + email);
         }
-        return UserConverter.convertToDTO(userOptional.get());
+        return userMapper.toDTO(userOptional.get());
     }
+
+
 }

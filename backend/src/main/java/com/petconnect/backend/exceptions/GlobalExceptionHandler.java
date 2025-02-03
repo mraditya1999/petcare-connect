@@ -1,5 +1,8 @@
 package com.petconnect.backend.exceptions;
 
+import com.petconnect.backend.exceptions.AuthenticationException;
+import com.petconnect.backend.exceptions.ErrorResponse;
+import com.petconnect.backend.exceptions.ResourceNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -22,7 +25,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleResourceNotFoundException(ResourceNotFoundException ex, WebRequest request) {
         logger.error("ResourceNotFoundException: {}", ex.getMessage());
-        ErrorResponse errorResponse = new ErrorResponse(ex.getMessage(), request.getDescription(false));
+        ErrorResponse errorResponse = ErrorResponse.builder()
+                .message(ex.getMessage())
+                .details(request.getDescription(false))
+                .statusCode(HttpStatus.NOT_FOUND.value())
+                .build();
         return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
     }
 
@@ -37,21 +44,33 @@ public class GlobalExceptionHandler {
         });
 
         logger.error("MethodArgumentNotValidException: {}", errors);
-        ErrorResponse errorResponse = new ErrorResponse("Validation Failed", errors.toString());
+        ErrorResponse errorResponse = ErrorResponse.builder()
+                .message("Validation Failed")
+                .details(errors.toString())
+                .statusCode(HttpStatus.BAD_REQUEST.value())
+                .build();
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(AuthenticationException.class)
     public ResponseEntity<ErrorResponse> handleAuthenticationException(AuthenticationException ex, WebRequest request) {
         logger.error("AuthenticationException: {}", ex.getMessage());
-        ErrorResponse errorResponse = new ErrorResponse(ex.getMessage(), request.getDescription(false));
+        ErrorResponse errorResponse = ErrorResponse.builder()
+                .message(ex.getMessage())
+                .details(request.getDescription(false))
+                .statusCode(HttpStatus.UNAUTHORIZED.value())
+                .build();
         return new ResponseEntity<>(errorResponse, HttpStatus.UNAUTHORIZED);
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGlobalException(Exception ex, WebRequest request) {
         logger.error("Exception: {}", ex.getMessage());
-        ErrorResponse errorResponse = new ErrorResponse("An error occurred: " + ex.getMessage(), request.getDescription(false));
+        ErrorResponse errorResponse = ErrorResponse.builder()
+                .message("An error occurred: " + ex.getMessage())
+                .details(request.getDescription(false))
+                .statusCode(HttpStatus.INTERNAL_SERVER_ERROR.value())
+                .build();
         return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }

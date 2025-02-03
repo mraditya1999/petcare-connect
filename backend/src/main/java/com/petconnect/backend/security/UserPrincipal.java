@@ -71,6 +71,9 @@ public class UserPrincipal implements UserDetails {
     }
 
     public Set<String> getRoles() {
-        return user.getRoles().stream().map(Role::getRoleName).collect(Collectors.toSet());
+        return user.getRoles().stream()
+                .map(role -> role.getRoleName().name())
+                .collect(Collectors.toSet());
     }
+
 }
