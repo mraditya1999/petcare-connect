@@ -75,7 +75,7 @@ public class AuthController {
                 String token = authService.generateJwtToken(user);
 
                 List<String> roles = user.getRoles().stream()
-                        .map(role -> role.getAuthority())
+                        .map(Role::getAuthority)
                         .collect(Collectors.toList());
 
                 UserLoginResponse userLoginResponse = new UserLoginResponse(
@@ -98,7 +98,6 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         }
     }
-
 
     @DeleteMapping("/logout")
     public ResponseEntity<ApiResponse<String>> logoutUser(HttpServletResponse response) {
@@ -138,7 +137,7 @@ public class AuthController {
             User user = userOptional.get();
             String resetToken = UUID.randomUUID().toString();
             user.setResetToken(resetToken);
-            userService.updateUser(user);
+            userService.updateResetToken(user);
             emailService.sendResetEmail(user);
             logger.info("Password reset email sent successfully to: {}", email);
             ApiResponse<String> apiResponse = new ApiResponse<>("Password reset email sent successfully", null);
