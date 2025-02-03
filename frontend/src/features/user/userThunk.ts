@@ -25,7 +25,6 @@ export const loginUser = createAsyncThunk<
   async ({ parsedData, rememberMe }: LoginUserParams, { rejectWithValue }) => {
     try {
       const response = await customFetch.post<IUser>("/auth/login", parsedData);
-      console.log(response.data);
       const user = response.data;
       saveUserToStorage(user, rememberMe);
       return user;
