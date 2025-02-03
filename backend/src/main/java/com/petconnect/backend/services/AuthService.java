@@ -126,7 +126,6 @@ public class AuthService implements UserDetailsService {
         claims.put("userId", user.getUserId());
         claims.put("email", user.getEmail());
         claims.put("roles", user.getRoles().stream().map(Role::getAuthority).toArray());
-
         String token = jwtUtil.generateToken(claims, userDetails.getUsername());
         logger.info("JWT token generated for user with email: {}", user.getEmail());
         return token;

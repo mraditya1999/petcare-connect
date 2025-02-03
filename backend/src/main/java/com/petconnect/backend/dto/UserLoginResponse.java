@@ -1,28 +1,20 @@
 package com.petconnect.backend.dto;
 
+import java.util.List;
+
 public class UserLoginResponse {
 
-    private Long userId;
     private String email;
-    private String role;
+    private List<String> roles;
     private String token;
 
     public UserLoginResponse() {
     }
 
-    public UserLoginResponse(Long userId, String email, String role, String token) {
-        this.userId = userId;
+    public UserLoginResponse( String email, List<String> roles, String token) {
         this.email = email;
-        this.role = role;
+        this.roles = roles;
         this.token = token;
-    }
-
-    public Long getUserId() {
-        return userId;
-    }
-
-    public void setUserId(Long userId) {
-        this.userId = userId;
     }
 
     public String getEmail() {
@@ -33,12 +25,12 @@ public class UserLoginResponse {
         this.email = email;
     }
 
-    public String getRole() {
-        return role;
+    public List<String> getRoles() {
+        return roles;
     }
 
-    public void setRole(String role) {
-        this.role = role;
+    public void setRoles(List<String> roles) {
+        this.roles = roles;
     }
 
     public String getToken() {

@@ -1,5 +1,7 @@
 package com.petconnect.backend.dto;
 
+import com.petconnect.backend.entity.Address;
+
 import java.util.Set;
 
 public class UserDTO {
@@ -7,20 +9,18 @@ public class UserDTO {
     private String firstName;
     private String lastName;
     private String email;
-    private Set<RoleDTO> roles;
-    private boolean isVerified;
-    private boolean isTwoFactorEnabled;
+    private AddressDTO address;
 
     // Default constructor
     public UserDTO() {}
 
     // Parameterized constructor
-    public UserDTO(Long userId, String firstName, String lastName, String email, Set<RoleDTO> roles, boolean isVerified, boolean isTwoFactorEnabled) {
+    public UserDTO(Long userId, String firstName, String lastName, String email,  AddressDTO address) {
         this.userId = userId;
         this.firstName = firstName;
         this.lastName = lastName;
         this.email = email;
-        this.roles = roles;
+        this.address = address;
     }
 
     // Getters and setters
@@ -56,11 +56,11 @@ public class UserDTO {
         this.email = email;
     }
 
-    public Set<RoleDTO> getRoles() {
-        return roles;
+    public AddressDTO getAddress() {
+        return address;
     }
 
-    public void setRoles(Set<RoleDTO> roles) {
-        this.roles = roles;
+    public void setAddress(AddressDTO address) {
+        this.address = address;
     }
 }
