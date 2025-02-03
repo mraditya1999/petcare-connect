@@ -35,33 +35,12 @@ public class UserController {
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponse<UserDTO>> getProfile(@AuthenticationPrincipal UserDetails userDetails) {
+    public ResponseEntity<ApiResponse<UserDTO>> getUserProfile(@AuthenticationPrincipal UserDetails userDetails) {
         logger.info("Fetching profile for user: {}", userDetails.getUsername());
         User user = userService.findByEmail(userDetails.getUsername())
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         UserDTO userDTO = userMapper.toDTO(user);
         ApiResponse<UserDTO> apiResponse = new ApiResponse<>("Profile fetched successfully", userDTO);
-        return ResponseEntity.ok(apiResponse);
-    }
-
-    @GetMapping("/users/all")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<List<UserDTO>>> getAllUsers() {
-        logger.info("Fetching all users");
-        List<UserDTO> users = userService.getAllUsers().stream()
-                .map(userMapper::toDTO)
-                .collect(Collectors.toList());
-        ApiResponse<List<UserDTO>> apiResponse = new ApiResponse<>("Users fetched successfully", users);
-        return ResponseEntity.ok(apiResponse);
-    }
-
-    @GetMapping("/users/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<UserDTO>> getUserById(@PathVariable Long id) {
-        User user = userService.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with id " + id));
-        UserDTO userDTO = userMapper.toDTO(user);
-        ApiResponse<UserDTO> apiResponse = new ApiResponse<>("User fetched successfully", userDTO);
         return ResponseEntity.ok(apiResponse);
     }
 
@@ -90,4 +69,27 @@ public class UserController {
         ApiResponse<Void> apiResponse = new ApiResponse<>("User deleted successfully", null);
         return ResponseEntity.ok(apiResponse);
     }
+
+//    @GetMapping("/users/all")
+//    @PreAuthorize("hasRole('ADMIN')")
+//    public ResponseEntity<ApiResponse<List<UserDTO>>> getAllUsers() {
+//        logger.info("Fetching all users");
+//        List<UserDTO> users = userService.getAllUsers().stream()
+//                .map(userMapper::toDTO)
+//                .collect(Collectors.toList());
+//        ApiResponse<List<UserDTO>> apiResponse = new ApiResponse<>("Users fetched successfully", users);
+//        return ResponseEntity.ok(apiResponse);
+//    }
+//
+//    @GetMapping("/users/{id}")
+//    @PreAuthorize("hasRole('ADMIN')")
+//    public ResponseEntity<ApiResponse<UserDTO>> getUserById(@PathVariable Long id) {
+//        User user = userService.findById(id)
+//                .orElseThrow(() -> new ResourceNotFoundException("User not found with id " + id));
+//        UserDTO userDTO = userMapper.toDTO(user);
+//        ApiResponse<UserDTO> apiResponse = new ApiResponse<>("User fetched successfully", userDTO);
+//        return ResponseEntity.ok(apiResponse);
+//    }
+
+
 }

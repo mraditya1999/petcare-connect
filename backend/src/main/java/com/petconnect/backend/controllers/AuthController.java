@@ -19,9 +19,12 @@ import org.springframework.web.bind.annotation.*;
 
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
+
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/auth")
@@ -71,17 +74,15 @@ public class AuthController {
                 User user = authenticatedUser.get();
                 String token = authService.generateJwtToken(user);
 
+                List<String> roles = user.getRoles().stream()
+                        .map(role -> role.getAuthority())
+                        .collect(Collectors.toList());
+
                 UserLoginResponse userLoginResponse = new UserLoginResponse(
-                        user.getUserId(),
                         user.getEmail(),
-                        user.getRoles().stream()
-                                .map(role -> role.getAuthority())
-                                .findFirst()
-                                .orElse("USER"),
+                        roles,
                         token
                 );
-
-
 
                 ApiResponse<UserLoginResponse> response = new ApiResponse<>("User logged in successfully", userLoginResponse);
                 return ResponseEntity.ok(response);
@@ -97,6 +98,7 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         }
     }
+
 
     @DeleteMapping("/logout")
     public ResponseEntity<ApiResponse<String>> logoutUser(HttpServletResponse response) {

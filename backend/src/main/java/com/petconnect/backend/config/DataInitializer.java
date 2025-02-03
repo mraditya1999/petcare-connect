@@ -1,5 +1,6 @@
 package com.petconnect.backend.config;
 
+import com.petconnect.backend.entity.Address;
 import com.petconnect.backend.entity.Role;
 import com.petconnect.backend.entity.User;
 import com.petconnect.backend.repositories.RoleRepository;
@@ -45,19 +46,29 @@ public class DataInitializer implements CommandLineRunner {
 
     private void initializeDefaultUsers() {
         if (!userRepository.existsByEmail("ay5480620@gmail.com")) {
-            createUser("Aditya", "Yadav", "ay5480620@gmail.com", "@mrAditya1999", Role.RoleName.ADMIN, true, false);
+            createUser("Aditya", "Yadav", "ay5480620@gmail.com", "@mrAditya1999", Role.RoleName.ADMIN, true, createAddress());
         }
     }
 
-    private void createUser(String firstName, String lastName, String email, String password, Role.RoleName role, boolean isVerified, boolean isAdmin) {
+    private void createUser(String firstName, String lastName, String email, String password, Role.RoleName role, boolean isVerified, Address address) {
         User user = new User();
         user.setFirstName(firstName);
         user.setLastName(lastName);
         user.setEmail(email);
         user.setPassword(passwordEncoder.encode(password));
         user.setVerified(isVerified);
-        user.setTwoFactorEnabled(false);
         user.setRoles(new HashSet<>(Set.of(roleRepository.findByRoleName(role).orElseThrow(() -> new IllegalArgumentException("Role not found")))));
+        user.setAddress(address);
         userRepository.save(user);
+    }
+
+    private Address createAddress() {
+        Address address = new Address();
+        address.setPincode(123456L);
+        address.setCity("Bengaluru");
+        address.setState("Karnataka");
+        address.setCountry("India");
+        address.setLocality("Electronic City");
+        return address;
     }
 }
