@@ -8,8 +8,8 @@ import { resetPassword } from "@/features/user/userThunk";
 import { LoadingSpinner } from "../ui/LoadingSpinner";
 import { IResetPasswordCredentials } from "@/types/auth-types";
 import { handleError, showToast } from "@/utils/helpers";
-import { resetPasswordFormSchema } from "@/utils/validations";
 import GenericAlert from "../shared/GenericAlert";
+import { resetPasswordFormSchema } from "@/utils/validations";
 
 const ResetPassword = () => {
   const dispatch = useAppDispatch();
@@ -20,6 +20,7 @@ const ResetPassword = () => {
   const [resetPasswordCredentials, setResetPasswordCredentials] =
     useState<IResetPasswordCredentials>({
       password: "",
+      confirmPassword: "",
     });
   const { loading, success } = useAppSelector((state) => state.user);
 
@@ -38,7 +39,16 @@ const ResetPassword = () => {
       );
       const token = query.get("token");
       const email = query.get("email");
-      await dispatch(resetPassword({ parsedData, token, email })).unwrap();
+      await dispatch(
+        resetPassword({
+          parsedData: {
+            password: parsedData.password,
+            confirmPassword: "",
+          },
+          token,
+          email,
+        }),
+      ).unwrap();
       showToast(
         "Password reset successfully. Redirecting to login page shortly...",
       );
@@ -59,7 +69,7 @@ const ResetPassword = () => {
             <h2 className="text-lg font-semibold md:text-2xl lg:text-3xl">
               Reset Password
             </h2>
-            <p className="text-sm">Enter your email address</p>
+            <p className="text-sm">Enter your New Password</p>
           </header>
 
           <form className="flex flex-col gap-5" onSubmit={handleSubmit}>
@@ -74,6 +84,20 @@ const ResetPassword = () => {
                 required
                 name="password"
                 value={resetPasswordCredentials.password}
+                onChange={handleChange}
+              />
+            </div>
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="confirmPassword" className="">
+                Confirm Password
+              </Label>
+              <Input
+                id="confirmPassword"
+                placeholder="Confirm your password"
+                type="password"
+                required
+                name="confirmPassword"
+                value={resetPasswordCredentials.confirmPassword}
                 onChange={handleChange}
               />
             </div>

@@ -29,4 +29,5 @@ export interface IForgetPasswordCredentials {
 
 export interface IResetPasswordCredentials {
   password: string;
+  confirmPassword: string;
 }

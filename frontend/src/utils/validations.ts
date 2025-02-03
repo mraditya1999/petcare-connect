@@ -50,17 +50,32 @@ export const forgetPasswordFormSchema = z.object({
   email: z.string().nonempty("Email is required").email("Invalid email format"),
 });
 
-export const resetPasswordFormSchema = z.object({
-  password: z
-    .string()
-    .nonempty("Password is required")
-    .min(8, { message: "Password must be at least 8 characters" })
-    .regex(
-      /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]+$/,
-      {
-        message:
-          "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character",
-      },
-    )
-    .min(1, "Password is required"),
-});
+export const resetPasswordFormSchema = z
+  .object({
+    password: z
+      .string()
+      .nonempty("Password is required")
+      .min(8, { message: "Password must be at least 8 characters" })
+      .regex(
+        /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]+$/,
+        {
+          message:
+            "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character",
+        },
+      ),
+    confirmPassword: z
+      .string()
+      .nonempty("Confirm Password is required")
+      .min(8, { message: "Confirm Password must be at least 8 characters" })
+      .regex(
+        /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]+$/,
+        {
+          message:
+            "Confirm Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character",
+        },
+      ),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+  });
