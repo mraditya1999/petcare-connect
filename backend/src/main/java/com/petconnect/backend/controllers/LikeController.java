@@ -3,7 +3,6 @@ package com.petconnect.backend.controllers;
 import com.petconnect.backend.dto.ApiResponse;
 import com.petconnect.backend.dto.LikeDTO;
 import com.petconnect.backend.entity.Like;
-import com.petconnect.backend.exceptions.ErrorResponse;
 import com.petconnect.backend.services.LikeService;
 import com.petconnect.backend.mappers.LikeMapper;
 import jakarta.validation.Valid;

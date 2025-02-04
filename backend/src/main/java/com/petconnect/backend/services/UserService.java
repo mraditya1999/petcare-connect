@@ -1,6 +1,7 @@
 package com.petconnect.backend.services;
 
 import com.petconnect.backend.dto.AddressDTO;
+import com.petconnect.backend.dto.UpdatePasswordRequest;
 import com.petconnect.backend.dto.UserDTO;
 import com.petconnect.backend.entity.Address;
 import com.petconnect.backend.entity.User;
@@ -8,7 +9,10 @@ import com.petconnect.backend.exceptions.ResourceNotFoundException;
 import com.petconnect.backend.repositories.RoleRepository;
 import com.petconnect.backend.repositories.UserRepository;
 import com.petconnect.backend.mappers.UserMapper;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -16,12 +20,15 @@ import java.util.Optional;
 @Service
 public class UserService {
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
     private final RoleRepository roleRepository;
     private final UserMapper userMapper;
 
+
     @Autowired
-    public UserService(UserRepository userRepository, RoleRepository roleRepository, UserMapper userMapper) {
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, RoleRepository roleRepository, UserMapper userMapper) {
         this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
         this.roleRepository = roleRepository;
         this.userMapper = userMapper;
     }
@@ -32,9 +39,9 @@ public class UserService {
         return userMapper.toDTO(user);
     }
 
-    public UserDTO updateUserProfile(Long id, UserDTO userDTO) {
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with id " + id));
+    public UserDTO updateUserProfile(String email, UserDTO userDTO) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with email " + email));
 
         // Update user fields if present
         if (userDTO.getFirstName() != null) {
@@ -77,23 +84,37 @@ public class UserService {
         return userMapper.toDTO(updatedUser);
     }
 
-    public void updateResetToken(User user) {
+    public void deleteUserProfile(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with email " + email));
+        userRepository.delete(user);
+    }
+
+    @Transactional
+    public void updatePassword(String email, UpdatePasswordRequest updatePasswordRequest, UserDetails userDetails) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with email " + email));
+
+        if (!passwordEncoder.matches(updatePasswordRequest.getCurrentPassword(), user.getPassword())) {
+            throw new IllegalArgumentException("Current password is incorrect.");
+        }
+
+        user.setPassword(passwordEncoder.encode(updatePasswordRequest.getNewPassword()));
         userRepository.save(user);
     }
 
-    public void deleteUserProfile(Long id) {
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with id " + id));
-        userRepository.delete(user);
+
+    public void updateResetToken(User user) {
+        userRepository.save(user);
     }
 
     public Optional<User> findByEmail(String email) {
         return userRepository.findByEmail(email);
     }
 
-    public Optional<User> findById(Long userId) {
-        return userRepository.findById(userId);
-    }
+//    public Optional<User> findById(Long userId) {
+//        return userRepository.findById(userId);
+//    }
 
 //    public User addRoleToUser(Long userId, Role.RoleName roleName) {
 //        Optional<User> userOptional = userRepository.findById(userId);

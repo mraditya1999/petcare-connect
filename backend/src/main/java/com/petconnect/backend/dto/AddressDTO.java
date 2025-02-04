@@ -8,10 +8,8 @@ public class AddressDTO {
     private String country;
     private String locality;
 
-    // Default constructor
     public AddressDTO() {}
 
-    // Parameterized constructor
     public AddressDTO(Long pincode, String city, String state, String country, String locality) {
         this.pincode = pincode;
         this.city = city;
@@ -20,7 +18,6 @@ public class AddressDTO {
         this.locality = locality;
     }
 
-    // Getters and setters
     public Long getAddressId() {
         return addressId;
     }

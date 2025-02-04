@@ -1,8 +1,5 @@
 package com.petconnect.backend.exceptions;
 
-import com.petconnect.backend.exceptions.AuthenticationException;
-import com.petconnect.backend.exceptions.ErrorResponse;
-import com.petconnect.backend.exceptions.ResourceNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;

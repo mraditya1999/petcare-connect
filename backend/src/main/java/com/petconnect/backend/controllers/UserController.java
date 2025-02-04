@@ -1,10 +1,8 @@
 package com.petconnect.backend.controllers;
 
-import com.petconnect.backend.dto.AddressDTO;
 import com.petconnect.backend.dto.ApiResponse;
+import com.petconnect.backend.dto.UpdatePasswordRequest;
 import com.petconnect.backend.dto.UserDTO;
-import com.petconnect.backend.entity.Address;
-import com.petconnect.backend.entity.User;
 import com.petconnect.backend.exceptions.ResourceNotFoundException;
 import com.petconnect.backend.services.UserService;
 import com.petconnect.backend.mappers.UserMapper;
@@ -14,14 +12,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-import java.util.stream.Collectors;
-
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/profile")
@@ -38,17 +33,17 @@ public class UserController {
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponse<UserDTO>> getUserProfile(@AuthenticationPrincipal UserDetails userDetails) {
+        public ResponseEntity<ApiResponse<UserDTO>> getUserProfile(@AuthenticationPrincipal UserDetails userDetails) {
         logger.info("Fetching profile for user: {}", userDetails.getUsername());
         UserDTO userDTO = userService.getUserProfile(userDetails.getUsername());
         ApiResponse<UserDTO> apiResponse = new ApiResponse<>("Profile fetched successfully", userDTO);
         return ResponseEntity.ok(apiResponse);
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<ApiResponse<UserDTO>> updateUserProfile(@PathVariable Long id, @Valid @RequestBody UserDTO userDTO) {
+    @PutMapping
+    public ResponseEntity<ApiResponse<UserDTO>> updateUserProfile(@AuthenticationPrincipal UserDetails userDetails, @Valid @RequestBody UserDTO userDTO) {
         try {
-            UserDTO updatedUserDTO = userService.updateUserProfile(id, userDTO);
+            UserDTO updatedUserDTO = userService.updateUserProfile(userDetails.getUsername(), userDTO);
             ApiResponse<UserDTO> apiResponse = new ApiResponse<>("Profile updated successfully", updatedUserDTO);
             return ResponseEntity.ok(apiResponse);
         } catch (ResourceNotFoundException e) {
@@ -58,29 +53,47 @@ public class UserController {
             ApiResponse<UserDTO> response = new ApiResponse<>(e.getMessage(), null);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         } catch (Exception e) {
-            // Log detailed error information
             e.printStackTrace();
             ApiResponse<UserDTO> errorResponse = new ApiResponse<>("An error occurred: " + e.getMessage(), null);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         }
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<ApiResponse<Void>> deleteUserProfile(@PathVariable Long id) {
+    @DeleteMapping
+    public ResponseEntity<ApiResponse<Void>> deleteUserProfile(@AuthenticationPrincipal UserDetails userDetails) {
         try {
-            userService.deleteUserProfile(id);
+            userService.deleteUserProfile(userDetails.getUsername());
             ApiResponse<Void> apiResponse = new ApiResponse<>("User deleted successfully", null);
             return ResponseEntity.ok(apiResponse);
         } catch (ResourceNotFoundException e) {
             ApiResponse<Void> response = new ApiResponse<>(e.getMessage(), null);
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
         } catch (Exception e) {
-            // Log detailed error information
             e.printStackTrace();
             ApiResponse<Void> errorResponse = new ApiResponse<>("An error occurred: " + e.getMessage(), null);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         }
     }
+
+    @PutMapping("/update-password")
+    public ResponseEntity<ApiResponse<Void>> updatePassword(@Valid @RequestBody UpdatePasswordRequest updatePasswordRequest, @AuthenticationPrincipal UserDetails userDetails) {
+        try {
+            userService.updatePassword(userDetails.getUsername(), updatePasswordRequest, userDetails);
+            ApiResponse<Void> apiResponse = new ApiResponse<>("Password updated successfully", null);
+            return ResponseEntity.ok(apiResponse);
+        } catch (ResourceNotFoundException e) {
+            ApiResponse<Void> response = new ApiResponse<>(e.getMessage(), null);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+        } catch (IllegalArgumentException e) {
+            ApiResponse<Void> response = new ApiResponse<>(e.getMessage(), null);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        } catch (Exception e) {
+            e.printStackTrace();
+            ApiResponse<Void> errorResponse = new ApiResponse<>("An error occurred: " + e.getMessage(), null);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        }
+    }
+
 
 //    @GetMapping("/users/all")
 //    @PreAuthorize("hasRole('ADMIN')")

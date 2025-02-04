@@ -4,17 +4,14 @@ public class RoleDTO {
     private Integer roleId;
     private String roleName;
 
-    // Default constructor
     public RoleDTO() {
     }
 
-    // Parameterized constructor
     public RoleDTO(Integer roleId, String roleName) {
         this.roleId = roleId;
         this.roleName = roleName;
     }
 
-    // Getters and setters
     public Integer getRoleId() {
         return roleId;
     }

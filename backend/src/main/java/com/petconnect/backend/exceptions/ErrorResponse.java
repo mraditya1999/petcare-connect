@@ -68,12 +68,10 @@ public class ErrorResponse {
     private String details;
     private int statusCode;
 
-    // Default constructor
     public ErrorResponse() {
         this.timestamp = LocalDateTime.now();
     }
 
-    // Parameterized constructor
     public ErrorResponse(String message, String details, int statusCode) {
         this.message = message;
         this.timestamp = LocalDateTime.now();
@@ -81,7 +79,6 @@ public class ErrorResponse {
         this.statusCode = statusCode;
     }
 
-    // Getters and Setters
     public String getMessage() {
         return message;
     }

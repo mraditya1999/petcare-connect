@@ -4,7 +4,6 @@ public class ResetPasswordRequest {
     private String token;
     private String newPassword;
 
-    // Getters and Setters
     public String getToken() {
         return token;
     }
