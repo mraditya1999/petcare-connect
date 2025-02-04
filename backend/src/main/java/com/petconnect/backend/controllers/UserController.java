@@ -40,10 +40,10 @@ public class UserController {
         return ResponseEntity.ok(apiResponse);
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<ApiResponse<UserDTO>> updateUserProfile(@PathVariable Long id, @Valid @RequestBody UserDTO userDTO) {
+    @PutMapping
+    public ResponseEntity<ApiResponse<UserDTO>> updateUserProfile(@AuthenticationPrincipal UserDetails userDetails, @Valid @RequestBody UserDTO userDTO) {
         try {
-            UserDTO updatedUserDTO = userService.updateUserProfile(id, userDTO);
+            UserDTO updatedUserDTO = userService.updateUserProfile(userDetails.getUsername(), userDTO);
             ApiResponse<UserDTO> apiResponse = new ApiResponse<>("Profile updated successfully", updatedUserDTO);
             return ResponseEntity.ok(apiResponse);
         } catch (ResourceNotFoundException e) {
@@ -53,37 +53,32 @@ public class UserController {
             ApiResponse<UserDTO> response = new ApiResponse<>(e.getMessage(), null);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         } catch (Exception e) {
-            // Log detailed error information
             e.printStackTrace();
             ApiResponse<UserDTO> errorResponse = new ApiResponse<>("An error occurred: " + e.getMessage(), null);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         }
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<ApiResponse<Void>> deleteUserProfile(@PathVariable Long id) {
+    @DeleteMapping
+    public ResponseEntity<ApiResponse<Void>> deleteUserProfile(@AuthenticationPrincipal UserDetails userDetails) {
         try {
-            userService.deleteUserProfile(id);
+            userService.deleteUserProfile(userDetails.getUsername());
             ApiResponse<Void> apiResponse = new ApiResponse<>("User deleted successfully", null);
             return ResponseEntity.ok(apiResponse);
         } catch (ResourceNotFoundException e) {
             ApiResponse<Void> response = new ApiResponse<>(e.getMessage(), null);
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
         } catch (Exception e) {
-            // Log detailed error information
             e.printStackTrace();
             ApiResponse<Void> errorResponse = new ApiResponse<>("An error occurred: " + e.getMessage(), null);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         }
     }
 
-    @PutMapping("/{id}/update-password")
-    public ResponseEntity<ApiResponse<Void>> updatePassword(
-            @PathVariable Long id,
-            @Valid @RequestBody UpdatePasswordRequest updatePasswordRequest,
-            @AuthenticationPrincipal UserDetails userDetails) {
+    @PutMapping("/update-password")
+    public ResponseEntity<ApiResponse<Void>> updatePassword(@Valid @RequestBody UpdatePasswordRequest updatePasswordRequest, @AuthenticationPrincipal UserDetails userDetails) {
         try {
-            userService.updatePassword(id, updatePasswordRequest, userDetails);
+            userService.updatePassword(userDetails.getUsername(), updatePasswordRequest, userDetails);
             ApiResponse<Void> apiResponse = new ApiResponse<>("Password updated successfully", null);
             return ResponseEntity.ok(apiResponse);
         } catch (ResourceNotFoundException e) {
@@ -98,6 +93,7 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         }
     }
+
 
 //    @GetMapping("/users/all")
 //    @PreAuthorize("hasRole('ADMIN')")

@@ -39,9 +39,9 @@ public class UserService {
         return userMapper.toDTO(user);
     }
 
-    public UserDTO updateUserProfile(Long id, UserDTO userDTO) {
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with id " + id));
+    public UserDTO updateUserProfile(String email, UserDTO userDTO) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with email " + email));
 
         // Update user fields if present
         if (userDTO.getFirstName() != null) {
@@ -84,38 +84,29 @@ public class UserService {
         return userMapper.toDTO(updatedUser);
     }
 
-    public void updateResetToken(User user) {
-        userRepository.save(user);
-    }
-
-    public void deleteUserProfile(Long id) {
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with id " + id));
+    public void deleteUserProfile(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with email " + email));
         userRepository.delete(user);
     }
 
     @Transactional
-    public void updatePassword(Long userId, UpdatePasswordRequest updatePasswordRequest, UserDetails userDetails) {
-        Optional<User> optionalUser = userRepository.findByEmail(userDetails.getUsername());
+    public void updatePassword(String email, UpdatePasswordRequest updatePasswordRequest, UserDetails userDetails) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with email " + email));
 
-        if (optionalUser.isPresent()) {
-            User user = optionalUser.get();
-
-            if (!user.getUserId().equals(userId)) {
-                throw new IllegalArgumentException("You can only update your own password.");
-            }
-
-            if (!passwordEncoder.matches(updatePasswordRequest.getCurrentPassword(), user.getPassword())) {
-                throw new IllegalArgumentException("Current password is incorrect.");
-            }
-
-            user.setPassword(passwordEncoder.encode(updatePasswordRequest.getNewPassword()));
-            userRepository.save(user);
-        } else {
-            throw new ResourceNotFoundException("User not found with email: " + userDetails.getUsername());
+        if (!passwordEncoder.matches(updatePasswordRequest.getCurrentPassword(), user.getPassword())) {
+            throw new IllegalArgumentException("Current password is incorrect.");
         }
+
+        user.setPassword(passwordEncoder.encode(updatePasswordRequest.getNewPassword()));
+        userRepository.save(user);
     }
 
+
+    public void updateResetToken(User user) {
+        userRepository.save(user);
+    }
 
     public Optional<User> findByEmail(String email) {
         return userRepository.findByEmail(email);
