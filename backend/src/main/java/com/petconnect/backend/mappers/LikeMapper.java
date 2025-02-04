@@ -8,5 +8,7 @@ import org.mapstruct.Mapping;
 @Mapper(componentModel = "spring")
 public interface LikeMapper {
     LikeDTO toDTO(Like like);
+
     Like toEntity(LikeDTO likeDTO);
 }
+

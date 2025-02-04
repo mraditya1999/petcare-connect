@@ -1,26 +1,14 @@
 package com.petconnect.backend.dto;
 
-import jakarta.validation.constraints.NotNull;
 import java.util.Date;
 
 public class LikeDTO {
     private String likeId;
-    @NotNull
     private String forumId;
-    @NotNull
     private String userId;
     private Date createdAt;
 
-    public LikeDTO() {
-    }
-
-    public LikeDTO(String likeId, String forumId, String userId, Date createdAt) {
-        this.likeId = likeId;
-        this.forumId = forumId;
-        this.userId = userId;
-        this.createdAt = createdAt;
-    }
-
+    // Getters and Setters
     public String getLikeId() {
         return likeId;
     }
@@ -53,3 +41,4 @@ public class LikeDTO {
         this.createdAt = createdAt;
     }
 }
+

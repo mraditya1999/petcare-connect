@@ -1,33 +1,22 @@
 package com.petconnect.backend.dto;
 
-import jakarta.validation.constraints.NotBlank;
-import lombok.Data;
+import com.petconnect.backend.dto.LikeDTO;
 
+import java.util.Date;
 import java.util.List;
 
-@Data
 public class ForumDTO {
     private String forumId;
     private String userId;
-    @NotBlank
     private String title;
-    @NotBlank
     private String content;
+    private Date createdAt;
+    private Date updatedAt;
     private List<CommentDTO> comments;
     private List<LikeDTO> likes;
+    private List<String> tags;
 
-    public ForumDTO() {
-    }
-
-    public ForumDTO(String forumId, String userId, String title, String content ,List<CommentDTO> comments, List<LikeDTO> likes) {
-        this.forumId = forumId;
-        this.userId = userId;
-        this.title = title;
-        this.content = content;
-        this.comments = comments;
-        this.likes = likes;
-    }
-
+    // Getters and Setters
     public String getForumId() {
         return forumId;
     }
@@ -60,6 +49,22 @@ public class ForumDTO {
         this.content = content;
     }
 
+    public Date getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(Date createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public Date getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(Date updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+
     public List<CommentDTO> getComments() {
         return comments;
     }
@@ -74,5 +79,13 @@ public class ForumDTO {
 
     public void setLikes(List<LikeDTO> likes) {
         this.likes = likes;
+    }
+
+    public List<String> getTags() {
+        return tags;
+    }
+
+    public void setTags(List<String> tags) {
+        this.tags = tags;
     }
 }
