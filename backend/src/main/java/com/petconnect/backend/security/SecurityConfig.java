@@ -99,7 +99,7 @@ public class SecurityConfig {
 
     private static final String[] AUTH_WHITELIST = {
             "/auth/**",
-            "/forums/**",
+            "/forums",
             "/appointments/**",
     };
 
@@ -109,9 +109,10 @@ public class SecurityConfig {
                 .authorizeHttpRequests((requests) -> requests
                         .requestMatchers(AUTH_WHITELIST).permitAll()
                         .requestMatchers("/profile/**").authenticated()
+                        .requestMatchers("/forums/**").authenticated()
                         .requestMatchers("/comments/**").authenticated()
                         .requestMatchers("/likes/**").authenticated()
-                        .requestMatchers("/profile/users/**", "/profile/users/role/**").hasRole("ADMIN")
+//                        .requestMatchers("/profile/users/**", "/profile/users/role/**").hasRole("ADMIN")
                         .anyRequest().authenticated())
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

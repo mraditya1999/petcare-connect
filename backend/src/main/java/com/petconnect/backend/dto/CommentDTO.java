@@ -1,31 +1,15 @@
 package com.petconnect.backend.dto;
 
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-
 import java.util.Date;
 
 public class CommentDTO {
     private String commentId;
-    @NotNull
     private String forumId;
-    @NotNull
     private String userId;
-    @NotBlank
     private String text;
     private Date createdAt;
 
-    public CommentDTO() {
-    }
-
-    public CommentDTO(String commentId, String forumId, String userId, String text, Date createdAt) {
-        this.commentId = commentId;
-        this.forumId = forumId;
-        this.userId = userId;
-        this.text = text;
-        this.createdAt = createdAt;
-    }
-
+    // Getters and Setters
     public String getCommentId() {
         return commentId;
     }
