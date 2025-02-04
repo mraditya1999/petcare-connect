@@ -11,10 +11,8 @@ public class UserDTO {
     private String email;
     private AddressDTO address;
 
-    // Default constructor
     public UserDTO() {}
 
-    // Parameterized constructor
     public UserDTO(Long userId, String firstName, String lastName, String email,  AddressDTO address) {
         this.userId = userId;
         this.firstName = firstName;
@@ -23,7 +21,6 @@ public class UserDTO {
         this.address = address;
     }
 
-    // Getters and setters
     public Long getUserId() {
         return userId;
     }

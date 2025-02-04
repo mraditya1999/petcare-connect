@@ -1,7 +1,6 @@
 package com.petconnect.backend.dto;
 
 import jakarta.validation.constraints.NotNull;
-
 import java.util.Date;
 
 public class LikeDTO {

@@ -1,6 +1,7 @@
 package com.petconnect.backend.services;
 
 import com.petconnect.backend.dto.AddressDTO;
+import com.petconnect.backend.dto.UpdatePasswordRequest;
 import com.petconnect.backend.dto.UserDTO;
 import com.petconnect.backend.entity.Address;
 import com.petconnect.backend.entity.User;
@@ -8,7 +9,10 @@ import com.petconnect.backend.exceptions.ResourceNotFoundException;
 import com.petconnect.backend.repositories.RoleRepository;
 import com.petconnect.backend.repositories.UserRepository;
 import com.petconnect.backend.mappers.UserMapper;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -16,12 +20,15 @@ import java.util.Optional;
 @Service
 public class UserService {
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
     private final RoleRepository roleRepository;
     private final UserMapper userMapper;
 
+
     @Autowired
-    public UserService(UserRepository userRepository, RoleRepository roleRepository, UserMapper userMapper) {
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, RoleRepository roleRepository, UserMapper userMapper) {
         this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
         this.roleRepository = roleRepository;
         this.userMapper = userMapper;
     }
@@ -87,13 +94,36 @@ public class UserService {
         userRepository.delete(user);
     }
 
+    @Transactional
+    public void updatePassword(Long userId, UpdatePasswordRequest updatePasswordRequest, UserDetails userDetails) {
+        Optional<User> optionalUser = userRepository.findByEmail(userDetails.getUsername());
+
+        if (optionalUser.isPresent()) {
+            User user = optionalUser.get();
+
+            if (!user.getUserId().equals(userId)) {
+                throw new IllegalArgumentException("You can only update your own password.");
+            }
+
+            if (!passwordEncoder.matches(updatePasswordRequest.getCurrentPassword(), user.getPassword())) {
+                throw new IllegalArgumentException("Current password is incorrect.");
+            }
+
+            user.setPassword(passwordEncoder.encode(updatePasswordRequest.getNewPassword()));
+            userRepository.save(user);
+        } else {
+            throw new ResourceNotFoundException("User not found with email: " + userDetails.getUsername());
+        }
+    }
+
+
     public Optional<User> findByEmail(String email) {
         return userRepository.findByEmail(email);
     }
 
-    public Optional<User> findById(Long userId) {
-        return userRepository.findById(userId);
-    }
+//    public Optional<User> findById(Long userId) {
+//        return userRepository.findById(userId);
+//    }
 
 //    public User addRoleToUser(Long userId, Role.RoleName roleName) {
 //        Optional<User> userOptional = userRepository.findById(userId);

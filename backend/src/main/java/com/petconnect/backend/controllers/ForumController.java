@@ -3,7 +3,6 @@
     import com.petconnect.backend.dto.ApiResponse;
     import com.petconnect.backend.dto.ForumDTO;
     import com.petconnect.backend.entity.Forum;
-    import com.petconnect.backend.exceptions.ErrorResponse;
     import com.petconnect.backend.services.ForumService;
     import com.petconnect.backend.mappers.ForumMapper;
     import jakarta.validation.Valid;

@@ -29,7 +29,6 @@ const ForgetPassword = () => {
       const parsedData = forgetPasswordFormSchema.parse(
         forgetPasswordCredentials,
       );
-      console.log(parsedData);
       await dispatch(forgetPassword({ parsedData })).unwrap();
       showToast("Please check your email to reset your password.");
     } catch (error) {

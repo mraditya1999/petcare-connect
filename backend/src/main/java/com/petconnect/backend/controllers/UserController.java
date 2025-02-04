@@ -1,10 +1,8 @@
 package com.petconnect.backend.controllers;
 
-import com.petconnect.backend.dto.AddressDTO;
 import com.petconnect.backend.dto.ApiResponse;
+import com.petconnect.backend.dto.UpdatePasswordRequest;
 import com.petconnect.backend.dto.UserDTO;
-import com.petconnect.backend.entity.Address;
-import com.petconnect.backend.entity.User;
 import com.petconnect.backend.exceptions.ResourceNotFoundException;
 import com.petconnect.backend.services.UserService;
 import com.petconnect.backend.mappers.UserMapper;
@@ -14,14 +12,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-import java.util.stream.Collectors;
-
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/profile")
@@ -38,7 +33,7 @@ public class UserController {
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponse<UserDTO>> getUserProfile(@AuthenticationPrincipal UserDetails userDetails) {
+        public ResponseEntity<ApiResponse<UserDTO>> getUserProfile(@AuthenticationPrincipal UserDetails userDetails) {
         logger.info("Fetching profile for user: {}", userDetails.getUsername());
         UserDTO userDTO = userService.getUserProfile(userDetails.getUsername());
         ApiResponse<UserDTO> apiResponse = new ApiResponse<>("Profile fetched successfully", userDTO);
@@ -76,6 +71,28 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
         } catch (Exception e) {
             // Log detailed error information
+            e.printStackTrace();
+            ApiResponse<Void> errorResponse = new ApiResponse<>("An error occurred: " + e.getMessage(), null);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        }
+    }
+
+    @PutMapping("/{id}/update-password")
+    public ResponseEntity<ApiResponse<Void>> updatePassword(
+            @PathVariable Long id,
+            @Valid @RequestBody UpdatePasswordRequest updatePasswordRequest,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        try {
+            userService.updatePassword(id, updatePasswordRequest, userDetails);
+            ApiResponse<Void> apiResponse = new ApiResponse<>("Password updated successfully", null);
+            return ResponseEntity.ok(apiResponse);
+        } catch (ResourceNotFoundException e) {
+            ApiResponse<Void> response = new ApiResponse<>(e.getMessage(), null);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+        } catch (IllegalArgumentException e) {
+            ApiResponse<Void> response = new ApiResponse<>(e.getMessage(), null);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        } catch (Exception e) {
             e.printStackTrace();
             ApiResponse<Void> errorResponse = new ApiResponse<>("An error occurred: " + e.getMessage(), null);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);

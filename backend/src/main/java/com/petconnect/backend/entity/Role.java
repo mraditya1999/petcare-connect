@@ -2,7 +2,6 @@ package com.petconnect.backend.entity;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
-import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
 
 import java.util.HashSet;
