@@ -15,6 +15,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.util.Optional;
 
 @Service
@@ -23,14 +24,16 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final RoleRepository roleRepository;
     private final UserMapper userMapper;
+    private final UploadService uploadService;
 
 
     @Autowired
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, RoleRepository roleRepository, UserMapper userMapper) {
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, RoleRepository roleRepository, UserMapper userMapper, UploadService uploadService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.roleRepository = roleRepository;
         this.userMapper = userMapper;
+        this.uploadService = uploadService;
     }
 
     public UserDTO getUserProfile(String email) {
@@ -39,9 +42,7 @@ public class UserService {
         return userMapper.toDTO(user);
     }
 
-    public UserDTO updateUserProfile(String email, UserDTO userDTO) {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with email " + email));
+    public UserDTO updateUserProfile(User user, UserDTO userDTO) {
 
         // Update user fields if present
         if (userDTO.getFirstName() != null) {
@@ -52,6 +53,15 @@ public class UserService {
         }
         if (userDTO.getEmail() != null) {
             user.setEmail(userDTO.getEmail());
+        }
+        if (userDTO.getAvatarUrl() != null) {
+            user.setAvatarUrl(userDTO.getAvatarUrl());
+        }
+        if (userDTO.getAvatarPublicId() != null) {
+            user.setAvatarPublicId(userDTO.getAvatarPublicId());
+        }
+        if (userDTO.getMobileNumber() != null) {
+            user.setMobileNumber(userDTO.getMobileNumber());
         }
 
         // Update address fields if present
@@ -87,6 +97,14 @@ public class UserService {
     public void deleteUserProfile(String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with email " + email));
+        // Delete the profile image from Cloudinary
+        if (user.getAvatarPublicId() != null) {
+            try {
+                uploadService.deleteImage(user.getAvatarPublicId());
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
         userRepository.delete(user);
     }
 
@@ -110,6 +128,11 @@ public class UserService {
 
     public Optional<User> findByEmail(String email) {
         return userRepository.findByEmail(email);
+    }
+
+    public User findUserByEmail(String email) {
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with email " + email));
     }
 
 //    public Optional<User> findById(Long userId) {
