@@ -45,11 +45,16 @@ public class User implements UserDetails {
     @JsonManagedReference
     private Address address; // New address field
 
-    @Column
-    private String oauthProvider; // OAuth provider name (e.g., "google", "facebook")
+    @Column(length = 255) // Adjust length if needed
+    private String avatarUrl; // URL of the avatar image stored in Cloudinary
 
-    @Column
-    private String oauthProviderId; // ID received from the OAuth provider (e.g., Google ID)
+    @Column(length = 255) // Adjust length if needed
+    private String avatarPublicId; // Public ID of the avatar image in Cloudinary
+
+//    @NotEmpty(message = "Mobile number is required")
+    @Size(max = 10, message = "Mobile number cannot exceed 10 characters")
+    @Column(length = 10)
+    private String mobileNumber;
 
     @NotEmpty(message = "Password is required")
     @Size(min = 6, message = "Password must have at least 6 characters")
@@ -72,6 +77,12 @@ public class User implements UserDetails {
 
     @Column(nullable = false)
     private boolean isVerified = false; // Tracks whether the user's email is verified
+
+    @Column
+    private String oauthProvider; // OAuth provider name (e.g., "google", "facebook")
+
+    @Column
+    private String oauthProviderId; // ID received from the OAuth provider (e.g., Google ID)
 
     @Column(nullable = false)
     private boolean isTwoFactorEnabled; // Tracks whether user enabled 2FA
@@ -123,17 +134,23 @@ public class User implements UserDetails {
     public User() {
     }
 
-    public User(Long userId, String firstName, String lastName, String email, Address address, String oauthProvider, String oauthProviderId, String password, String verificationToken, String resetToken, Set<Role> roles, boolean isVerified, boolean isTwoFactorEnabled, Date createdAt, Date updatedAt) {
+    public User(Long userId, String firstName, String lastName, String email, Address address, String avatarUrl, String avatarPublicId, String mobileNumber, String password, String verificationToken, String resetToken, Set<Role> roles, boolean isVerified, String oauthProvider, String oauthProviderId, boolean isTwoFactorEnabled, Date createdAt, Date updatedAt) {
         this.userId = userId;
         this.firstName = firstName;
         this.lastName = lastName;
         this.email = email;
         this.address = address;
+        this.avatarUrl = avatarUrl;
+        this.avatarPublicId = avatarPublicId;
+        this.mobileNumber = mobileNumber;
         this.password = password;
         this.verificationToken = verificationToken;
         this.resetToken = resetToken;
         this.roles = roles;
         this.isVerified = isVerified;
+        this.oauthProvider = oauthProvider;
+        this.oauthProviderId = oauthProviderId;
+        this.isTwoFactorEnabled = isTwoFactorEnabled;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
     }
@@ -144,6 +161,30 @@ public class User implements UserDetails {
 
     public void setAddress(Address address) {
         this.address = address;
+    }
+
+    public String getAvatarUrl() {
+        return avatarUrl;
+    }
+
+    public void setAvatarUrl(String avatarUrl) {
+        this.avatarUrl = avatarUrl;
+    }
+
+    public String getAvatarPublicId() {
+        return avatarPublicId;
+    }
+
+    public void setAvatarPublicId(String avatarPublicId) {
+        this.avatarPublicId = avatarPublicId;
+    }
+
+    public String getMobileNumber() {
+        return mobileNumber;
+    }
+
+    public void setMobileNumber(String mobileNumber) {
+        this.mobileNumber = mobileNumber;
     }
 
     // Custom methods for role handling and verification status

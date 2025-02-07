@@ -3,7 +3,9 @@ package com.petconnect.backend.controllers;
 import com.petconnect.backend.dto.ApiResponse;
 import com.petconnect.backend.dto.UpdatePasswordRequest;
 import com.petconnect.backend.dto.UserDTO;
+import com.petconnect.backend.entity.User;
 import com.petconnect.backend.exceptions.ResourceNotFoundException;
+import com.petconnect.backend.services.UploadService;
 import com.petconnect.backend.services.UserService;
 import com.petconnect.backend.mappers.UserMapper;
 import jakarta.validation.Valid;
@@ -11,11 +13,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.util.Map;
 import java.util.Optional;
 
 @RestController
@@ -24,12 +29,14 @@ public class UserController {
 
     private final UserService userService;
     private final UserMapper userMapper;
+    private final UploadService uploadService;
     private static final Logger logger = LoggerFactory.getLogger(UserController.class);
 
     @Autowired
-    public UserController(UserService userService, UserMapper userMapper) {
+    public UserController(UserService userService, UserMapper userMapper, UploadService uploadService) {
         this.userService = userService;
         this.userMapper = userMapper;
+        this.uploadService = uploadService;
     }
 
     @GetMapping
@@ -40,10 +47,59 @@ public class UserController {
         return ResponseEntity.ok(apiResponse);
     }
 
-    @PutMapping
-    public ResponseEntity<ApiResponse<UserDTO>> updateUserProfile(@AuthenticationPrincipal UserDetails userDetails, @Valid @RequestBody UserDTO userDTO) {
+//    @PutMapping(consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
+//    public ResponseEntity<ApiResponse<UserDTO>> updateUserProfile(
+//            @AuthenticationPrincipal UserDetails userDetails,
+//            @RequestPart("user") @Valid UserDTO userDTO,
+//            @RequestPart(value = "profile-image", required = false) MultipartFile profileImage
+//    ) {
+//        User currentUser = userService.findUserByEmail(userDetails.getUsername());
+//        try {
+//            if (profileImage != null) {
+//                Map<String, Object> uploadResult;
+//                if (userDTO.getAvatarPublicId() != null && !userDTO.getAvatarPublicId().isEmpty()) {
+//                    uploadResult = uploadService.updateImage(userDTO.getAvatarPublicId(), profileImage);
+//                } else {
+//                    uploadResult = uploadService.uploadImage(profileImage);
+//                }
+//                userDTO.setAvatarUrl((String) uploadResult.get("url"));
+//                userDTO.setAvatarPublicId((String) uploadResult.get("public_id"));
+//            }
+//            UserDTO updatedUserDTO = userService.updateUserProfile(userDetails.getUsername(), userDTO);
+//            ApiResponse<UserDTO> apiResponse = new ApiResponse<>("Profile updated successfully", updatedUserDTO);
+//            return ResponseEntity.ok(apiResponse);
+//        } catch (ResourceNotFoundException e) {
+//            ApiResponse<UserDTO> response = new ApiResponse<>(e.getMessage(), null);
+//            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+//        } catch (IllegalArgumentException e) {
+//            ApiResponse<UserDTO> response = new ApiResponse<>(e.getMessage(), null);
+//            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//            ApiResponse<UserDTO> errorResponse = new ApiResponse<>("An error occurred: " + e.getMessage(), null);
+//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+//        }
+//    }
+
+    @PutMapping(consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
+    public ResponseEntity<ApiResponse<UserDTO>> updateUserProfile(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestPart("user") @Valid UserDTO userDTO,
+            @RequestPart(value = "profile-image", required = false) MultipartFile profileImage
+    ) {
         try {
-            UserDTO updatedUserDTO = userService.updateUserProfile(userDetails.getUsername(), userDTO);
+            User currentUser = userService.findUserByEmail(userDetails.getUsername());
+            if (profileImage != null) {
+                Map<String, Object> uploadResult;
+                if (currentUser.getAvatarPublicId() != null && !currentUser.getAvatarPublicId().isEmpty()) {
+                    uploadResult = uploadService.updateImage(currentUser.getAvatarPublicId(), profileImage);
+                } else {
+                    uploadResult = uploadService.uploadImage(profileImage);
+                }
+                userDTO.setAvatarUrl((String) uploadResult.get("url"));
+                userDTO.setAvatarPublicId((String) uploadResult.get("public_id"));
+            }
+            UserDTO updatedUserDTO = userService.updateUserProfile(currentUser, userDTO);
             ApiResponse<UserDTO> apiResponse = new ApiResponse<>("Profile updated successfully", updatedUserDTO);
             return ResponseEntity.ok(apiResponse);
         } catch (ResourceNotFoundException e) {
@@ -58,6 +114,8 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         }
     }
+
+
 
     @DeleteMapping
     public ResponseEntity<ApiResponse<Void>> deleteUserProfile(@AuthenticationPrincipal UserDetails userDetails) {

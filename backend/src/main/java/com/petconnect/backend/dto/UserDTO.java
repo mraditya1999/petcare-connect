@@ -10,15 +10,21 @@ public class UserDTO {
     private String lastName;
     private String email;
     private AddressDTO address;
+    private String avatarUrl;
+    private String avatarPublicId;
+    private String mobileNumber;
 
     public UserDTO() {}
 
-    public UserDTO(Long userId, String firstName, String lastName, String email,  AddressDTO address) {
+    public UserDTO(Long userId, String firstName, String lastName, String email, AddressDTO address, String avatarUrl, String avatarPublicId, String mobileNumber) {
         this.userId = userId;
         this.firstName = firstName;
         this.lastName = lastName;
         this.email = email;
         this.address = address;
+        this.avatarUrl = avatarUrl;
+        this.avatarPublicId = avatarPublicId;
+        this.mobileNumber = mobileNumber;
     }
 
     public Long getUserId() {
@@ -59,5 +65,29 @@ public class UserDTO {
 
     public void setAddress(AddressDTO address) {
         this.address = address;
+    }
+
+    public String getAvatarUrl() {
+        return avatarUrl;
+    }
+
+    public void setAvatarUrl(String avatarUrl) {
+        this.avatarUrl = avatarUrl;
+    }
+
+    public String getAvatarPublicId() {
+        return avatarPublicId;
+    }
+
+    public void setAvatarPublicId(String avatarPublicId) {
+        this.avatarPublicId = avatarPublicId;
+    }
+
+    public String getMobileNumber() {
+        return mobileNumber;
+    }
+
+    public void setMobileNumber(String mobileNumber) {
+        this.mobileNumber = mobileNumber;
     }
 }
