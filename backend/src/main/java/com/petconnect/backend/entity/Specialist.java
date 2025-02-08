@@ -9,24 +9,42 @@ import lombok.Setter;
 /**
  * Entity representing a Specialist.
  */
-@Entity
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-public class Specialist extends BaseEntity {
+@Entity@Table(name = "specialists")
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long specialistId;
-
+public class Specialist extends User  {
     private String about;
+    private String speciality;
 
-    @ManyToOne
-    @JoinColumn(name = "userId", nullable = false)
-    private User user;
+    public Specialist() {
+    }
 
-    @ManyToOne
-    @JoinColumn(name = "specialityId", nullable = false)
-    private Speciality speciality;
+    public Specialist(Long specialistId, String about, User user, String speciality) {
+        this.about = about;
+        this.speciality = speciality;
+    }
+
+    public String getAbout() {
+        return about;
+    }
+
+    public void setAbout(String about) {
+        this.about = about;
+    }
+
+
+    public String getSpeciality() {
+        return speciality;
+    }
+
+    public void setSpeciality(String speciality) {
+        this.speciality = speciality;
+    }
+
+    @Override
+    public String toString() {
+        return "Specialist{" +
+                ", about='" + about + '\'' +
+                ", speciality='" + speciality + '\'' +
+                '}';
+    }
 }
