@@ -41,6 +41,7 @@ const router = createBrowserRouter(
 
       {/* Public Route */}
       <Route element={<LayoutPage />}>
+        {/* <Route path={ROUTES.PROFILE} element={<ProfilePage />} /> */}
         <Route index path={ROUTES.HOME} element={<HomePage />} />
         <Route path={ROUTES.ABOUT} element={<AboutPage />} />
         <Route path={ROUTES.FORUM} element={<ForumPage />} />

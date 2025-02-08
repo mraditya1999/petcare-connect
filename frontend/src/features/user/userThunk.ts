@@ -1,135 +1,113 @@
+// import { createAsyncThunk } from "@reduxjs/toolkit";
+// import { IProfile } from "@/types/profile-types";
+// import { IDeleteProfileResponse } from "@/types/profile-thunk-types";
+// import { customFetch } from "@/utils/customFetch";
+// import { handleError } from "@/utils/helpers";
+
+// export const fetchProfile = createAsyncThunk<
+//   IProfile,
+//   void,
+//   { rejectValue: string }
+// >("profile/fetchProfile", async (_, { rejectWithValue }) => {
+//   try {
+//     const response = await customFetch.get<IProfile>("/profile");
+//     return response.data;
+//   } catch (error) {
+//     return rejectWithValue(handleError(error));
+//   }
+// });
+
+// export const updateProfile = createAsyncThunk<
+//   IProfile,
+//   IProfile,
+//   { rejectValue: string }
+// >("profile/updateProfile", async (data: IProfile, { rejectWithValue }) => {
+//   try {
+//     const response = await customFetch.put<IProfile>("/profile", data);
+//     return response.data;
+//   } catch (error) {
+//     return rejectWithValue(handleError(error));
+//   }
+// });
+
+// export const deleteProfile = createAsyncThunk<
+//   IDeleteProfileResponse,
+//   void,
+//   { rejectValue: string }
+// >("profile/deleteProfile", async (_, { rejectWithValue }) => {
+//   try {
+//     const response =
+//       await customFetch.delete<IDeleteProfileResponse>("/profile");
+//     return response.data;
+//   } catch (error) {
+//     return rejectWithValue(handleError(error));
+//   }
+// });
 import { createAsyncThunk } from "@reduxjs/toolkit";
-import { IUser } from "@/types/auth-types";
+import { IProfile } from "@/types/profile-types";
 import { customFetch } from "@/utils/customFetch";
-import { handleError, saveUserToStorage } from "@/utils/helpers";
-import { ROUTES } from "@/utils/constants";
+import { handleError } from "@/utils/helpers";
 import {
-  ForgetPasswordParams,
-  ForgetPasswordResponse,
-  LoginUserParams,
-  LogoutUserResponse,
-  RegisterUserParams,
-  RegisterUserResponse,
-  ResetPasswordParams,
-  ResetPasswordResponse,
-  VerifyEmailParams,
-  VerifyEmailResponse,
-} from "@/types/thunk-types";
+  IDeleteProfileResponse,
+  IUpdatePasswordRequest,
+  IUpdatePasswordResponse,
+  // IUpdateProfile,
+} from "@/types/profile-thunk-types";
 
-export const loginUser = createAsyncThunk<
-  IUser,
-  LoginUserParams,
-  { rejectValue: string }
->(
-  "user/loginUser",
-  async ({ parsedData, rememberMe }: LoginUserParams, { rejectWithValue }) => {
-    try {
-      const response = await customFetch.post<IUser>("/auth/login", parsedData);
-      const user = response.data;
-      saveUserToStorage(user, rememberMe);
-      return user;
-    } catch (error) {
-      console.log(error);
-      return rejectWithValue(handleError(error));
-    }
-  },
-);
-
-export const registerUser = createAsyncThunk<
-  RegisterUserResponse, // Return type
-  RegisterUserParams, // First parameter type
-  { rejectValue: string } // Extra argument type
->(
-  "user/registerUser",
-  async ({ parsedData }: RegisterUserParams, { rejectWithValue }) => {
-    try {
-      const response = await customFetch.post<RegisterUserResponse>(
-        "/auth/register",
-        parsedData,
-      );
-      return response.data;
-    } catch (error) {
-      return rejectWithValue(handleError(error));
-    }
-  },
-);
-
-export const logoutUser = createAsyncThunk<
-  LogoutUserResponse,
+export const fetchProfile = createAsyncThunk<
+  IProfile,
   void,
   { rejectValue: string }
->("user/logoutUser", async (_, { rejectWithValue }) => {
+>("user/fetchProfile", async (_, { rejectWithValue }) => {
   try {
-    const response = await customFetch.delete("/auth/logout");
-    localStorage.removeItem("user");
-    sessionStorage.removeItem("user");
+    const response = await customFetch.get("/profile");
+    const data: IProfile = response.data.data;
+    return data;
+  } catch (error) {
+    return rejectWithValue(handleError(error));
+  }
+});
+
+export const updateProfile = createAsyncThunk<
+  IProfile,
+  FormData,
+  { rejectValue: string }
+>("user/updateProfile", async (formData: FormData, { rejectWithValue }) => {
+  try {
+    const response = await customFetch.put<IProfile>("/profile", formData);
+    console.log(response);
     return response.data;
   } catch (error) {
     return rejectWithValue(handleError(error));
   }
 });
 
-export const verifyEmail = createAsyncThunk<
-  VerifyEmailResponse,
-  VerifyEmailParams,
+export const deleteProfile = createAsyncThunk<
+  IDeleteProfileResponse,
+  void,
   { rejectValue: string }
->(
-  "user/verifyEmail",
-  async ({ token, email, navigate }, { rejectWithValue }) => {
-    try {
-      const response = await customFetch.post("/auth/verify-email", {
-        verificationToken: token,
-        email: email,
-      });
-      setTimeout(() => {
-        navigate(ROUTES.LOGIN);
-      }, 3000);
-      return response.data;
-    } catch (error) {
-      return rejectWithValue(handleError(error));
-    }
-  },
-);
+>("user/deleteProfile", async (_, { rejectWithValue }) => {
+  try {
+    const response =
+      await customFetch.delete<IDeleteProfileResponse>("/profile");
+    return response.data;
+  } catch (error) {
+    return rejectWithValue(handleError(error));
+  }
+});
 
-export const forgetPassword = createAsyncThunk<
-  ForgetPasswordResponse,
-  ForgetPasswordParams,
+export const updatePassword = createAsyncThunk<
+  IUpdatePasswordResponse,
+  IUpdatePasswordRequest,
   { rejectValue: string }
->(
-  "user/forgetPassword",
-  async ({ parsedData }: ForgetPasswordParams, { rejectWithValue }) => {
-    try {
-      const response = await customFetch.post(
-        "/auth/forget-password",
-        parsedData,
-      );
-      return response.data;
-    } catch (error) {
-      return rejectWithValue(handleError(error));
-    }
-  },
-);
-
-export const resetPassword = createAsyncThunk<
-  ResetPasswordResponse,
-  ResetPasswordParams,
-  { rejectValue: string }
->(
-  "user/resetPassword",
-  async (
-    { parsedData, token, email }: ResetPasswordParams,
-    { rejectWithValue },
-  ) => {
-    try {
-      const response = await customFetch.post("/auth/reset-password", {
-        newPassword: parsedData.password,
-        token,
-        email,
-      });
-
-      return response.data;
-    } catch (error) {
-      return rejectWithValue(handleError(error));
-    }
-  },
-);
+>("user/updatePassword", async (updatePasswordRequest, { rejectWithValue }) => {
+  try {
+    const response = await customFetch.put<IUpdatePasswordResponse>(
+      "/profile/update-password",
+      updatePasswordRequest,
+    );
+    return response.data;
+  } catch (error) {
+    return rejectWithValue(handleError(error));
+  }
+});
