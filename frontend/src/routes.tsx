@@ -12,6 +12,7 @@ import {
   AuthLayoutPage,
   ErrorPage,
   ProfilePage,
+  SingleForumPage,
 } from "@/pages";
 import { ROUTES } from "@/utils/constants";
 import {
@@ -45,6 +46,10 @@ const router = createBrowserRouter(
         <Route index path={ROUTES.HOME} element={<HomePage />} />
         <Route path={ROUTES.ABOUT} element={<AboutPage />} />
         <Route path={ROUTES.FORUM} element={<ForumPage />} />
+        <Route
+          path={`${ROUTES.FORUM}/:forumId`}
+          element={<SingleForumPage />}
+        />
         <Route path={ROUTES.SERVICE} element={<ServicePage />} />
       </Route>
 

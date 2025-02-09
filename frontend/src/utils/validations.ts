@@ -103,7 +103,6 @@ export const profileFormSchema = z.object({
   locality: z.string().optional(),
 });
 
-
 export const updatePasswordSchema = z
   .object({
     currentPassword: z.string().min(1, "Current password is required"),

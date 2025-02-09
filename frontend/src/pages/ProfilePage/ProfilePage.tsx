@@ -1,4 +1,3 @@
-
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
   PetInfo,
@@ -13,16 +12,21 @@ export default function ProfilePage() {
     <section className="section-width mx-auto flex min-h-screen w-full rounded-lg p-6">
       <Tabs defaultValue="account" className="mt-20 w-full">
         <TabsList className="flex space-x-4 border-b">
-          <TabsTrigger
-            value="account"
-            className="border-b-2 border-red-500 pb-2"
-          >
-            Account Settings
-          </TabsTrigger>
-          <TabsTrigger value="petInfo">Pet Info</TabsTrigger>
-          <TabsTrigger value="appointments">Appointments</TabsTrigger>
-          <TabsTrigger value="loginSecurity">Login & Security</TabsTrigger>
-          <TabsTrigger value="forums">Forums</TabsTrigger>
+          {[
+            { value: "account", label: "Account Settings" },
+            { value: "petInfo", label: "Pet Info" },
+            { value: "appointments", label: "Appointments" },
+            { value: "loginSecurity", label: "Login & Security" },
+            { value: "forums", label: "Forums" },
+          ].map((tab) => (
+            <TabsTrigger
+              key={tab.value}
+              value={tab.value}
+              className="pb-2 text-gray-600 transition-all duration-200 data-[state=active]:border-b-2 data-[state=active]:border-red-500 data-[state=active]:text-black"
+            >
+              {tab.label}
+            </TabsTrigger>
+          ))}
         </TabsList>
 
         <TabsContent value="account">
