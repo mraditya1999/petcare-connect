@@ -1,6 +1,7 @@
 package com.petconnect.backend.entity;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -39,9 +40,13 @@ public class Appointment {
 //    @ManyToOne
 //    @JoinColumn(name = "petOwnerId", nullable = false)
 //    private User petOwner;
-@ManyToOne
-@JoinColumn(name = "petOwnerId", referencedColumnName = "userId", nullable = false)
-@JsonBackReference
+//@ManyToOne
+//@JoinColumn(name = "petOwnerId", referencedColumnName = "userId", nullable = false)
+//@JsonBackReference
+//private User petOwner;
+@ManyToOne(fetch = FetchType.LAZY)
+@JoinColumn(name = "user_id", referencedColumnName = "userId", nullable = false)
+@JsonIgnore// <-- Use the same reference name as in User.java
 private User petOwner;
 
 

@@ -1,6 +1,7 @@
 package com.petconnect.backend.entity;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
@@ -37,17 +38,13 @@ public class Pet extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", referencedColumnName = "userId", nullable = false)
-    @JsonIgnoreProperties("pets") // <-- Use the same reference name as in User.java
+    @JsonIgnore// <-- Use the same reference name as in User.java
     private User petOwner;
 
 
-//    @ManyToOne
-//    @JoinColumn(name = "speciesId", nullable = false)
-//    private Species species;
-//
-//    @ManyToOne
-//    @JoinColumn(name = "breedId")
-//    private Breed breed;
+    private String species;
+
+     private String breed;
 
     public Long getPetId() {
         return petId;
@@ -125,5 +122,19 @@ public class Pet extends BaseEntity {
         this.weight = weight;
         this.avatarUrl = avatarUrl;
         this.petOwner = petOwner;
+    }
+
+    public void setSpecies(String species) {
+    }
+
+    public void setBreed(String breed) {
+    }
+
+    public String getSpecies() {
+        return "species";
+    }
+    public String getBreed()
+    {
+        return "breed";
     }
 }

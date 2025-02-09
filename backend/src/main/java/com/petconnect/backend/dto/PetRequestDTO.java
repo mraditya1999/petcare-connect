@@ -7,7 +7,21 @@ public class PetRequestDTO {
     private String avatarUrl;
     private Long petOwnerId; // Only send userId, not entire User object
 
-    // Getters and Setters
+    public PetRequestDTO() {
+    }
+
+    public PetRequestDTO(String petName, Long petOwnerId, Integer age, String avatarUrl, Double weight) {
+        this.petName = petName;
+        this.petOwnerId = petOwnerId;
+        this.age = age;
+        this.avatarUrl = avatarUrl;
+        this.weight = weight;
+    }
+
+
+
+
+// Getters and Setters
 
     public String getPetName() {
         return petName;
@@ -48,5 +62,7 @@ public class PetRequestDTO {
     public void setPetOwnerId(Long petOwnerId) {
         this.petOwnerId = petOwnerId;
     }
+
+
 }
 

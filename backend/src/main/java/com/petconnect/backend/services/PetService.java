@@ -1,17 +1,26 @@
 package com.petconnect.backend.services;
 
+import com.petconnect.backend.dto.PetRequestDTO;
 import com.petconnect.backend.entity.Pet;
+import com.petconnect.backend.entity.User;
 import com.petconnect.backend.repositories.PetRepository;
+import com.petconnect.backend.repositories.UserRepository;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class PetService
 {
     @Autowired
     private PetRepository petRepository;
+    @Autowired
+    private UserRepository userRepository;
+
+
 
     public Pet createPet(Pet pet) {
         return petRepository.save(pet);
@@ -42,6 +51,7 @@ public class PetService
     public void deletePet(Long id)
     {
         petRepository.deleteById(id);
-    }
-
+        }
 }
+
+
