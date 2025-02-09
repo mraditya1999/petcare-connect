@@ -1,4 +1,4 @@
-import { Footer, } from "@/components";
+import { Footer } from "@/components";
 import Navbar from "@/components/shared/Navbar";
 import { Outlet } from "react-router-dom";
 

@@ -1,7 +1,11 @@
 export interface IUser {
-  userId: string;
-  email: string;
-  role: "USER" | "ADMIN" | "SPECIALIST";
+  message: string;
+  data: {
+    userId: string;
+    email: string;
+    roles: Array<"USER" | "ADMIN" | "SPECIALIST">;
+    token: string;
+  };
 }
 
 export interface IUserState {

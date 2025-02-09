@@ -81,7 +81,7 @@ public class AuthController {
                 UserLoginResponse userLoginResponse = new UserLoginResponse(
                         user.getEmail(),
                         roles,
-                        token
+                        token,authenticatedUser.get().getUserId()
                 );
 
                 ApiResponse<UserLoginResponse> response = new ApiResponse<>("User logged in successfully", userLoginResponse);

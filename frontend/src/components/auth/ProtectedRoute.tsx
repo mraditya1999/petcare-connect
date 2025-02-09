@@ -9,7 +9,7 @@ interface ProtectedRouteProps {
 
 const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const navigate = useNavigate();
-  const user = useAppSelector((state) => state.user.user);
+  const user = useAppSelector((state) => state.auth.user);
 
   useEffect(() => {
     if (!user) {

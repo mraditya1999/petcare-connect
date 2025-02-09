@@ -17,7 +17,7 @@ const links: Link[] = [
 ];
 
 const NavLinks: React.FC = () => {
-  const user = useAppSelector((state) => state.user.user);
+  const user = useAppSelector((state) => state.auth.user);
 
   return (
     <>

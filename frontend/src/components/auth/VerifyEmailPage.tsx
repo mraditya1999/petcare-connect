@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "@/app/hooks";
-import { verifyEmail } from "@/features/user/userThunk";
+import { verifyEmail } from "@/features/auth/authThunk";
 import GenericAlert from "../shared/GenericAlert";
 import { ROUTES } from "@/utils/constants";
 
@@ -13,7 +13,7 @@ const VerifyEmailPage = () => {
   const query = useQuery();
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const { loading, error, success } = useAppSelector((state) => state.user);
+  const { loading, error, success } = useAppSelector((state) => state.auth);
 
   useEffect(() => {
     if (!loading && !success) {
