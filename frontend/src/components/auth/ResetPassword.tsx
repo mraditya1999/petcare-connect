@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "@/app/hooks";
-import { resetPassword } from "@/features/user/userThunk";
+import { resetPassword } from "@/features/auth/authThunk";
 import { LoadingSpinner } from "../ui/LoadingSpinner";
 import { IResetPasswordCredentials } from "@/types/auth-types";
 import { handleError, showToast } from "@/utils/helpers";
@@ -22,7 +22,7 @@ const ResetPassword = () => {
       password: "",
       confirmPassword: "",
     });
-  const { loading, success } = useAppSelector((state) => state.user);
+  const { loading, success } = useAppSelector((state) => state.auth);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setResetPasswordCredentials({

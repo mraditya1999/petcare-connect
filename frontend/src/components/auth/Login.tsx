@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "@/app/hooks";
-import { loginUser } from "@/features/user/userThunk";
+import { loginUser } from "@/features/auth/authThunk";
 import { ILoginCredentials } from "@/types/auth-types";
 import { ROUTES } from "@/utils/constants";
 import { Label } from "@/components/ui/label";
@@ -16,7 +16,7 @@ import { handleError, showToast } from "@/utils/helpers";
 const Login = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const { loading } = useAppSelector((state) => state.user);
+  const { loading } = useAppSelector((state) => state.auth);
   const [rememberMe, setRememberMe] = useState(false);
   const [loginFormCredentials, setLoginFormCredentials] =
     useState<ILoginCredentials>({

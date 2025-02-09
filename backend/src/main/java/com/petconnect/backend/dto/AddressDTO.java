@@ -65,4 +65,16 @@ public class AddressDTO {
     public void setLocality(String locality) {
         this.locality = locality;
     }
+
+    @Override
+    public String toString() {
+        return "AddressDTO{" +
+                "addressId=" + addressId +
+                ", pincode=" + pincode +
+                ", city='" + city + '\'' +
+                ", state='" + state + '\'' +
+                ", country='" + country + '\'' +
+                ", locality='" + locality + '\'' +
+                '}';
+    }
 }

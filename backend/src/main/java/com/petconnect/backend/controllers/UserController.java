@@ -87,8 +87,18 @@ public class UserController {
             @RequestPart("user") @Valid UserDTO userDTO,
             @RequestPart(value = "profile-image", required = false) MultipartFile profileImage
     ) {
+        // Log received UserDTO details
+        System.out.println("UserDTO: " + (userDTO != null ? userDTO : "No UserDTO"));
+        if (userDTO != null && userDTO.getAddress() != null) {
+            System.out.println("Address: " + userDTO.getAddress());
+        } else {
+            System.out.println("Address: No Address");
+        }
+        System.out.println("ProfileImage: " + (profileImage != null ? profileImage.getOriginalFilename() : "No Image"));
+
         try {
             User currentUser = userService.findUserByEmail(userDetails.getUsername());
+            System.out.println(currentUser);
             if (profileImage != null) {
                 Map<String, Object> uploadResult;
                 if (currentUser.getAvatarPublicId() != null && !currentUser.getAvatarPublicId().isEmpty()) {
@@ -114,8 +124,6 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         }
     }
-
-
 
     @DeleteMapping
     public ResponseEntity<ApiResponse<Void>> deleteUserProfile(@AuthenticationPrincipal UserDetails userDetails) {
