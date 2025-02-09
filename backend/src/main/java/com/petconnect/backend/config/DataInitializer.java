@@ -48,8 +48,8 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private void initializeDefaultUsers() {
-        if (!userRepository.existsByEmail("admin@petconnect.com")) {
-            createUser("Admin", "User", "admin@petconnect.com", "admin@123", Role.RoleName.ADMIN, true, createAddress("Headquarters", "Main City", "Country"));
+        if (!userRepository.existsByEmail("ay5480620@gmail.com")) {
+            createUser("Aditya", "Yadav", "ay5480620@gmail.com", "@mrAditya1999", Role.RoleName.ADMIN, true, createAddress());
         }
         if (!specialistRepository.existsByEmail("specialist@example.com")) {
             createSpecialist("John", "Doe", "specialist@example.com", "specialist123", Role.RoleName.SPECIALIST, true, "Veterinary Specialist", "Experienced veterinarian", createAddress("Animal Care Center", "Bengaluru", "India"));
