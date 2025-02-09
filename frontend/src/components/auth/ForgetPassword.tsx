@@ -3,7 +3,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useAppDispatch, useAppSelector } from "@/app/hooks";
-import { forgetPassword } from "@/features/user/userThunk";
+import { forgetPassword } from "@/features/auth/authThunk";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import GenericAlert from "@/components/shared/GenericAlert";
 import { IForgetPasswordCredentials } from "@/types/auth-types";
@@ -12,7 +12,7 @@ import { handleError, showToast } from "@/utils/helpers";
 
 const ForgetPassword = () => {
   const dispatch = useAppDispatch();
-  const { loading, success } = useAppSelector((state) => state.user);
+  const { loading, success } = useAppSelector((state) => state.auth);
   const [forgetPasswordCredentials, setForgetPasswordCredentials] =
     useState<IForgetPasswordCredentials>({ email: "" });
 
