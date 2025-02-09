@@ -68,16 +68,37 @@ export const fetchProfile = createAsyncThunk<
   }
 });
 
+// export const updateProfile = createAsyncThunk<
+//   IProfile,
+//   FormData,
+//   { rejectValue: string }
+// >("user/updateProfile", async (formData: FormData, { rejectWithValue }) => {
+//   try {
+//     console.log(formData.entries);
+//     const response = await customFetch.put<IProfile>("/profile", formData);
+//     console.log(response);
+//     return response.data;
+//   } catch (error) {
+//     console.log(error)
+//     return rejectWithValue(handleError(error));
+//   }
+// });
 export const updateProfile = createAsyncThunk<
   IProfile,
   FormData,
   { rejectValue: string }
 >("user/updateProfile", async (formData: FormData, { rejectWithValue }) => {
   try {
+    // Log FormData entries
+    for (const [key, value] of formData.entries()) {
+      console.log(`${key}:`, value instanceof File ? value.name : value);
+    }
+
     const response = await customFetch.put<IProfile>("/profile", formData);
     console.log(response);
     return response.data;
   } catch (error) {
+    console.log(error);
     return rejectWithValue(handleError(error));
   }
 });
