@@ -11,7 +11,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
-import org.springframework.data.mongodb.core.MongoTemplate;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -25,7 +24,7 @@ public class DataInitializer implements CommandLineRunner {
     private final PasswordEncoder passwordEncoder;
 
     @Autowired
-    public DataInitializer(RoleRepository roleRepository, UserRepository userRepository, SpecialistRepository specialistRepository, PasswordEncoder passwordEncoder, MongoTemplate mongoTemplate) {
+    public DataInitializer(RoleRepository roleRepository, UserRepository userRepository, SpecialistRepository specialistRepository, PasswordEncoder passwordEncoder) {
         this.roleRepository = roleRepository;
         this.userRepository = userRepository;
         this.specialistRepository = specialistRepository;
@@ -49,13 +48,53 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private void initializeDefaultUsers() {
-        if (!userRepository.existsByEmail("ay5480620@gmail.com")) {
-            createUser("Aditya", "Yadav", "ay5480620@gmail.com", "@mrAditya1999", Role.RoleName.ADMIN, true, createAddress());
+        if (!userRepository.existsByEmail("admin@petconnect.com")) {
+            createUser("Admin", "User", "admin@petconnect.com", "admin@123", Role.RoleName.ADMIN, true, createAddress("Headquarters", "Main City", "Country"));
         }
         if (!specialistRepository.existsByEmail("specialist@example.com")) {
-            createSpecialist("John", "Doe", "specialist@example.com", "specialist123", Role.RoleName.SPECIALIST, true, "Veterinary Specialist", "Experienced veterinarian", createAddress());
+            createSpecialist("John", "Doe", "specialist@example.com", "specialist123", Role.RoleName.SPECIALIST, true, "Veterinary Specialist", "Experienced veterinarian", createAddress("Animal Care Center", "Bengaluru", "India"));
+        }
+
+        // Additional users
+        if (!userRepository.existsByEmail("alice.smith@example.com")) {
+            createUser("Alice", "Smith", "alice.smith@example.com", "password1", Role.RoleName.USER, true, createAddress("Residential Area", "City A", "Country"));
+        }
+        if (!userRepository.existsByEmail("bob.johnson@example.com")) {
+            createUser("Bob", "Johnson", "bob.johnson@example.com", "password2", Role.RoleName.USER, true, createAddress("Residential Area", "City B", "Country"));
+        }
+        if (!userRepository.existsByEmail("charlie.brown@example.com")) {
+            createUser("Charlie", "Brown", "charlie.brown@example.com", "password3", Role.RoleName.USER, true, createAddress("Residential Area", "City C", "Country"));
+        }
+        if (!userRepository.existsByEmail("david.williams@example.com")) {
+            createUser("David", "Williams", "david.williams@example.com", "password4", Role.RoleName.USER, true, createAddress("Residential Area", "City D", "Country"));
+        }
+
+        // Additional specialists
+        if (!specialistRepository.existsByEmail("eve.davis@medical.com")) {
+            createSpecialist("Eve", "Davis", "eve.davis@medical.com", "specialist123", Role.RoleName.SPECIALIST, true, "Cardiology Specialist", "Experienced in cardiology", createAddress("Heart Care Clinic", "City E", "Country"));
+        }
+        if (!specialistRepository.existsByEmail("frank.miller@neuro.com")) {
+            createSpecialist("Frank", "Miller", "frank.miller@neuro.com", "specialist123", Role.RoleName.SPECIALIST, true, "Neurology Specialist", "Experienced in neurology", createAddress("Neuro Clinic", "City F", "Country"));
+        }
+        if (!specialistRepository.existsByEmail("grace.wilson@peds.com")) {
+            createSpecialist("Grace", "Wilson", "grace.wilson@peds.com", "specialist123", Role.RoleName.SPECIALIST, true, "Pediatrics Specialist", "Experienced in pediatrics", createAddress("Children's Hospital", "City G", "Country"));
+        }
+        if (!specialistRepository.existsByEmail("henry.moore@derma.com")) {
+            createSpecialist("Henry", "Moore", "henry.moore@derma.com", "specialist123", Role.RoleName.SPECIALIST, true, "Dermatology Specialist", "Experienced in dermatology", createAddress("Skin Care Center", "City H", "Country"));
         }
     }
+
+    private Address createAddress(String locality, String city, String country) {
+        Address address = new Address();
+        address.setPincode(123456L);
+        address.setCity(city);
+        address.setState("State");
+        address.setCountry(country);
+        address.setLocality(locality);
+        return address;
+    }
+
+
 
     private void createUser(String firstName, String lastName, String email, String password, Role.RoleName role, boolean isVerified, Address address) {
         User user = new User();

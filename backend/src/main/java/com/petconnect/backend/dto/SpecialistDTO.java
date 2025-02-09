@@ -17,16 +17,16 @@ public class SpecialistDTO {
     public SpecialistDTO() {
     }
 
-    public SpecialistDTO(Long id, String firstName, String lastName, String email, String speciality, String about, String password, Address address) {
-        this.id = id;
-        this.firstName = firstName;
-        this.lastName = lastName;
-        this.email = email;
-        this.speciality = speciality;
-        this.about = about;
-        this.password = password;
-        this.address = address;
-    }
+        public SpecialistDTO(Long id, String firstName, String lastName, String email, String speciality, String about, String password, Address address) {
+            this.id = id;
+            this.firstName = firstName;
+            this.lastName = lastName;
+            this.email = email;
+            this.speciality = speciality;
+            this.about = about;
+            this.password = password;
+            this.address = address;
+        }
 
     public Address getAddress() {
         return address;
@@ -90,5 +90,8 @@ public class SpecialistDTO {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public void setPhone(String phone) {
     }
 }

@@ -1,13 +1,17 @@
 package com.petconnect.backend.services;
 
 import com.petconnect.backend.dto.SpecialistDTO;
+import com.petconnect.backend.entity.Role;
 import com.petconnect.backend.entity.Specialist;
+import com.petconnect.backend.repositories.RoleRepository;
 import com.petconnect.backend.repositories.SpecialistRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -15,27 +19,29 @@ public class SpecialistService {
 
     private final SpecialistRepository repository;
     private final PasswordEncoder passwordEncoder;
+    private final RoleRepository roleRepository;
 
     @Autowired
-    public SpecialistService(SpecialistRepository repository, PasswordEncoder passwordEncoder) {
+    public SpecialistService(SpecialistRepository repository, SpecialistRepository specialistRepository, PasswordEncoder passwordEncoder, RoleRepository roleRepository) {
         this.repository = repository;
         this.passwordEncoder = passwordEncoder;
+        this.roleRepository = roleRepository;
     }
 
-    public SpecialistDTO createSpecialist(SpecialistDTO specialistDTO) {
+    public Specialist createSpecialist(SpecialistDTO specialistDTO) {
         Specialist specialist = new Specialist();
         specialist.setFirstName(specialistDTO.getFirstName());
         specialist.setLastName(specialistDTO.getLastName());
         specialist.setEmail(specialistDTO.getEmail());
+        specialist.setPassword(passwordEncoder.encode(specialistDTO.getPassword()));
         specialist.setSpeciality(specialistDTO.getSpeciality());
         specialist.setAbout(specialistDTO.getAbout());
         specialist.setAddress(specialistDTO.getAddress());
+        specialist.setRoles(new HashSet<>(Set.of(roleRepository.findByRoleName(Role.RoleName.SPECIALIST)
+                .orElseThrow(() -> new IllegalArgumentException("Role not found")))));
+        specialist.setVerified(true); // Assuming new specialists are verified by default
 
-        // Encode the password before saving
-        specialist.setPassword(passwordEncoder.encode(specialistDTO.getPassword()));
-
-        Specialist saved = repository.save(specialist);
-        return convertToDTO(saved);
+        return repository.save(specialist);
     }
 
     public List<SpecialistDTO> getAllSpecialists() {

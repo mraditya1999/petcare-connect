@@ -94,6 +94,7 @@
 package com.petconnect.backend.controllers;
 
 import com.petconnect.backend.dto.SpecialistDTO;
+import com.petconnect.backend.entity.Specialist;
 import com.petconnect.backend.services.SpecialistService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -113,10 +114,10 @@ public class SpecialistController {
         this.specialistService = specialistService;
     }
 
-    @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<SpecialistDTO> createSpecialist(@RequestBody SpecialistDTO specialistDTO) {
-        SpecialistDTO created = specialistService.createSpecialist(specialistDTO);
-        return ResponseEntity.ok(created);
+    @PostMapping(consumes = "application/json", produces = "application/json")
+    public ResponseEntity<Specialist> createSpecialist(@RequestBody SpecialistDTO specialistDTO) {
+        Specialist createdSpecialist = specialistService.createSpecialist(specialistDTO);
+        return ResponseEntity.ok(createdSpecialist);
     }
 
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
@@ -130,8 +131,26 @@ public class SpecialistController {
         SpecialistDTO specialist = specialistService.getSpecialistById(id);
         return ResponseEntity.ok(specialist);
     }
+//    @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+//    public ResponseEntity<SpecialistDTO> updateSpecialist(@PathVariable Long id,
+//                                                          @RequestPart("name") String name,
+//                                                          @RequestPart("specialty") String specialty,
+//                                                          @RequestPart("email") String email,
+//                                                          @RequestPart("phone") String phone,
+//                                                          @RequestPart("address") String address) {
+//        SpecialistDTO specialistDTO = new SpecialistDTO();
+//        specialistDTO.setId(id);
+//        specialistDTO.setFirstName(name);
+//        specialistDTO.setSpeciality(specialty);
+//        specialistDTO.setEmail(email);
+//        specialistDTO.setPhone(phone);
+//        specialistDTO.setAddress(address);
+//
+//        SpecialistDTO updated = specialistService.updateSpecialist(id, specialistDTO);
+//        return ResponseEntity.ok(updated);
+//    }
 
-    @PutMapping(value = "/{id}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @PutMapping(value = "/{id}", consumes = {MediaType.APPLICATION_JSON_VALUE,"application/json;charset=UTF-8"}, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<SpecialistDTO> updateSpecialist(@PathVariable Long id, @RequestBody SpecialistDTO specialistDTO) {
         SpecialistDTO updated = specialistService.updateSpecialist(id, specialistDTO);
         return ResponseEntity.ok(updated);
