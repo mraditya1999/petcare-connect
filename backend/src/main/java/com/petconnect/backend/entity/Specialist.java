@@ -26,9 +26,8 @@ public class Specialist extends BaseEntity {
     @JoinColumn(name = "userId", nullable = false)
     private User user;
 
-    @ManyToOne
-    @JoinColumn(name = "specialityId", nullable = false)
-    private Speciality speciality;
+
+    private String speciality;
 
     public Long getSpecialistId() {
         return specialistId;
@@ -54,11 +53,11 @@ public class Specialist extends BaseEntity {
         this.user = user;
     }
 
-    public Speciality getSpeciality() {
+    public String getSpeciality() {
         return speciality;
     }
 
-    public void setSpeciality(Speciality speciality) {
+    public void setSpeciality(String speciality) {
         this.speciality = speciality;
     }
 }

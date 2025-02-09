@@ -1,5 +1,7 @@
 package com.petconnect.backend.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
@@ -355,7 +357,7 @@ public class User implements UserDetails {
                 '}';
     }
     @OneToMany(mappedBy = "petOwner", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
-    @JsonIgnoreProperties("petOwner") // <-- Use the exact field name in Pet
+     // Ensures correct serialization // <-- Use the exact field name in Pet
     private List<Pet> pets;
 
     public List<Pet> getPets() {

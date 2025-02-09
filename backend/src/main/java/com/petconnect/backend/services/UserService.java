@@ -135,6 +135,11 @@ public class UserService {
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with email " + email));
     }
 
+    public Optional<User> getUserById(Long userId) {
+
+        return Optional.empty();
+    }
+
 //    public Optional<User> findById(Long userId) {
 //        return userRepository.findById(userId);
 //    }
