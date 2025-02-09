@@ -3,14 +3,14 @@ import NavLinks from "./NavLinks";
 import { FaBars } from "react-icons/fa6";
 import { Link, useNavigate } from "react-router-dom";
 import { useAppSelector, useAppDispatch } from "@/app/hooks";
-import { logoutUser } from "@/features/user/userThunk";
+import { logoutUser } from "@/features/auth/authThunk";
 import logo from "@/assets/images/logo.png";
 import CustomButton from "./CustomButton";
 
 const Navbar = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
-  const user = useAppSelector((state) => state.user.user);
+  const user = useAppSelector((state) => state.auth.user);
 
   const handleLogout = async () => {
     await dispatch(logoutUser());

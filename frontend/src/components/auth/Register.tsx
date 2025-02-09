@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "@/app/hooks";
-import { registerUser } from "@/features/user/userThunk";
+import { registerUser } from "@/features/auth/authThunk";
 import { IRegisterCredentials } from "@/types/auth-types";
 import { registerFormSchema } from "@/utils/validations";
 import { handleError, showToast } from "@/utils/helpers";
@@ -19,7 +19,7 @@ import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 const Register = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
-  const { loading, success } = useAppSelector((state) => state.user);
+  const { loading, success } = useAppSelector((state) => state.auth);
 
   const [registerFormCredentials, setRegisterFormCredentials] =
     useState<IRegisterCredentials>({

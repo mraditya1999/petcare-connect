@@ -1,5 +1,7 @@
 package com.petconnect.backend.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
@@ -11,15 +13,12 @@ import lombok.Setter;
  * Entity representing a Pet.
  */
 @Entity
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
+
 public class Pet extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer petId;
+    private Long petId;
 
     @NotNull(message = "Pet name cannot be null")
     @Size(min = 2, max = 50, message = "Pet name must be between 2 and 50 characters")
@@ -36,15 +35,95 @@ public class Pet extends BaseEntity {
 
     private String avatarUrl;
 
-    @ManyToOne
-    @JoinColumn(name = "petOwnerId", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", referencedColumnName = "userId", nullable = false)
+    @JsonIgnoreProperties("pets") // <-- Use the same reference name as in User.java
     private User petOwner;
 
-    @ManyToOne
-    @JoinColumn(name = "speciesId", nullable = false)
-    private Species species;
 
-    @ManyToOne
-    @JoinColumn(name = "breedId")
-    private Breed breed;
+//    @ManyToOne
+//    @JoinColumn(name = "speciesId", nullable = false)
+//    private Species species;
+//
+//    @ManyToOne
+//    @JoinColumn(name = "breedId")
+//    private Breed breed;
+
+    public Long getPetId() {
+        return petId;
+    }
+
+    public void setPetId(Long petId) {
+        this.petId = petId;
+    }
+
+    public String getPetName() {
+        return petName;
+    }
+
+    public void setPetName(String petName) {
+        this.petName = petName;
+    }
+
+    public Integer getAge() {
+        return age;
+    }
+
+    public void setAge(Integer age) {
+        this.age = age;
+    }
+
+    public Double getWeight() {
+        return weight;
+    }
+
+    public void setWeight(Double weight) {
+        this.weight = weight;
+    }
+
+    public String getAvatarUrl() {
+        return avatarUrl;
+    }
+
+    public void setAvatarUrl(String avatarUrl) {
+        this.avatarUrl = avatarUrl;
+    }
+
+
+//    public Species getSpecies() {
+//        return species;
+//    }
+//
+//    public void setSpecies(Species species) {
+//        this.species = species;
+//    }
+//
+//    public Breed getBreed() {
+//        return breed;
+//    }
+//
+//    public void setBreed(Breed breed) {
+//        this.breed = breed;
+//    }
+
+
+    public User getPetOwner() {
+        return petOwner;
+    }
+
+    public void setPetOwner(User petOwner) {
+        this.petOwner = petOwner;
+    }
+
+    public Pet() {
+    }
+
+    public Pet(Long petId, String petName, Integer age, Double weight, String avatarUrl, User petOwner) {
+        this.petId = petId;
+        this.petName = petName;
+        this.age = age;
+        this.weight = weight;
+        this.avatarUrl = avatarUrl;
+        this.petOwner = petOwner;
+    }
 }

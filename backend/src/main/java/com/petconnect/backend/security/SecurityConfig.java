@@ -67,6 +67,7 @@
 //
 package com.petconnect.backend.security;
 
+import com.petconnect.backend.entity.Appointment;
 import com.petconnect.backend.services.AuthService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -103,6 +104,7 @@ public class SecurityConfig {
             "/specialists/**",
             "/upload/**",
             "/appointments/**",
+            "/pets/**",
     };
 
     @Bean
@@ -110,6 +112,7 @@ public class SecurityConfig {
         http.cors(withDefaults())
                 .authorizeHttpRequests((requests) -> requests
                         .requestMatchers(AUTH_WHITELIST).permitAll()
+                        .requestMatchers("/appointments").permitAll()
                         .requestMatchers("/profile/**").authenticated()
                         .requestMatchers("/forums/**").authenticated()
 //                        .requestMatchers("/comments/**").authenticated()
