@@ -1,11 +1,14 @@
 package com.petconnect.backend.config;
 
 import com.petconnect.backend.interceptors.RequestInterceptor;
+import jakarta.servlet.MultipartConfigElement;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.web.embedded.tomcat.TomcatServletWebServerFactory;
 import org.springframework.boot.web.server.WebServerFactoryCustomizer;
+import org.springframework.boot.web.servlet.MultipartConfigFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.util.unit.DataSize;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -48,4 +51,13 @@ public class WebConfig implements WebMvcConfigurer {
     public WebServerFactoryCustomizer<TomcatServletWebServerFactory> webServerFactoryCustomizer() {
         return factory -> factory.setContextPath("/api/v1");
     }
+
+    @Bean
+    public MultipartConfigElement multipartConfigElement() {
+        MultipartConfigFactory factory = new MultipartConfigFactory();
+        factory.setMaxFileSize(DataSize.ofMegabytes(10));
+        factory.setMaxRequestSize(DataSize.ofMegabytes(10));
+        return factory.createMultipartConfig();
+    }
+
 }

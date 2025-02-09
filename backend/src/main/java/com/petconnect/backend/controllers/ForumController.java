@@ -76,7 +76,6 @@
             }
         }
 
-
         @DeleteMapping("/{forumId}")
         public ResponseEntity<ApiResponse<Void>> deleteForum(@PathVariable String forumId, @AuthenticationPrincipal UserDetails userDetails) {
             try {
@@ -119,4 +118,5 @@
             List<ForumDTO> forums = forumService.getMyForums(userDetails.getUsername());
             return ResponseEntity.ok(forums);
         }
+
     }

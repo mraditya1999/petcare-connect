@@ -43,56 +43,33 @@ public class UserService {
     }
 
     public UserDTO updateUserProfile(User user, UserDTO userDTO) {
-
         // Update user fields if present
-        if (userDTO.getFirstName() != null) {
-            user.setFirstName(userDTO.getFirstName());
-        }
-        if (userDTO.getLastName() != null) {
-            user.setLastName(userDTO.getLastName());
-        }
-        if (userDTO.getEmail() != null) {
-            user.setEmail(userDTO.getEmail());
-        }
-        if (userDTO.getAvatarUrl() != null) {
-            user.setAvatarUrl(userDTO.getAvatarUrl());
-        }
-        if (userDTO.getAvatarPublicId() != null) {
-            user.setAvatarPublicId(userDTO.getAvatarPublicId());
-        }
-        if (userDTO.getMobileNumber() != null) {
-            user.setMobileNumber(userDTO.getMobileNumber());
-        }
+        if (userDTO.getFirstName() != null) user.setFirstName(userDTO.getFirstName());
+        if (userDTO.getLastName() != null) user.setLastName(userDTO.getLastName());
+        if (userDTO.getEmail() != null) user.setEmail(userDTO.getEmail());
+        if (userDTO.getAvatarUrl() != null) user.setAvatarUrl(userDTO.getAvatarUrl());
+        if (userDTO.getAvatarPublicId() != null) user.setAvatarPublicId(userDTO.getAvatarPublicId());
+        if (userDTO.getMobileNumber() != null) user.setMobileNumber(userDTO.getMobileNumber());
 
         // Update address fields if present
         AddressDTO addressDTO = userDTO.getAddress();
         if (addressDTO != null) {
             Address address = user.getAddress();
             if (address == null) {
-                // Create new address if it doesn't exist
                 address = new Address();
                 user.setAddress(address);
             }
-            if (addressDTO.getPincode() != null) {
-                address.setPincode(addressDTO.getPincode());
-            }
-            if (addressDTO.getCity() != null) {
-                address.setCity(addressDTO.getCity());
-            }
-            if (addressDTO.getState() != null) {
-                address.setState(addressDTO.getState());
-            }
-            if (addressDTO.getCountry() != null) {
-                address.setCountry(addressDTO.getCountry());
-            }
-            if (addressDTO.getLocality() != null) {
-                address.setLocality(addressDTO.getLocality());
-            }
+            if (addressDTO.getPincode() != null) address.setPincode(addressDTO.getPincode());
+            if (addressDTO.getCity() != null) address.setCity(addressDTO.getCity());
+            if (addressDTO.getState() != null) address.setState(addressDTO.getState());
+            if (addressDTO.getCountry() != null) address.setCountry(addressDTO.getCountry());
+            if (addressDTO.getLocality() != null) address.setLocality(addressDTO.getLocality());
         }
 
         User updatedUser = userRepository.save(user);
         return userMapper.toDTO(updatedUser);
     }
+
 
     public void deleteUserProfile(String email) {
         User user = userRepository.findByEmail(email)
