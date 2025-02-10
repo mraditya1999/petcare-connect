@@ -66,9 +66,6 @@
 //}
 //
 package com.petconnect.backend.security;
-
-
-
 import com.petconnect.backend.entity.Appointment;
 import com.petconnect.backend.services.AuthService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -103,12 +100,8 @@ public class SecurityConfig {
 
     private static final String[] AUTH_WHITELIST = {
             "/auth/**",
-            "/forums",
-            "/forums/**",
             "/specialists/**",
             "/upload/**",
-            "/appointments/**",
-            "/pets/**",
     };
 
     @Bean
@@ -116,11 +109,12 @@ public class SecurityConfig {
         http.cors(withDefaults())
                 .authorizeHttpRequests((requests) -> requests
                         .requestMatchers(AUTH_WHITELIST).permitAll()
-                        .requestMatchers("/appointments").permitAll()
-                        .requestMatchers("/profile/**").authenticated()
                         .requestMatchers(HttpMethod.GET, "/forums").permitAll()
                         .requestMatchers(HttpMethod.GET, "/forums/**").permitAll()
+                        .requestMatchers("/appointments/**").permitAll()
+                        .requestMatchers("/profile/**").authenticated()
                         .requestMatchers("/forums/**").authenticated()
+                        .requestMatchers("/pets/**").authenticated()
 //                        .requestMatchers("/comments/**").authenticated()
 //                        .requestMatchers("/likes/**").authenticated()
 //                        .requestMatchers("/profile/users/**", "/profile/users/role/**").hasRole("ADMIN")
