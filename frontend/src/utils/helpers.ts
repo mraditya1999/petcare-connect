@@ -2,6 +2,7 @@ import { AxiosError } from "axios";
 import { toast } from "@/components/ui/use-toast";
 import { IUser } from "@/types/auth-types";
 import { ZodError } from "zod";
+import { formatDistanceToNow } from "date-fns";
 
 export const saveUserToStorage = (user: IUser, rememberMe: boolean) => {
   const storage = rememberMe ? localStorage : sessionStorage;
@@ -66,3 +67,9 @@ export function handleError(error: unknown): string {
 
   return "An unexpected error occurred.";
 }
+
+export const formatRelativeTime = (dateStr) => {
+  if (!dateStr) return "Just now";
+  const date = new Date(dateStr);
+  return formatDistanceToNow(date, { addSuffix: true });
+};

@@ -16,6 +16,13 @@ public class UserDTO {
 
     public UserDTO() {}
 
+    public UserDTO(Long userId,String firstName, String lastName, String email) {
+        this.userId = userId;
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.email = email;
+    }
+
     public UserDTO(Long userId, String firstName, String lastName, String email, AddressDTO address, String avatarUrl, String avatarPublicId, String mobileNumber) {
         this.userId = userId;
         this.firstName = firstName;

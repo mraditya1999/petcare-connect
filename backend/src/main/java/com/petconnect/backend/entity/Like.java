@@ -14,6 +14,7 @@ import java.util.Date;
 
 @EntityListeners(AuditingEntityListener.class)
 @Document(collection = "likes")
+
 public class Like {
     @Id
     private String likeId;

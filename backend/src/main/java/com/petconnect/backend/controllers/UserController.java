@@ -1,5 +1,6 @@
 package com.petconnect.backend.controllers;
 
+import com.petconnect.backend.dto.AddressDTO;
 import com.petconnect.backend.dto.ApiResponse;
 import com.petconnect.backend.dto.UpdatePasswordRequest;
 import com.petconnect.backend.dto.UserDTO;
@@ -50,22 +51,50 @@ public class UserController {
 //    @PutMapping(consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
 //    public ResponseEntity<ApiResponse<UserDTO>> updateUserProfile(
 //            @AuthenticationPrincipal UserDetails userDetails,
-//            @RequestPart("user") @Valid UserDTO userDTO,
-//            @RequestPart(value = "profile-image", required = false) MultipartFile profileImage
+//            @RequestPart("firstName") Optional<String> firstName,
+//            @RequestPart("lastName") Optional<String> lastName,
+//            @RequestPart("email") Optional<String> email,
+//            @RequestPart("mobileNumber") Optional<String> mobileNumber,
+//            @RequestPart("address.pincode") Optional<Long> pincode,
+//            @RequestPart("address.city") Optional<String> city,
+//            @RequestPart("address.state") Optional<String> state,
+//            @RequestPart("address.country") Optional<String> country,
+//            @RequestPart("address.locality") Optional<String> locality,
+//            @RequestPart(value = "profileImage", required = false) MultipartFile profileImage
 //    ) {
-//        User currentUser = userService.findUserByEmail(userDetails.getUsername());
 //        try {
+//            User currentUser = userService.findUserByEmail(userDetails.getUsername());
+//
+//            // Create UserDTO and AddressDTO
+//            UserDTO userDTO = new UserDTO();
+//            userDTO.setUserId(currentUser.getUserId());
+//
+//            AddressDTO addressDTO = new AddressDTO();
+//
+//            // Update only fields that are provided
+//            firstName.ifPresent(userDTO::setFirstName);
+//            lastName.ifPresent(userDTO::setLastName);
+//            email.ifPresent(userDTO::setEmail);
+//            mobileNumber.ifPresent(userDTO::setMobileNumber);
+//            pincode.ifPresent(addressDTO::setPincode);
+//            city.ifPresent(addressDTO::setCity);
+//            state.ifPresent(addressDTO::setState);
+//            country.ifPresent(addressDTO::setCountry);
+//            locality.ifPresent(addressDTO::setLocality);
+//            userDTO.setAddress(addressDTO);
+//
 //            if (profileImage != null) {
 //                Map<String, Object> uploadResult;
-//                if (userDTO.getAvatarPublicId() != null && !userDTO.getAvatarPublicId().isEmpty()) {
-//                    uploadResult = uploadService.updateImage(userDTO.getAvatarPublicId(), profileImage);
+//                if (currentUser.getAvatarPublicId() != null && !currentUser.getAvatarPublicId().isEmpty()) {
+//                    uploadResult = uploadService.updateImage(currentUser.getAvatarPublicId(), profileImage);
 //                } else {
 //                    uploadResult = uploadService.uploadImage(profileImage);
 //                }
 //                userDTO.setAvatarUrl((String) uploadResult.get("url"));
 //                userDTO.setAvatarPublicId((String) uploadResult.get("public_id"));
 //            }
-//            UserDTO updatedUserDTO = userService.updateUserProfile(userDetails.getUsername(), userDTO);
+//
+//            UserDTO updatedUserDTO = userService.updateUserProfile(currentUser, userDTO);
 //            ApiResponse<UserDTO> apiResponse = new ApiResponse<>("Profile updated successfully", updatedUserDTO);
 //            return ResponseEntity.ok(apiResponse);
 //        } catch (ResourceNotFoundException e) {
@@ -84,21 +113,48 @@ public class UserController {
     @PutMapping(consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
     public ResponseEntity<ApiResponse<UserDTO>> updateUserProfile(
             @AuthenticationPrincipal UserDetails userDetails,
-            @RequestPart("user") @Valid UserDTO userDTO,
-            @RequestPart(value = "profile-image", required = false) MultipartFile profileImage
+            @RequestPart("firstName") Optional<String> firstName,
+            @RequestPart("lastName") Optional<String> lastName,
+            @RequestPart("email") Optional<String> email,
+            @RequestPart("mobileNumber") Optional<String> mobileNumber,
+            @RequestPart("address.pincode") Optional<Long> pincode,
+            @RequestPart("address.city") Optional<String> city,
+            @RequestPart("address.state") Optional<String> state,
+            @RequestPart("address.country") Optional<String> country,
+            @RequestPart("address.locality") Optional<String> locality,
+            @RequestPart(value = "profileImage", required = false) MultipartFile profileImage
     ) {
-        // Log received UserDTO details
-        System.out.println("UserDTO: " + (userDTO != null ? userDTO : "No UserDTO"));
-        if (userDTO != null && userDTO.getAddress() != null) {
-            System.out.println("Address: " + userDTO.getAddress());
-        } else {
-            System.out.println("Address: No Address");
-        }
-        System.out.println("ProfileImage: " + (profileImage != null ? profileImage.getOriginalFilename() : "No Image"));
-
+        System.out.println(pincode);
+        System.out.println(city);
+        System.out.println(state);
         try {
             User currentUser = userService.findUserByEmail(userDetails.getUsername());
-            System.out.println(currentUser);
+
+            // Create UserDTO and AddressDTO
+            UserDTO userDTO = new UserDTO();
+            userDTO.setUserId(currentUser.getUserId());
+
+            AddressDTO addressDTO = new AddressDTO();
+
+            // Update only fields that are provided
+            firstName.ifPresent(userDTO::setFirstName);
+            lastName.ifPresent(userDTO::setLastName);
+            email.ifPresent(userDTO::setEmail);
+            mobileNumber.ifPresent(userDTO::setMobileNumber);
+
+            // Update address fields
+            pincode.ifPresent(addressDTO::setPincode);
+            city.ifPresent(addressDTO::setCity);
+            state.ifPresent(addressDTO::setState);
+            country.ifPresent(addressDTO::setCountry);
+            locality.ifPresent(addressDTO::setLocality);
+
+            // Set updated address to userDTO if any address field is provided
+            if (pincode.isPresent() || city.isPresent() || state.isPresent() || country.isPresent() || locality.isPresent()) {
+                userDTO.setAddress(addressDTO);
+            }
+
+            // Handle profile image
             if (profileImage != null) {
                 Map<String, Object> uploadResult;
                 if (currentUser.getAvatarPublicId() != null && !currentUser.getAvatarPublicId().isEmpty()) {
@@ -109,6 +165,7 @@ public class UserController {
                 userDTO.setAvatarUrl((String) uploadResult.get("url"));
                 userDTO.setAvatarPublicId((String) uploadResult.get("public_id"));
             }
+
             UserDTO updatedUserDTO = userService.updateUserProfile(currentUser, userDTO);
             ApiResponse<UserDTO> apiResponse = new ApiResponse<>("Profile updated successfully", updatedUserDTO);
             return ResponseEntity.ok(apiResponse);
@@ -124,6 +181,8 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         }
     }
+
+
 
     @DeleteMapping
     public ResponseEntity<ApiResponse<Void>> deleteUserProfile(@AuthenticationPrincipal UserDetails userDetails) {

@@ -15,6 +15,7 @@ import com.petconnect.backend.repositories.CommentRepository;
 import com.petconnect.backend.repositories.ForumRepository;
 import com.petconnect.backend.repositories.LikeRepository;
 import com.petconnect.backend.repositories.UserRepository;
+import com.petconnect.backend.utils.ForumUtility;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -35,9 +36,10 @@ public class ForumService {
     private final ForumMapper forumMapper;
     private final LikeMapper likeMapper;
     private final CommentMapper commentMapper;
+    private final ForumUtility forumUtility;
 
     @Autowired
-    public ForumService(ForumRepository forumRepository, UserRepository userRepository, LikeRepository likeRepository, CommentRepository commentRepository, ForumMapper forumMapper, LikeMapper likeMapper, CommentMapper commentMapper) {
+    public ForumService(ForumRepository forumRepository, UserRepository userRepository, LikeRepository likeRepository, CommentRepository commentRepository, ForumMapper forumMapper, LikeMapper likeMapper, CommentMapper commentMapper, ForumUtility forumUtility) {
         this.forumRepository = forumRepository;
         this.userRepository = userRepository;
         this.likeRepository = likeRepository;
@@ -45,18 +47,43 @@ public class ForumService {
         this.forumMapper = forumMapper;
         this.likeMapper = likeMapper;
         this.commentMapper = commentMapper;
+        this.forumUtility = forumUtility;
     }
+
     public ForumDTO getForum(String forumId) {
         Forum forum = forumRepository.findById(forumId)
                 .orElseThrow(() -> new ResourceNotFoundException("Forum not found with id " + forumId));
-        return forumMapper.toDTO(forum);
+        ForumDTO forumDTO = forumMapper.toDTO(forum);
+
+        // Use the utility method to add user details
+        forumUtility.addUserDetailsToForumDTO(forum, forumDTO);
+
+        // Fetch comments for the forum and add to ForumDTO
+        List<CommentDTO> comments = commentRepository.findByForumId(forumId).stream()
+                .map(commentMapper::toDTO)
+                .collect(Collectors.toList());
+        forumDTO.setComments(comments);
+
+        // Fetch likes for the forum and add to ForumDTO
+        List<LikeDTO> likes = likeRepository.findByForumId(forumId).stream()
+                .map(likeMapper::toDTO)
+                .collect(Collectors.toList());
+        forumDTO.setLikes(likes);
+
+        return forumDTO;
     }
+
+
 
     public List<ForumDTO> getAllForums() {
         List<Forum> forums = forumRepository.findAll();
         return forums.stream()
                 .map(forum -> {
                     ForumDTO forumDTO = forumMapper.toDTO(forum);
+
+                    // Use the utility method to add user details
+                    forumUtility.addUserDetailsToForumDTO(forum, forumDTO);
+
                     forumDTO.setLikes(likeRepository.findByForumId(forum.getForumId()).stream()
                             .map(likeMapper::toDTO)
                             .collect(Collectors.toList()));
@@ -69,12 +96,13 @@ public class ForumService {
     }
 
 
+
     @Transactional
     public ForumDTO createForum(String email, ForumDTO forumDTO) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with email " + email));
         Forum forum = new Forum();
-        forum.setUserId(String.valueOf(user.getUserId()));
+        forum.setUserId(user.getUserId());
         forum.setTitle(forumDTO.getTitle());
         forum.setContent(forumDTO.getContent());
         forum.setTags(forumDTO.getTags());
@@ -87,7 +115,7 @@ public class ForumService {
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with email " + email));
         Forum forum = forumRepository.findById(forumId)
                 .orElseThrow(() -> new ResourceNotFoundException("Forum not found with id " + forumId));
-        if (!forum.getUserId().equals(user.getUserId().toString())) {
+        if (!forum. getUserId().equals(user.getUserId().toString())) {
             throw new IllegalArgumentException("You can only update your own forums.");
         }
 
@@ -119,16 +147,39 @@ public class ForumService {
     }
 
 
+//    public LikeDTO likeForum(String forumId, String email) {
+//        User user = userRepository.findByEmail(email)
+//                .orElseThrow(() -> new ResourceNotFoundException("User not found with email " + email));
+//        Forum forum = forumRepository.findById(forumId)
+//                .orElseThrow(() -> new ResourceNotFoundException("Forum not found with id " + forumId));
+//        Like like = new Like();
+//        like.setForumId(forumId);
+//        like.setUserId(String.valueOf(user.getUserId()));
+//        like = likeRepository.save(like);
+//        return likeMapper.toDTO(like);
+//    }
+
     public LikeDTO likeForum(String forumId, String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with email " + email));
         Forum forum = forumRepository.findById(forumId)
                 .orElseThrow(() -> new ResourceNotFoundException("Forum not found with id " + forumId));
-        Like like = new Like();
-        like.setForumId(forumId);
-        like.setUserId(String.valueOf(user.getUserId()));
-        like = likeRepository.save(like);
-        return likeMapper.toDTO(like);
+
+        String userId = String.valueOf(user.getUserId());
+
+        // Find existing like (using a query in the repository)
+        Optional<Like> existingLike = likeRepository.findByUserIdAndForumId(userId,forumId);
+
+        if (existingLike.isPresent()) {
+            likeRepository.delete(existingLike.get()); // Toggle: Remove existing like
+            return null; // Or return null if you prefer
+        } else {
+            Like like = new Like();
+            like.setForumId(forumId);
+            like.setUserId(userId);
+            like = likeRepository.save(like);
+            return likeMapper.toDTO(like);
+        }
     }
 
     public CommentDTO commentOnForum(String forumId, String email, CommentDTO commentDTO) {

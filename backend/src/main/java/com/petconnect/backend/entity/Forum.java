@@ -23,7 +23,7 @@ public class Forum {
 
     @NotNull
     @Indexed
-    private String userId;
+    private Long userId;
 
     @NotBlank
     private String title;
@@ -51,7 +51,7 @@ public class Forum {
     public Forum() {
     }
 
-    public Forum(String forumId, String userId, String title, String content, Date createdAt, Date updatedAt, List<Comment> comments, List<Like> likes, List<String> tags) {
+    public Forum(String forumId, Long userId, String title, String content, Date createdAt, Date updatedAt, List<Comment> comments, List<Like> likes, List<String> tags) {
         this.forumId = forumId;
         this.userId = userId;
         this.title = title;
@@ -79,11 +79,11 @@ public class Forum {
         this.forumId = forumId;
     }
 
-    public String getUserId() {
+    public Long getUserId() {
         return userId;
     }
 
-    public void setUserId(String userId) {
+    public void setUserId(Long userId) {
         this.userId = userId;
     }
 
