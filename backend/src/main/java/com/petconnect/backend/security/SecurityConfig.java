@@ -66,8 +66,6 @@
 //}
 //
 package com.petconnect.backend.security;
-
-import com.cloudinary.Api;
 import com.petconnect.backend.entity.Appointment;
 import com.petconnect.backend.services.AuthService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -115,7 +113,6 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/forums/**").permitAll()
                         .requestMatchers("/appointments/**").permitAll()
                         .requestMatchers("/profile/**").authenticated()
-                        .requestMatchers("/forums/**").authenticated()
                         .requestMatchers("/forums/**").authenticated()
                         .requestMatchers("/pets/**").authenticated()
 //                        .requestMatchers("/comments/**").authenticated()
