@@ -493,7 +493,7 @@ public class User implements UserDetails {
     public User() {
     }
 
-    public User(Long userId, String firstName, String lastName, String email, Address address, String avatarUrl, String avatarPublicId, String mobileNumber, String password, String verificationToken, String resetToken, Set<Role> roles, boolean isVerified, String oauthProvider, String oauthProviderId, boolean isTwoFactorEnabled, Date createdAt, Date updatedAt) {
+    public User(Long userId, String firstName, String lastName, String email, Address address, String avatarUrl, String avatarPublicId, String mobileNumber, String password, String verificationToken, String resetToken, Set<Role> roles, boolean isVerified, String oauthProvider, String oauthProviderId, boolean isTwoFactorEnabled, Date createdAt, Date updatedAt, List<Pet> pets) {
         this.userId = userId;
         this.firstName = firstName;
         this.lastName = lastName;
@@ -512,6 +512,7 @@ public class User implements UserDetails {
         this.isTwoFactorEnabled = isTwoFactorEnabled;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
+        this.pets = pets;
     }
 
     public Address getAddress() {

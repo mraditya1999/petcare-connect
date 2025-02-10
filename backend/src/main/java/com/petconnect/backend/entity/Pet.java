@@ -33,8 +33,6 @@ public class Pet extends BaseEntity {
     @DecimalMax(value = "300", message = "Weight cannot exceed 300 kg")
     private Double weight;
 
-    private String avatarUrl;
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", referencedColumnName = "userId", nullable = false)
     @JsonIgnoreProperties("pets") // <-- Use the same reference name as in User.java
@@ -81,15 +79,6 @@ public class Pet extends BaseEntity {
         this.weight = weight;
     }
 
-    public String getAvatarUrl() {
-        return avatarUrl;
-    }
-
-    public void setAvatarUrl(String avatarUrl) {
-        this.avatarUrl = avatarUrl;
-    }
-
-
 //    public Species getSpecies() {
 //        return species;
 //    }
@@ -118,12 +107,12 @@ public class Pet extends BaseEntity {
     public Pet() {
     }
 
-    public Pet(Long petId, String petName, Integer age, Double weight, String avatarUrl, User petOwner) {
+    public Pet(Long petId, String petName, Integer age, Double weight, User petOwner) {
         this.petId = petId;
         this.petName = petName;
         this.age = age;
-        this.weight = weight;
-        this.avatarUrl = avatarUrl;
+        this.weight =
+                weight;
         this.petOwner = petOwner;
     }
 }

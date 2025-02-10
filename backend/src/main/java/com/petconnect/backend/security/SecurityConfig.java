@@ -114,6 +114,7 @@ public class SecurityConfig {
                         .requestMatchers("/appointments/**").permitAll()
                         .requestMatchers("/profile/**").authenticated()
                         .requestMatchers("/forums/**").authenticated()
+                        .requestMatchers("/pets").authenticated()
                         .requestMatchers("/pets/**").authenticated()
 //                        .requestMatchers("/comments/**").authenticated()
 //                        .requestMatchers("/likes/**").authenticated()
