@@ -21,7 +21,7 @@ public class AppointmentController
         Appointment savedAppointment = appointmentService.createAppointment(
                 appointment.getPetOwner().getUserId(),
                 appointment.getPet().getPetId(),
-                appointment.getSpecialist().getSpecialistId(),
+                appointment.getSpecialist().getUserId(),
                 appointment.getDate()
         );
         return ResponseEntity.ok(savedAppointment);

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -30,6 +30,19 @@ const PetInfo = () => {
     event.preventDefault();
     console.log("Updated Pet Profile: ", petProfile);
   };
+
+  useEffect(() => {
+    // Dummy Data
+    const dummyPetProfile = {
+      petName: "Buddy",
+      species: "Dog",
+      breed: "Golden Retriever",
+      gender: "Male",
+      weight: "25 kg",
+      age: "3 years",
+    };
+    setPetProfile(dummyPetProfile);
+  }, []); // Empty dependency array ensures this runs only once on mount
 
   return (
     <Card className="mx-auto mt-6 h-full">

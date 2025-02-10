@@ -340,8 +340,8 @@ import { formatRelativeTime } from "@/utils/helpers";
 import { ROUTES } from "@/utils/constants";
 
 const ForumPage = () => {
-  const [newForumTitle, setNewForumTitle] = useState("New Forum"); // Default title
-  const [newForumTags, setNewForumTags] = useState(["community"]); // Default tags
+  const [newForumTitle, setNewForumTitle] = useState(""); // Default title
+  const [newForumTags, setNewForumTags] = useState([]); // Default tags
   const [forums, setForums] = useState<IForum[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);

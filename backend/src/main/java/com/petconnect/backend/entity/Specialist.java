@@ -54,6 +54,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.util.Date;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -71,14 +72,10 @@ public class Specialist extends User {
     private String speciality;
 
     // Constructor initializing inherited User fields
-    public Specialist(Long userId, String firstName, String lastName, String email, Address address,
-                      String avatarUrl, String avatarPublicId, String mobileNumber, String password,
-                      String verificationToken, String resetToken, Set<Role> roles, boolean isVerified,
-                      String oauthProvider, String oauthProviderId, boolean isTwoFactorEnabled,
-                      Date createdAt, Date updatedAt, String about, String speciality) {
-        super(userId, firstName, lastName, email, address, avatarUrl, avatarPublicId, mobileNumber,
-                password, verificationToken, resetToken, roles, isVerified, oauthProvider,
-                oauthProviderId, isTwoFactorEnabled, createdAt, updatedAt);
+
+
+    public Specialist(Long userId, String firstName, String lastName, String email, Address address, String avatarUrl, String avatarPublicId, String mobileNumber, String password, String verificationToken, String resetToken, Set<Role> roles, boolean isVerified, String oauthProvider, String oauthProviderId, boolean isTwoFactorEnabled, Date createdAt, Date updatedAt, List<Pet> pets, String about, String speciality) {
+        super(userId, firstName, lastName, email, address, avatarUrl, avatarPublicId, mobileNumber, password, verificationToken, resetToken, roles, isVerified, oauthProvider, oauthProviderId, isTwoFactorEnabled, createdAt, updatedAt, pets);
         this.about = about;
         this.speciality = speciality;
     }
@@ -96,10 +93,6 @@ public class Specialist extends User {
     }
 
     public Specialist() {
-    }
-
-    public Specialist(Long userId, String firstName, String lastName, String email, Address address, String avatarUrl, String avatarPublicId, String mobileNumber, String password, String verificationToken, String resetToken, Set<Role> roles, boolean isVerified, String oauthProvider, String oauthProviderId, boolean isTwoFactorEnabled, Date createdAt, Date updatedAt) {
-        super(userId, firstName, lastName, email, address, avatarUrl, avatarPublicId, mobileNumber, password, verificationToken, resetToken, roles, isVerified, oauthProvider, oauthProviderId, isTwoFactorEnabled, createdAt, updatedAt);
     }
 
     public String getAbout() {
