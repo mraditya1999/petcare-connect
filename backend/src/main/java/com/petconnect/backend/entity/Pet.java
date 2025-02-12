@@ -1,20 +1,23 @@
 package com.petconnect.backend.entity;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+
+import java.util.Date;
 
 /**
  * Entity representing a Pet.
  */
+//@Data
+//@NoArgsConstructor
+//@AllArgsConstructor
+@Builder
 @Entity
-
-public class Pet extends BaseEntity {
+public class Pet {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -33,20 +36,41 @@ public class Pet extends BaseEntity {
     @DecimalMax(value = "300", message = "Weight cannot exceed 300 kg")
     private Double weight;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "user_id", referencedColumnName = "userId", nullable = false)
-    @JsonIgnoreProperties("pets") // <-- Use the same reference name as in User.java
-    private User petOwner;
+    @JsonBackReference
+    private User owner;
 
+    @CreationTimestamp
+    @Column(nullable = false, updatable = false)
+    private Date createdAt;
 
-//    @ManyToOne
-//    @JoinColumn(name = "speciesId", nullable = false)
-//    private Species species;
-//
-//    @ManyToOne
-//    @JoinColumn(name = "breedId")
-//    private Breed breed;
+    @UpdateTimestamp
+    @Column(nullable = false)
+    private Date updatedAt;
 
+    @Column
+    private String avatarUrl; // Add this
+
+    @Column
+    private String avatarPublicId; // Add this
+
+    public Pet() {
+    }
+
+    public Pet(Long petId, String petName, Integer age, Double weight, User owner, Date createdAt, Date updatedAt, String avatarUrl, String avatarPublicId) {
+        this.petId = petId;
+        this.petName = petName;
+        this.age = age;
+        this.weight = weight;
+        this.owner = owner;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
+        this.avatarUrl = avatarUrl;
+        this.avatarPublicId = avatarPublicId;
+    }
+
+    // Getters and Setters
     public Long getPetId() {
         return petId;
     }
@@ -79,40 +103,56 @@ public class Pet extends BaseEntity {
         this.weight = weight;
     }
 
-//    public Species getSpecies() {
-//        return species;
-//    }
-//
-//    public void setSpecies(Species species) {
-//        this.species = species;
-//    }
-//
-//    public Breed getBreed() {
-//        return breed;
-//    }
-//
-//    public void setBreed(Breed breed) {
-//        this.breed = breed;
-//    }
-
-
     public User getPetOwner() {
-        return petOwner;
+        return owner;
     }
 
-    public void setPetOwner(User petOwner) {
-        this.petOwner = petOwner;
+    public void setPetOwner(User owner) {
+        this.owner = owner;
     }
 
-    public Pet() {
+    public Date getCreatedAt() {
+        return createdAt;
     }
 
-    public Pet(Long petId, String petName, Integer age, Double weight, User petOwner) {
-        this.petId = petId;
-        this.petName = petName;
-        this.age = age;
-        this.weight =
-                weight;
-        this.petOwner = petOwner;
+    public void setCreatedAt(Date createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public Date getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(Date updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+
+    public String getAvatarUrl() {
+        return avatarUrl;
+    }
+
+    public void setAvatarUrl(String avatarUrl) {
+        this.avatarUrl = avatarUrl;
+    }
+
+    public String getAvatarPublicId() {
+        return avatarPublicId;
+    }
+
+    public void setAvatarPublicId(String avatarPublicId) {
+        this.avatarPublicId = avatarPublicId;
+    }
+
+    @Override
+    public String toString() {
+        return "Pet{" +
+                "petId=" + petId +
+                ", petName='" + petName + '\'' +
+                ", age=" + age +
+                ", weight=" + weight +
+                ", petOwner=" + owner.getUserId() + // Avoid recursive call to petOwner
+                ", avatarUrl='" + avatarUrl + '\'' +
+                ", avatarPublicId='" + avatarPublicId + '\'' +
+                '}';
     }
 }

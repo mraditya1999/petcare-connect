@@ -1,29 +1,14 @@
-//package com.petconnect.backend.mappers;
+//package com.petconnect.backend.mapper;
 //
-//public class SpecialistMapper {
+//import com.petconnect.backend.dto.SpecialistDTO;
+//import com.petconnect.backend.entity.Specialist;
+//import org.mapstruct.Mapper;
+//import org.mapstruct.factory.Mappers;
 //
-//    public static SpecialistDTO toDTO(Specialist specialist, User user) {
-//        Address address = user.getAddress();
+//@Mapper
+//public interface SpecialistMapper {
+//    SpecialistMapper INSTANCE = Mappers.getMapper(SpecialistMapper.class);
 //
-//        return new SpecialistDTO(
-//                specialist.getSpecialistId(),
-//                specialist.getAbout(),
-//                user.getUserId(),
-//                specialist.getSpeciality(),
-//                user.getFirstName(),
-//                user.getLastName(),
-//                user.getEmail(),
-//                user.getAvatarUrl(),
-//                (address != null) ? address.getAddressLine1() : null,
-//                (address != null) ? address.getCity() : null,
-//                (address != null) ? address.getState() : null
-//        );
-//    }
-//
-//    public static Specialist toEntity(SpecialistDTO dto) {
-//        Specialist specialist = new Specialist();
-//        specialist.setAbout(dto.getAbout());
-//        specialist.setSpeciality(dto.getSpecialityId());
-//        return specialist;
-//    }
+//    SpecialistDTO toDTO(Specialist specialist);
+//    Specialist toEntity(SpecialistDTO specialistDTO);
 //}

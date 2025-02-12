@@ -1,57 +1,6 @@
-//package com.petconnect.backend.dto;
-//
-//public class PetRequestDTO {
-//    private String petName;
-//    private Integer age;
-//    private Double weight;
-//    private String avatarUrl;
-//    private Long petOwnerId; // Only send userId, not entire User object
-//
-//    // Getters and Setters
-//
-//    public String getPetName() {
-//        return petName;
-//    }
-//
-//    public void setPetName(String petName) {
-//        this.petName = petName;
-//    }
-//
-//    public Integer getAge() {
-//        return age;
-//    }
-//
-//    public void setAge(Integer age) {
-//        this.age = age;
-//    }
-//
-//    public Double getWeight() {
-//        return weight;
-//    }
-//
-//    public void setWeight(Double weight) {
-//        this.weight = weight;
-//    }
-//
-//    public String getAvatarUrl() {
-//        return avatarUrl;
-//    }
-//
-//    public void setAvatarUrl(String avatarUrl) {
-//        this.avatarUrl = avatarUrl;
-//    }
-//
-//    public Long getPetOwnerId() {
-//        return petOwnerId;
-//    }
-//
-//    public void setPetOwnerId(Long petOwnerId) {
-//        this.petOwnerId = petOwnerId;
-//    }
-//}
-//
-
 package com.petconnect.backend.dto;
+
+import java.time.LocalDateTime;
 
 public class PetDTO {
 
@@ -59,34 +8,28 @@ public class PetDTO {
     private String petName;
     private Integer age;
     private Double weight;
-//    private String avatarUrl;
-    private String avatarPublicId;  // Add this
+    private String avatarPublicId;
     private String ownerFirstName;
     private String ownerLastName;
     private String ownerMobileNumber;
+    private LocalDateTime createdAt;  // Add this
+    private LocalDateTime updatedAt;  // Add this
 
     public PetDTO() {
     }
 
-    public PetDTO(Long petId, String petName, Integer age, Double weight, String avatarUrl, String avatarPublicId, String ownerFirstName, String ownerLastName, String ownerMobileNumber) {
+    public PetDTO(Long petId, String petName, Integer age, Double weight, String avatarPublicId, String ownerFirstName, String ownerLastName, String ownerMobileNumber, LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.petId = petId;
         this.petName = petName;
         this.age = age;
         this.weight = weight;
-//        this.avatarUrl = avatarUrl;
-//        this.avatarPublicId = avatarPublicId;
+        this.avatarPublicId = avatarPublicId;
         this.ownerFirstName = ownerFirstName;
         this.ownerLastName = ownerLastName;
         this.ownerMobileNumber = ownerMobileNumber;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
     }
-
-//    public String getAvatarPublicId() {
-//        return avatarPublicId;
-//    }
-//
-//    public void setAvatarPublicId(String avatarPublicId) {
-//        this.avatarPublicId = avatarPublicId;
-//    }
 
     // Getters and Setters
     public Long getPetId() {
@@ -121,13 +64,13 @@ public class PetDTO {
         this.weight = weight;
     }
 
-//    public String getAvatarUrl() {
-//        return avatarUrl;
-//    }
-//
-//    public void setAvatarUrl(String avatarUrl) {
-//        this.avatarUrl = avatarUrl;
-//    }
+    public String getAvatarPublicId() {
+        return avatarPublicId;
+    }
+
+    public void setAvatarPublicId(String avatarPublicId) {
+        this.avatarPublicId = avatarPublicId;
+    }
 
     public String getOwnerFirstName() {
         return ownerFirstName;
@@ -151,5 +94,21 @@ public class PetDTO {
 
     public void setOwnerMobileNumber(String ownerMobileNumber) {
         this.ownerMobileNumber = ownerMobileNumber;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
     }
 }

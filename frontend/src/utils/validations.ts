@@ -96,7 +96,8 @@ export const profileFormSchema = z.object({
   pincode: z
     .string()
     .regex(/^\d{6}$/, "Pincode must be exactly 6 digits")
-    .optional(),
+    .optional()
+    .transform((val) => (val ? parseInt(val, 10) : undefined)),
   city: z.string().optional(),
   state: z.string().optional(),
   country: z.string().optional(),

@@ -54,7 +54,6 @@ public class EmailService {
 
     public void sendResetEmail(User user) {
         String resetLink = frontendUrl + "/user/reset-password?token=" + user.getResetToken();
-        System.out.println(resetLink);
         Context context = new Context();
         context.setVariable("user", user);
         context.setVariable("resetLink", resetLink);

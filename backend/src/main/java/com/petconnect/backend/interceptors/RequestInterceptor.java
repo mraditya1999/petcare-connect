@@ -18,7 +18,7 @@ public class RequestInterceptor implements HandlerInterceptor {
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws IOException {
         logger.info("Incoming request: {} {}", request.getMethod(), request.getRequestURI());
-        return true; // Continue the request
+        return true;
     }
 
     @Override

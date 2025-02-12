@@ -3,6 +3,7 @@ package com.petconnect.backend.config;
 import com.petconnect.backend.interceptors.RequestInterceptor;
 import jakarta.servlet.MultipartConfigElement;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.embedded.tomcat.TomcatServletWebServerFactory;
 import org.springframework.boot.web.server.WebServerFactoryCustomizer;
 import org.springframework.boot.web.servlet.MultipartConfigFactory;
@@ -24,6 +25,9 @@ public class WebConfig implements WebMvcConfigurer {
 
     private final RequestInterceptor requestInterceptor;
 
+    @Value("${frontend.url}")
+    private String frontendUrl;
+
     @Autowired
     public WebConfig(RequestInterceptor requestInterceptor) {
         this.requestInterceptor = requestInterceptor;
@@ -32,12 +36,13 @@ public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(requestInterceptor).addPathPatterns("/auth/**"); // Apply to auth paths
+        registry.addInterceptor(requestInterceptor).addPathPatterns("/profiles/**"); // Apply to auth paths
     }
 
     @Bean
-    public static CorsConfigurationSource corsConfigurationSource() {
+    public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Collections.singletonList(AppConfig.FRONTEND_URL));
+        configuration.setAllowedOrigins(Collections.singletonList(frontendUrl));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
@@ -52,12 +57,12 @@ public class WebConfig implements WebMvcConfigurer {
         return factory -> factory.setContextPath("/api/v1");
     }
 
-    @Bean
-    public MultipartConfigElement multipartConfigElement() {
-        MultipartConfigFactory factory = new MultipartConfigFactory();
-        factory.setMaxFileSize(DataSize.ofMegabytes(10));
-        factory.setMaxRequestSize(DataSize.ofMegabytes(10));
-        return factory.createMultipartConfig();
-    }
+//    @Bean
+//    public MultipartConfigElement multipartConfigElement() {
+//        MultipartConfigFactory factory = new MultipartConfigFactory();
+//        factory.setMaxFileSize(DataSize.ofMegabytes(10));
+//        factory.setMaxRequestSize(DataSize.ofMegabytes(10));
+//        return factory.createMultipartConfig();
+//    }
 
 }

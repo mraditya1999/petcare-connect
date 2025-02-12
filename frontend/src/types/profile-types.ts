@@ -26,7 +26,7 @@
 //   success: string | null;
 // }
 export interface Address {
-  pincode: string;
+  pincode: number;
   city: string;
   state: string;
   country: string;
@@ -51,5 +51,3 @@ export interface IProfileState {
   error: string | null;
   success: string | null;
 }
-
-

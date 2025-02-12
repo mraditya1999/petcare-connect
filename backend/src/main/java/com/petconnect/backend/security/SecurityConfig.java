@@ -40,10 +40,10 @@
 //                .authorizeHttpRequests((requests) -> requests
 //                        .requestMatchers(AUTH_WHITELIST).permitAll()
 //                        .requestMatchers("/profile/**").authenticated()
-////                        .requestMatchers("/forums/create", "/forums/update/**", "/forums/delete/**").authenticated()
-////                        .requestMatchers("/comments/**").authenticated()
-////                        .requestMatchers("/likes/**").authenticated()
-////                        .requestMatchers("/profile/users/**", "/profile/users/role/**").hasRole("ADMIN")
+/// /                        .requestMatchers("/forums/create", "/forums/update/**", "/forums/delete/**").authenticated()
+/// /                        .requestMatchers("/comments/**").authenticated()
+/// /                        .requestMatchers("/likes/**").authenticated()
+/// /                        .requestMatchers("/profile/users/**", "/profile/users/role/**").hasRole("ADMIN")
 //                        .anyRequest().authenticated())
 //                .csrf(AbstractHttpConfigurer::disable)
 //                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -66,7 +66,8 @@
 //}
 //
 package com.petconnect.backend.security;
-import com.petconnect.backend.entity.Appointment;
+
+//import com.petconnect.backend.entity.Appointment;
 import com.petconnect.backend.services.AuthService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -78,10 +79,16 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.provisioning.InMemoryUserDetailsManager;
+import org.springframework.security.provisioning.JdbcUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
+import javax.sql.DataSource;
 
 import static org.springframework.security.config.Customizer.withDefaults;
 
@@ -100,7 +107,6 @@ public class SecurityConfig {
 
     private static final String[] AUTH_WHITELIST = {
             "/auth/**",
-            "/specialists/**",
             "/upload/**",
     };
 
@@ -109,16 +115,8 @@ public class SecurityConfig {
         http.cors(withDefaults())
                 .authorizeHttpRequests((requests) -> requests
                         .requestMatchers(AUTH_WHITELIST).permitAll()
-                        .requestMatchers(HttpMethod.GET, "/forums").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/forums/**").permitAll()
-                        .requestMatchers("/appointments/**").permitAll()
-                        .requestMatchers("/profile/**").authenticated()
-                        .requestMatchers("/forums/**").authenticated()
-                        .requestMatchers("/pets").authenticated()
-                        .requestMatchers("/pets/**").authenticated()
-//                        .requestMatchers("/comments/**").authenticated()
-//                        .requestMatchers("/likes/**").authenticated()
-//                        .requestMatchers("/profile/users/**", "/profile/users/role/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET,"/forums/**","/specialists/**").permitAll()
+                        .requestMatchers("/profile/**","/forums/**","/appointments/**","/pets/**").authenticated()
                         .anyRequest().authenticated())
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -138,4 +136,32 @@ public class SecurityConfig {
         auth.userDetailsService(authService).passwordEncoder(passwordEncoder());
         return auth.build();
     }
+
+//    In-memory databases
+//    @Bean
+//    public UserDetailsService userDetailsService() {
+//        InMemoryUserDetailsManager manager = new InMemoryUserDetailsManager();
+//        if (!manager.userExists("ay5480620@gmail.com")) {
+//            manager.createUser(User.withUsername("ay5480620@gmail.com").password("@mrAditya1999").roles("ADMIN").build());
+//        }
+//
+//        if (!manager.userExists("dbadaditya@gmail.com")) {
+//            manager.createUser(User.withUsername("dbadaditya@gmail.com").password("@mrAditya1999").roles("USER").build());
+//        }
+//        return manager;
+//    }
+
+//    Jdbc databases
+//    @Bean
+//    public UserDetailsService userDetailsService(DataSource dataSource) {
+//        JdbcUserDetailsManager manager = new JdbcUserDetailsManager(dataSource);
+//        if (!manager.userExists("ay5480620@gmail.com")) {
+//            manager.createUser(User.withUsername("ay5480620@gmail.com").password("@mrAditya1999").roles("ADMIN").build());
+//        }
+//
+//        if (!manager.userExists("dbadaditya@gmail.com")) {
+//            manager.createUser(User.withUsername("dbadaditya@gmail.com").password("@mrAditya1999").roles("USER").build());
+//        }
+//        return manager;
+//    }
 }

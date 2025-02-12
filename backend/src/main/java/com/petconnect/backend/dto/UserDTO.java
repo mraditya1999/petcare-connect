@@ -1,9 +1,12 @@
 package com.petconnect.backend.dto;
 
-import com.petconnect.backend.entity.Address;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import lombok.*;
 
-import java.util.Set;
-
+//@Data
+//@NoArgsConstructor
+//@AllArgsConstructor
+@Builder
 public class UserDTO {
     private Long userId;
     private String firstName;
@@ -14,13 +17,13 @@ public class UserDTO {
     private String avatarPublicId;
     private String mobileNumber;
 
-    public UserDTO() {}
+    public UserDTO() {
+    }
 
-    public UserDTO(Long userId,String firstName, String lastName, String email) {
-        this.userId = userId;
+    public UserDTO(String firstName, String lastName, String mobileNumber) {
         this.firstName = firstName;
         this.lastName = lastName;
-        this.email = email;
+        this.mobileNumber = mobileNumber;
     }
 
     public UserDTO(Long userId, String firstName, String lastName, String email, AddressDTO address, String avatarUrl, String avatarPublicId, String mobileNumber) {
