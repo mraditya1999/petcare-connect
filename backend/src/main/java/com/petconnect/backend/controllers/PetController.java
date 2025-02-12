@@ -1,104 +1,90 @@
-//package com.petconnect.backend.controllers;
-//
-//import com.petconnect.backend.dto.ApiResponse;
-//import com.petconnect.backend.dto.PetDTO;
-//import com.petconnect.backend.exceptions.ResourceNotFoundException;
-//import com.petconnect.backend.services.PetService;
-//import com.petconnect.backend.services.UploadService;
-//import jakarta.validation.Valid;
-//import org.springframework.beans.factory.annotation.Autowired;
-//import org.springframework.http.HttpStatus;
-//import org.springframework.http.ResponseEntity;
-//import org.springframework.security.core.annotation.AuthenticationPrincipal;
-//import org.springframework.security.core.context.SecurityContextHolder;
-//import org.springframework.security.core.userdetails.UserDetails;
-//import org.springframework.validation.annotation.Validated;
-//import org.springframework.web.bind.annotation.*;
-//
-//import java.util.List;
-//
-//@RestController
-//@RequestMapping("/pets")
-//@Validated
-//public class PetController {
-//
-//    private final PetService petService;
-//    private final UploadService uploadService;
-//
-//    @Autowired
-//    public PetController(UploadService uploadService, PetService petService) {
-//        this.uploadService = uploadService;
-//        this.petService = petService;
-//    }
-//
-//    @PostMapping
-//    public ResponseEntity<ApiResponse<PetDTO>> createPet(@Valid @RequestBody PetDTO petRequest,
-//                                                         @AuthenticationPrincipal UserDetails userDetails) {
-//
-//        try {
-//            String username = userDetails.getUsername();
-//            PetDTO createdPetDTO = petService.createPetForUser(petRequest, username);
-//            ApiResponse<PetDTO> apiResponse = new ApiResponse<>("Pet created successfully", createdPetDTO);
-//            return new ResponseEntity<>(apiResponse, HttpStatus.CREATED);
-//
-//        } catch (ResourceNotFoundException e) {
-//            ApiResponse<PetDTO> response = new ApiResponse<>(e.getMessage(), null);
-//            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
-//        } catch (IllegalArgumentException e) {
-//            ApiResponse<PetDTO> response = new ApiResponse<>(e.getMessage(), null);
-//            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//            ApiResponse<PetDTO> errorResponse = new ApiResponse<>("An error occurred: " + e.getMessage(), null);
-//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
-//        }
-//    }
-//
-//    @GetMapping
-//    public ResponseEntity<List<PetDTO>> getAllPets() {
-//        return ResponseEntity.ok(petService.getAllPets());
-//    }
-//
-//    @GetMapping("/my-pets")
-//    public ResponseEntity<List<PetDTO>> getAllPetsForCurrentUser() {
-//        String username = SecurityContextHolder.getContext().getAuthentication().getName();
-//        List<PetDTO> pets = petService.getAllPetsForUser(username);
-//        return ResponseEntity.ok(pets);
-//    }
-//
-//    @GetMapping("/{id}")
-//    public ResponseEntity<PetDTO> getPetById(@PathVariable Long id) {
-//        PetDTO petDTO = petService.getPetById(id);
-//        return ResponseEntity.ok(petDTO);
-//    }
-//
-//    @PutMapping("/{id}")
-//    public ResponseEntity<ApiResponse<PetDTO>> updatePet(@PathVariable Long id,
-//                                                         @Valid @RequestBody PetDTO petRequest,
-//                                                         @AuthenticationPrincipal UserDetails userDetails) {
-//        try {
-//            String username = userDetails.getUsername();
-//            PetDTO updatedPetDTO = petService.updatePetForUser(id, petRequest, username);
-//            ApiResponse<PetDTO> apiResponse = new ApiResponse<>("Pet updated successfully", updatedPetDTO);
-//            return ResponseEntity.ok(apiResponse);
-//
-//        } catch (ResourceNotFoundException e) {
-//            ApiResponse<PetDTO> response = new ApiResponse<>(e.getMessage(), null);
-//            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
-//        } catch (IllegalArgumentException e) {
-//            ApiResponse<PetDTO> response = new ApiResponse<>(e.getMessage(), null);
-//            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//            ApiResponse<PetDTO> errorResponse = new ApiResponse<>("An error occurred: " + e.getMessage(), null);
-//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
-//        }
-//    }
-//
-//    @DeleteMapping("/{id}")
-//    public ResponseEntity<Void> deletePet(@PathVariable Long id) {
-//        String username = SecurityContextHolder.getContext().getAuthentication().getName();
-//        petService.deletePetForUser(id, username);
-//        return ResponseEntity.noContent().build();
-//    }
-//}
+package com.petconnect.backend.controllers;
+
+import com.petconnect.backend.dto.PetDTO;
+import com.petconnect.backend.services.PetService;
+import jakarta.validation.Valid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
+import java.util.List;
+
+@RestController
+@RequestMapping("/pets")
+public class PetController {
+
+    private static final Logger logger = LoggerFactory.getLogger(PetController.class);
+
+    private final PetService petService;
+
+    @Autowired
+    public PetController(PetService petService) {
+        this.petService = petService;
+    }
+
+    @PostMapping(consumes = { "multipart/form-data" })
+    public ResponseEntity<PetDTO> createPetForUser(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestParam("name") String name,
+            @RequestParam("breed") String breed,
+            @RequestParam("age") int age,
+            @RequestParam("weight") Double weight,
+            @RequestParam("gender") String gender,
+            @RequestParam("species") String species,
+            @RequestParam(value = "avatarFile", required = false) MultipartFile avatarFile) throws IOException {
+
+        PetDTO petDTO = new PetDTO(name, breed, age, weight, gender, species);
+        PetDTO createdPet = petService.createPetForUser(petDTO, avatarFile);
+        logger.info("Pet created for user: {}", userDetails.getUsername());
+        return ResponseEntity.ok(createdPet);
+    }
+
+    @GetMapping
+    public ResponseEntity<List<PetDTO>> getAllPets() {
+        List<PetDTO> pets = petService.getAllPets();
+        return ResponseEntity.ok(pets);
+    }
+
+    @GetMapping("/user")
+    public ResponseEntity<List<PetDTO>> getAllPetsForUser(@AuthenticationPrincipal UserDetails userDetails) {
+        List<PetDTO> pets = petService.getAllPetsForUser();
+        return ResponseEntity.ok(pets);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<PetDTO> getPetById(@PathVariable Long id, @AuthenticationPrincipal UserDetails userDetails) {
+        PetDTO pet = petService.getPetById(id);
+        return ResponseEntity.ok(pet);
+    }
+
+    @PutMapping(value = "/{id}", consumes = { "multipart/form-data" })
+    public ResponseEntity<PetDTO> updatePetForUser(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestParam("name") String name,
+            @RequestParam("breed") String breed,
+            @RequestParam("age") int age,
+            @RequestParam("weight") Double weight,
+            @RequestParam("gender") String gender,
+            @RequestParam("species") String species,
+            @RequestParam(value = "avatarFile", required = false) MultipartFile avatarFile) throws IOException {
+
+        PetDTO petDTO = new PetDTO(name, breed, age, weight, gender, species);
+        PetDTO updatedPet = petService.updatePetForUser(id, petDTO, avatarFile);
+        logger.info("Pet updated for user: {}", userDetails.getUsername());
+        return ResponseEntity.ok(updatedPet);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deletePetForUser(@PathVariable Long id, @AuthenticationPrincipal UserDetails userDetails) {
+        petService.deletePetForUser(id);
+        logger.info("Pet deleted with ID: {}", id);
+        return ResponseEntity.noContent().build();
+    }
+}
