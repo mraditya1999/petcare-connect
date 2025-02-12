@@ -14,6 +14,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
+import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import java.util.Arrays;
@@ -36,7 +37,7 @@ public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(requestInterceptor).addPathPatterns("/auth/**"); // Apply to auth paths
-        registry.addInterceptor(requestInterceptor).addPathPatterns("/profiles/**"); // Apply to auth paths
+        registry.addInterceptor(requestInterceptor).addPathPatterns("/profiles/**"); // Apply to profiles paths
     }
 
     @Bean
@@ -52,8 +53,26 @@ public class WebConfig implements WebMvcConfigurer {
         return source;
     }
 
+
     @Bean
     public WebServerFactoryCustomizer<TomcatServletWebServerFactory> webServerFactoryCustomizer() {
         return factory -> factory.setContextPath("/api/v1");
     }
+
+    @Bean
+    public MultipartConfigElement multipartConfigElement() {
+        MultipartConfigFactory factory = new MultipartConfigFactory();
+        factory.setMaxFileSize(DataSize.ofMegabytes(10));
+        factory.setMaxRequestSize(DataSize.ofMegabytes(20));
+        return factory.createMultipartConfig();
+    }
+
+//    @Override
+//    public void addResourceHandlers(ResourceHandlerRegistry registry) {
+//        registry.addResourceHandler("/**")
+//                .addResourceLocations("classpath:/static/")
+//                .setCachePeriod(3600); // Cache for 1 hour
+//    }
+
+
 }
