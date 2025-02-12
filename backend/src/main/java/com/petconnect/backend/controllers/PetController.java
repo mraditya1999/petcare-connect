@@ -67,12 +67,12 @@ public class PetController {
     public ResponseEntity<PetDTO> updatePetForUser(
             @PathVariable Long id,
             @AuthenticationPrincipal UserDetails userDetails,
-            @RequestParam("name") String name,
-            @RequestParam("breed") String breed,
-            @RequestParam("age") int age,
-            @RequestParam("weight") Double weight,
-            @RequestParam("gender") String gender,
-            @RequestParam("species") String species,
+            @RequestParam(value = "name", required = false) String name,
+            @RequestParam(value = "breed", required = false) String breed,
+            @RequestParam(value = "age", required = false) Integer age,
+            @RequestParam(value = "weight", required = false) Double weight,
+            @RequestParam(value = "gender", required = false) String gender,
+            @RequestParam(value = "species", required = false) String species,
             @RequestParam(value = "avatarFile", required = false) MultipartFile avatarFile) throws IOException {
 
         PetDTO petDTO = new PetDTO(name, breed, age, weight, gender, species);
@@ -82,9 +82,9 @@ public class PetController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deletePetForUser(@PathVariable Long id, @AuthenticationPrincipal UserDetails userDetails) {
-        petService.deletePetForUser(id);
+    public ResponseEntity<String> deletePetForUser(@PathVariable Long id, @AuthenticationPrincipal UserDetails userDetails) {
+        petService.deletePetForUser(id,userDetails);
         logger.info("Pet deleted with ID: {}", id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok("Pet successfully deleted.");
     }
 }
