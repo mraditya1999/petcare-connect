@@ -18,8 +18,7 @@ public class UserRegistrationRequest {
     @NotBlank(message = "Password is mandatory")
     private String password;
 
-    public UserRegistrationRequest() {
-    }
+    public UserRegistrationRequest() {}
 
     public UserRegistrationRequest(String firstName, String lastName, String email, String password) {
         this.firstName = firstName;

@@ -2,9 +2,6 @@ package com.petconnect.backend.dto;
 
 import lombok.*;
 
-//@Data
-//@NoArgsConstructor
-//@AllArgsConstructor
 @Builder
 public class AddressDTO {
     private Long addressId;
@@ -14,8 +11,7 @@ public class AddressDTO {
     private String country;
     private String locality;
 
-    public AddressDTO() {
-    }
+    public AddressDTO() {}
 
     public AddressDTO(Long addressId, Long pincode, String city, String state, String country, String locality) {
         this.addressId = addressId;
@@ -26,6 +22,7 @@ public class AddressDTO {
         this.locality = locality;
     }
 
+    // Getters and Setters
     public Long getAddressId() {
         return addressId;
     }

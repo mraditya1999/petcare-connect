@@ -1,30 +1,22 @@
 package com.petconnect.backend.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
-import lombok.*;
 import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.userdetails.UserDetails;
-
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Size;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
-//@Data
 @SuperBuilder
-//@NoArgsConstructor
-//@AllArgsConstructor
 @Entity
 @Table(name = "users")
 @Inheritance(strategy = InheritanceType.JOINED)
-public class User implements UserDetails {
+public class User {
+
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -44,13 +36,12 @@ public class User implements UserDetails {
     @Email(message = "Email must be valid")
     @Size(max = 100, message = "Email cannot exceed 100 characters")
     @Column(nullable = false, unique = true, length = 100)
-    private String email; // User login email
+    private String email;
 
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "address_id", referencedColumnName = "addressId")
     @JsonManagedReference
-    private Address address;
-
+    private Address address; // Make sure Address entity exists
 
     @Column(length = 255)
     private String avatarUrl;
@@ -80,17 +71,9 @@ public class User implements UserDetails {
     @JsonManagedReference
     private Set<Role> roles = new HashSet<>();
 
+
     @Column(nullable = false)
     private boolean isVerified = false;
-
-//    @Column
-//    private String oauthProvider;
-//
-//    @Column
-//    private String oauthProviderId;
-
-//    @Column(nullable = false)
-//    private boolean isTwoFactorEnabled = false;
 
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
@@ -100,25 +83,16 @@ public class User implements UserDetails {
     @Column(nullable = false)
     private Date updatedAt;
 
+//    @Column
+//    private String oauthProvider;
+//
+//    @Column
+//    private String oauthProviderId;
+
+
     @PrePersist
     public void onPersist() {
         this.isVerified = false;
-//        this.isTwoFactorEnabled = false;
-    }
-
-    @Override
-    public Collection<? extends GrantedAuthority> getAuthorities() {
-        return roles.stream().map(role -> (GrantedAuthority) role).collect(Collectors.toList());
-    }
-
-    @Override
-    public String getUsername() {
-        return email;
-    }
-
-    @Override
-    public boolean isEnabled() {
-        return isVerified;
     }
 
     public boolean hasRole(Role.RoleName roleName) {

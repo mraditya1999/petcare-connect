@@ -7,7 +7,7 @@ import com.petconnect.backend.exceptions.UserAlreadyExistsException;
 import com.petconnect.backend.repositories.RoleRepository;
 import com.petconnect.backend.repositories.UserRepository;
 import com.petconnect.backend.security.JwtUtil;
-import com.petconnect.backend.security.UserPrincipal;
+import com.petconnect.backend.security.UserDetailsServiceImpl;
 import com.petconnect.backend.utils.TempUserStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -115,7 +115,7 @@ public class AuthService implements UserDetailsService {
     }
 
     public String generateJwtToken(User user) {
-        UserDetails userDetails = new UserPrincipal(user);
+        UserDetails userDetails = new UserDetailsServiceImpl(user);
         Map<String, Object> claims = new HashMap<>();
         claims.put("userId", user.getUserId());
         claims.put("email", user.getEmail());
