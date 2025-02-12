@@ -9,9 +9,9 @@ import com.petconnect.backend.exceptions.UserAlreadyExistsException;
 import com.petconnect.backend.services.EmailService;
 import com.petconnect.backend.services.AuthService;
 import com.petconnect.backend.services.UserService;
-import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -81,7 +81,8 @@ public class AuthController {
                 UserLoginResponse userLoginResponse = new UserLoginResponse(
                         user.getEmail(),
                         roles,
-                        token,authenticatedUser.get().getUserId()
+                        token,
+                        user.getUserId()
                 );
 
                 ApiResponse<UserLoginResponse> response = new ApiResponse<>("User logged in successfully", userLoginResponse);

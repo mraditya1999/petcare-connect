@@ -13,7 +13,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -33,24 +32,20 @@ public class AuthService implements UserDetailsService {
 
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
-    private PasswordEncoder passwordEncoder;
+    private final PasswordEncoder passwordEncoder;
     private final TempUserStore tempUserStore;
     private final EmailService emailService;
     private final JwtUtil jwtUtil;
 
     @Autowired
-    public AuthService(UserRepository userRepository, RoleRepository roleRepository, TempUserStore tempUserStore, EmailService emailService, JwtUtil jwtUtil) {
+    public AuthService(UserRepository userRepository, RoleRepository roleRepository, @Lazy  PasswordEncoder passwordEncoder,
+                       TempUserStore tempUserStore, EmailService emailService, JwtUtil jwtUtil) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
+        this.passwordEncoder = passwordEncoder;
         this.tempUserStore = tempUserStore;
         this.emailService = emailService;
         this.jwtUtil = jwtUtil;
-    }
-
-    @Autowired
-    @Lazy
-    public void setPasswordEncoder(PasswordEncoder passwordEncoder) {
-        this.passwordEncoder = passwordEncoder;
     }
 
     @Override
@@ -76,33 +71,8 @@ public class AuthService implements UserDetailsService {
         user.setVerificationToken(UUID.randomUUID().toString());
         user.setVerified(false);
 
-        // Check if the user is the first user
-        boolean isFirstUser = userRepository.count() == 0;
-
         // Assign roles
-        Set<Role> roles = new HashSet<>();
-        if (isFirstUser) {
-            Role adminRole = roleRepository.findByRoleName(Role.RoleName.ADMIN)
-                    .orElseThrow(() -> {
-                        logger.error("Admin role not found");
-                        return new RuntimeException("Admin role not found");
-                    });
-            Role userRole = roleRepository.findByRoleName(Role.RoleName.USER)
-                    .orElseThrow(() -> {
-                        logger.error("User role not found");
-                        return new RuntimeException("User role not found");
-                    });
-            roles.add(adminRole);
-            roles.add(userRole);
-        } else {
-            Role defaultRole = roleRepository.findByRoleName(Role.RoleName.USER)
-                    .orElseThrow(() -> {
-                        logger.error("User role not found");
-                        return new RuntimeException("User role not found");
-                    });
-            roles.add(defaultRole);
-        }
-        user.setRoles(roles);
+        assignRolesToUser(user);
 
         // Save the user temporarily
         tempUserStore.saveTemporaryUser(user.getVerificationToken(), user);
@@ -110,14 +80,38 @@ public class AuthService implements UserDetailsService {
         logger.info("User registered with email: {}", user.getEmail());
     }
 
-    public Optional<User> authenticateUser(String email, String password) {
-        Optional<User> userOptional = userRepository.findByEmail(email);
-        if (userOptional.isPresent() && passwordEncoder.matches(password, userOptional.get().getPassword())) {
-            logger.info("User authenticated with email: {}", email);
-            return userOptional;
+    private void assignRolesToUser(User user) {
+        boolean isFirstUser = userRepository.count() == 0;
+        Set<Role> roles = new HashSet<>();
+
+        if (isFirstUser) {
+            roles.add(fetchRole(Role.RoleName.ADMIN));
+            roles.add(fetchRole(Role.RoleName.USER));
+        } else {
+            roles.add(fetchRole(Role.RoleName.USER));
         }
-        logger.warn("Invalid email or password for email: {}", email);
-        throw new AuthenticationException("Invalid email or password.");
+        user.setRoles(roles);
+    }
+
+    private Role fetchRole(Role.RoleName roleName) {
+        return roleRepository.findByRoleName(roleName)
+                .orElseThrow(() -> {
+                    logger.error("{} role not found", roleName);
+                    return new RuntimeException(roleName + " role not found");
+                });
+    }
+
+    public Optional<User> authenticateUser(String email, String password) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new AuthenticationException("Invalid email or password."));
+
+        if (passwordEncoder.matches(password, user.getPassword())) {
+            logger.info("User authenticated with email: {}", email);
+            return Optional.of(user);
+        } else {
+            logger.warn("Invalid email or password for email: {}", email);
+            throw new AuthenticationException("Invalid email or password.");
+        }
     }
 
     public String generateJwtToken(User user) {
@@ -147,20 +141,13 @@ public class AuthService implements UserDetailsService {
 
     @Transactional
     public boolean resetPassword(String resetToken, String newPassword) {
-        Optional<User> userOptional = userRepository.findByResetToken(resetToken);
-        if (userOptional.isPresent()) {
-            User user = userOptional.get();
-            user.setPassword(passwordEncoder.encode(newPassword));
-            user.setResetToken(null);
-            userRepository.save(user);
-            logger.info("Password reset for user with email: {}", user.getEmail());
-            return true;
-        }
-        logger.warn("Reset token invalid or expired: {}", resetToken);
-        return false;
-    }
+        User user = userRepository.findByResetToken(resetToken)
+                .orElseThrow(() -> new AuthenticationException("Invalid reset token."));
 
-    public boolean existsByEmail(String email) {
-        return userRepository.existsByEmail(email);
+        user.setPassword(passwordEncoder.encode(newPassword));
+        user.setResetToken(null);
+        userRepository.save(user);
+        logger.info("Password reset for user with email: {}", user.getEmail());
+        return true;
     }
 }
