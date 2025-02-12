@@ -20,4 +20,3 @@ public class ResetPasswordRequest {
         this.newPassword = newPassword;
     }
 }
-

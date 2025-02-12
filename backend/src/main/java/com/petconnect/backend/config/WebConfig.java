@@ -56,13 +56,4 @@ public class WebConfig implements WebMvcConfigurer {
     public WebServerFactoryCustomizer<TomcatServletWebServerFactory> webServerFactoryCustomizer() {
         return factory -> factory.setContextPath("/api/v1");
     }
-
-//    @Bean
-//    public MultipartConfigElement multipartConfigElement() {
-//        MultipartConfigFactory factory = new MultipartConfigFactory();
-//        factory.setMaxFileSize(DataSize.ofMegabytes(10));
-//        factory.setMaxRequestSize(DataSize.ofMegabytes(10));
-//        return factory.createMultipartConfig();
-//    }
-
 }

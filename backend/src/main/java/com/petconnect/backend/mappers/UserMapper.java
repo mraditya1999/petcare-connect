@@ -1,6 +1,7 @@
 package com.petconnect.backend.mappers;
 
 import com.petconnect.backend.dto.UserDTO;
+import com.petconnect.backend.dto.UserRegistrationRequest;
 import com.petconnect.backend.entity.User;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -14,4 +15,7 @@ public interface UserMapper {
 
     @Mapping(target = "address", source = "address")
     User toEntity(UserDTO userDTO);
+
+    @Mapping(target = "address", ignore = true) // Assuming registration doesn't include address
+    User toEntity(UserRegistrationRequest userRegistrationRequest);
 }

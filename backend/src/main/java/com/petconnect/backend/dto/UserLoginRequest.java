@@ -12,8 +12,7 @@ public class UserLoginRequest {
     @NotBlank(message = "Password is mandatory")
     private String password;
 
-    public UserLoginRequest() {
-    }
+    public UserLoginRequest() {}
 
     public UserLoginRequest(String email, String password) {
         this.email = email;

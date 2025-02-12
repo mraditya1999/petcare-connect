@@ -9,10 +9,9 @@ public class UserLoginResponse {
     private List<String> roles;
     private String token;
 
-    public UserLoginResponse() {
-    }
+    public UserLoginResponse() {}
 
-    public UserLoginResponse(String email, List<String> roles, String token,Long userId) {
+    public UserLoginResponse(String email, List<String> roles, String token, Long userId) {
         this.email = email;
         this.roles = roles;
         this.token = token;
@@ -26,7 +25,6 @@ public class UserLoginResponse {
     public void setUserId(Long userId) {
         this.userId = userId;
     }
-
 
     public String getEmail() {
         return email;

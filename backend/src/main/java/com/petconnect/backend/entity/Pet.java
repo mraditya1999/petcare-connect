@@ -9,12 +9,6 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import java.util.Date;
 
-/**
- * Entity representing a Pet.
- */
-//@Data
-//@NoArgsConstructor
-//@AllArgsConstructor
 @Builder
 @Entity
 public class Pet {
@@ -36,10 +30,30 @@ public class Pet {
     @DecimalMax(value = "300", message = "Weight cannot exceed 300 kg")
     private Double weight;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Gender gender;
+
+    @NotNull(message = "Breed cannot be null")
+    @Size(min = 1, max = 50, message = "Breed must be between 1 and 50 characters")
+    @Column(nullable = false)
+    private String breed;
+
+    @NotNull(message = "Species cannot be null")
+    @Size(min = 1, max = 50, message = "Species must be between 1 and 50 characters")
+    @Column(nullable = false)
+    private String species;
+
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "user_id", referencedColumnName = "userId", nullable = false)
     @JsonBackReference
-    private User owner;
+    private User petOwner;
+
+    @Column
+    private String avatarUrl;
+
+    @Column
+    private String avatarPublicId;
 
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
@@ -49,21 +63,19 @@ public class Pet {
     @Column(nullable = false)
     private Date updatedAt;
 
-    @Column
-    private String avatarUrl; // Add this
-
-    @Column
-    private String avatarPublicId; // Add this
 
     public Pet() {
     }
 
-    public Pet(Long petId, String petName, Integer age, Double weight, User owner, Date createdAt, Date updatedAt, String avatarUrl, String avatarPublicId) {
+    public Pet(Long petId, String petName, Integer age, Double weight, Gender gender, String breed, String species, User petOwner, Date createdAt, Date updatedAt, String avatarUrl, String avatarPublicId) {
         this.petId = petId;
         this.petName = petName;
         this.age = age;
         this.weight = weight;
-        this.owner = owner;
+        this.gender = gender;
+        this.breed = breed;
+        this.species = species;
+        this.petOwner = petOwner;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
         this.avatarUrl = avatarUrl;
@@ -103,12 +115,36 @@ public class Pet {
         this.weight = weight;
     }
 
-    public User getPetOwner() {
-        return owner;
+    public Gender getGender() {
+        return gender;
     }
 
-    public void setPetOwner(User owner) {
-        this.owner = owner;
+    public void setGender(Gender gender) {
+        this.gender = gender;
+    }
+
+    public String getBreed() {
+        return breed;
+    }
+
+    public void setBreed(String breed) {
+        this.breed = breed;
+    }
+
+    public String getSpecies() {
+        return species;
+    }
+
+    public void setSpecies(String species) {
+        this.species = species;
+    }
+
+    public User getPetOwner() {
+        return petOwner;
+    }
+
+    public void setPetOwner(User petOwner) {
+        this.petOwner = petOwner;
     }
 
     public Date getCreatedAt() {
@@ -150,9 +186,16 @@ public class Pet {
                 ", petName='" + petName + '\'' +
                 ", age=" + age +
                 ", weight=" + weight +
-                ", petOwner=" + owner.getUserId() + // Avoid recursive call to petOwner
+                ", gender='" + gender + '\'' +
+                ", breed='" + breed + '\'' +
+                ", species='" + species + '\'' +
+                ", petOwner=" + petOwner.getUserId() + 
                 ", avatarUrl='" + avatarUrl + '\'' +
                 ", avatarPublicId='" + avatarPublicId + '\'' +
                 '}';
+    }
+
+    public enum Gender {
+        MALE, FEMALE
     }
 }

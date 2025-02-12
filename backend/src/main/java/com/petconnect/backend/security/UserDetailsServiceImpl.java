@@ -1,38 +1,82 @@
-//package com.petconnect.backend.security;
-//
-//import com.petconnect.backend.entity.Role;
-//import com.petconnect.backend.entity.User;
-//import com.petconnect.backend.repositories.UserRepository;
-//import org.springframework.beans.factory.annotation.Autowired;
-//import org.springframework.security.core.GrantedAuthority;
-//import org.springframework.security.core.authority.SimpleGrantedAuthority;
-//import org.springframework.security.core.userdetails.UserDetails;
-//import org.springframework.security.core.userdetails.UserDetailsService;
-//import org.springframework.security.core.userdetails.UsernameNotFoundException;
-//import org.springframework.stereotype.Service;
-//
-//import java.util.Set;
-//import java.util.stream.Collectors;
-//
-//@Service
-//public class UserDetailsServiceImpl implements UserDetailsService {
-//
-//    private final UserRepository userRepository;
-//
-//    @Autowired
-//    public UserDetailsServiceImpl(UserRepository userRepository) {
-//        this.userRepository = userRepository;
-//    }
-//
-//    @Override
-//    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-//        User user = userRepository.findByEmail(email)
-//                .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
-//
-//        Set<GrantedAuthority> authorities = user.getRoles().stream()
-//                .map(role -> new SimpleGrantedAuthority("ROLE_" + role.getRoleName().name())) // Ensure roleName is an enum
-//                .collect(Collectors.toSet());
-//
-//        return new org.springframework.security.core.userdetails.User(user.getEmail(), user.getPassword(), authorities);
-//    }
-//}
+package com.petconnect.backend.security;
+
+import com.petconnect.backend.entity.User;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+
+import java.util.Collection;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+public class UserDetailsServiceImpl implements UserDetails {
+
+    private User user;
+
+    public UserDetailsServiceImpl(User user) {
+        this.user = user;
+    }
+
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return user.getRoles().stream()
+                .map(role -> (GrantedAuthority) role::getAuthority)
+                .collect(Collectors.toSet());
+    }
+
+    @Override
+    public String getPassword() {
+        return user.getPassword();
+    }
+
+    @Override
+    public String getUsername() {
+        return user.getEmail();
+    }
+
+    @Override
+    public boolean isAccountNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        return true;
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return user.isVerified();
+    }
+
+    // Additional getters for user details (if needed)
+    public Long getUserId() {
+        return user.getUserId();
+    }
+
+    public String getEmail() {
+        return user.getEmail();
+    }
+
+    public String getFirstName() {
+        return user.getFirstName();
+    }
+
+    public String getLastName() {
+        return user.getLastName();
+    }
+
+    public Set<String> getRoles() {
+        return user.getRoles().stream()
+                .map(role -> role.getRoleName().name()) // Assuming RoleName is an enum
+                .collect(Collectors.toSet());
+    }
+
+    public User getUser() {
+        return user;
+    }
+}

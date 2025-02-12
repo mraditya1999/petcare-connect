@@ -9,14 +9,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import java.util.Date;
 
-/**
- * Entity representing an Address.
- */
 @Entity
-//@Data
-//@NoArgsConstructor
-//@AllArgsConstructor
-//@Builder
 public class Address {
 
     @Id
@@ -42,9 +35,6 @@ public class Address {
     @OneToOne(mappedBy = "address", cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
     private User user;
 
-//    @Version
-//    private Long version;
-
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
     private Date createdAt;
@@ -56,7 +46,7 @@ public class Address {
     public Address() {
     }
 
-    public Address(Long addressId, Long pincode, String city, String state, String country, String locality, User user, Long version, Date createdAt, Date updatedAt) {
+    public Address(Long addressId, Long pincode, String city, String state, String country, String locality, User user, Date createdAt, Date updatedAt) {
         this.addressId = addressId;
         this.pincode = pincode;
         this.city = city;
@@ -64,7 +54,6 @@ public class Address {
         this.country = country;
         this.locality = locality;
         this.user = user;
-//        this.version = version;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
     }
@@ -124,14 +113,6 @@ public class Address {
     public void setUser(User user) {
         this.user = user;
     }
-
-//    public Long getVersion() {
-//        return version;
-//    }
-//
-//    public void setVersion(Long version) {
-//        this.version = version;
-//    }
 
     public Date getCreatedAt() {
         return createdAt;

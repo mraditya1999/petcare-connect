@@ -11,8 +11,8 @@ public class SpecialistDTO {
     private String email;
     private String speciality;
     private String about;
-    private String password; // Assuming password is included in the DTO
-    private Address address; // Assuming address is included in the DTO
+    private String password;
+    private Address address;
 
     public SpecialistDTO() {
     }

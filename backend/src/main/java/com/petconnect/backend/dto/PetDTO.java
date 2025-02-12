@@ -1,34 +1,60 @@
 package com.petconnect.backend.dto;
 
-import java.time.LocalDateTime;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
 
 public class PetDTO {
 
     private Long petId;
+
+    @NotNull
+    @Size(min = 1, max = 255)
     private String petName;
+
+    @NotNull
+    @Positive
     private Integer age;
+
+    @NotNull
+    @Positive
     private Double weight;
-    private String avatarPublicId;
-    private String ownerFirstName;
-    private String ownerLastName;
-    private String ownerMobileNumber;
-    private LocalDateTime createdAt;  // Add this
-    private LocalDateTime updatedAt;  // Add this
+
+    private String avatarUrl;
+
+    @NotNull
+    @Size(min = 1, max = 10)
+    private String gender;
+
+    @NotNull
+    @Size(min = 1, max = 255)
+    private String breed;
+
+    @NotNull
+    @Size(min = 1, max = 255)
+    private String species;
 
     public PetDTO() {
     }
 
-    public PetDTO(Long petId, String petName, Integer age, Double weight, String avatarPublicId, String ownerFirstName, String ownerLastName, String ownerMobileNumber, LocalDateTime createdAt, LocalDateTime updatedAt) {
+    public PetDTO(String petName, String breed, Integer age, Double weight, String gender, String species) {
+        this.petName = petName;
+        this.breed = breed;
+        this.age = age;
+        this.weight = weight;
+        this.gender = gender;
+        this.species = species;
+    }
+
+    public PetDTO(Long petId, String petName, Integer age, Double weight, String avatarUrl, String gender, String breed, String species) {
         this.petId = petId;
         this.petName = petName;
         this.age = age;
         this.weight = weight;
-        this.avatarPublicId = avatarPublicId;
-        this.ownerFirstName = ownerFirstName;
-        this.ownerLastName = ownerLastName;
-        this.ownerMobileNumber = ownerMobileNumber;
-        this.createdAt = createdAt;
-        this.updatedAt = updatedAt;
+        this.avatarUrl = avatarUrl;
+        this.gender = gender;
+        this.breed = breed;
+        this.species = species;
     }
 
     // Getters and Setters
@@ -64,51 +90,35 @@ public class PetDTO {
         this.weight = weight;
     }
 
-    public String getAvatarPublicId() {
-        return avatarPublicId;
+    public String getAvatarUrl() {
+        return avatarUrl;
     }
 
-    public void setAvatarPublicId(String avatarPublicId) {
-        this.avatarPublicId = avatarPublicId;
+    public void setAvatarUrl(String avatarUrl) {
+        this.avatarUrl = avatarUrl;
     }
 
-    public String getOwnerFirstName() {
-        return ownerFirstName;
+    public String getGender() {
+        return gender;
     }
 
-    public void setOwnerFirstName(String ownerFirstName) {
-        this.ownerFirstName = ownerFirstName;
+    public void setGender(String gender) {
+        this.gender = gender;
     }
 
-    public String getOwnerLastName() {
-        return ownerLastName;
+    public String getBreed() {
+        return breed;
     }
 
-    public void setOwnerLastName(String ownerLastName) {
-        this.ownerLastName = ownerLastName;
+    public void setBreed(String breed) {
+        this.breed = breed;
     }
 
-    public String getOwnerMobileNumber() {
-        return ownerMobileNumber;
+    public String getSpecies() {
+        return species;
     }
 
-    public void setOwnerMobileNumber(String ownerMobileNumber) {
-        this.ownerMobileNumber = ownerMobileNumber;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
+    public void setSpecies(String species) {
+        this.species = species;
     }
 }
