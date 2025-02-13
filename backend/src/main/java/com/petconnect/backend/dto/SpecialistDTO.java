@@ -1,11 +1,10 @@
 package com.petconnect.backend.dto;
 
-import com.petconnect.backend.entity.Address;
 import lombok.Builder;
 
 @Builder
 public class SpecialistDTO {
-    private Long specialistId;
+    private Long userId;
     private String firstName;
     private String lastName;
     private String email;
@@ -21,8 +20,8 @@ public class SpecialistDTO {
     public SpecialistDTO() {
     }
 
-    public SpecialistDTO(Long specialistId, String firstName, String lastName, String email, String password, String mobileNumber, String speciality, String about, AddressDTO address, String avatarUrl, String avatarPublicId) {
-        this.specialistId = specialistId;
+    public SpecialistDTO(Long userId, String firstName, String lastName, String email, String password, String mobileNumber, String speciality, String about, AddressDTO address, String avatarUrl, String avatarPublicId) {
+        this.userId = userId;
         this.firstName = firstName;
         this.lastName = lastName;
         this.email = email;
@@ -36,11 +35,11 @@ public class SpecialistDTO {
     }
 
     public Long getSpecialistId() {
-        return specialistId;
+        return userId;
     }
 
-    public void setSpecialistId(Long specialistId) {
-        this.specialistId = specialistId;
+    public void setSpecialistId(Long userId) {
+        this.userId = userId;
     }
 
     public String getFirstName() {

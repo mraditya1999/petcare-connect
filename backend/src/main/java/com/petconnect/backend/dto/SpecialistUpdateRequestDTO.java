@@ -25,26 +25,15 @@ public class SpecialistUpdateRequestDTO {
     @Size(max = 500, message = "About cannot exceed 500 characters")
     private String about;
 
-    private Long pincode;
-
-    @Size(max = 255, message = "City cannot exceed 255 characters")
-    private String city;
-
-    @Size(max = 255, message = "State cannot exceed 255 characters")
-    private String state;
-
-    private String locality;
-
-    @Size(max = 255, message = "Country cannot exceed 255 characters")
-    private String country;
-
     private String avatarUrl;
     private String avatarPublicId;
+
+    private AddressDTO addressDTO;
 
     public SpecialistUpdateRequestDTO() {
     }
 
-    public SpecialistUpdateRequestDTO(String firstName, String lastName, String email, String password, String mobileNumber, String speciality, String about, Long pincode, String city, String state, String locality, String country, String avatarUrl, String avatarPublicId) {
+    public SpecialistUpdateRequestDTO(String firstName, String lastName, String email, String password, String mobileNumber, String speciality, String about, String avatarUrl, String avatarPublicId, AddressDTO addressDTO) {
         this.firstName = firstName;
         this.lastName = lastName;
         this.email = email;
@@ -52,13 +41,9 @@ public class SpecialistUpdateRequestDTO {
         this.mobileNumber = mobileNumber;
         this.speciality = speciality;
         this.about = about;
-        this.pincode = pincode;
-        this.city = city;
-        this.state = state;
-        this.locality = locality;
-        this.country = country;
         this.avatarUrl = avatarUrl;
         this.avatarPublicId = avatarPublicId;
+        this.addressDTO = addressDTO;
     }
 
     public String getFirstName() {
@@ -117,45 +102,6 @@ public class SpecialistUpdateRequestDTO {
         this.about = about;
     }
 
-    public Long getPincode() {
-        return pincode;
-    }
-
-    public void setPincode(Long pincode) {
-        this.pincode = pincode;
-    }
-
-    public String getCity() {
-        return city;
-    }
-
-    public void setCity(String city) {
-        this.city = city;
-    }
-
-    public String getState() {
-        return state;
-    }
-
-    public void setState(String state) {
-        this.state = state;
-    }
-
-    public String getLocality() {
-        return locality;
-    }
-
-    public void setLocality(String locality) {
-        this.locality = locality;
-    }
-
-    public String getCountry() {
-        return country;
-    }
-
-    public void setCountry(String country) {
-        this.country = country;
-    }
 
     public String getAvatarUrl() {
         return avatarUrl;
@@ -171,6 +117,14 @@ public class SpecialistUpdateRequestDTO {
 
     public void setAvatarPublicId(String avatarPublicId) {
         this.avatarPublicId = avatarPublicId;
+    }
+
+    public AddressDTO getAddressDTO() {
+        return addressDTO;
+    }
+
+    public void setAddressDTO(AddressDTO addressDTO) {
+        this.addressDTO = addressDTO;
     }
 }
 

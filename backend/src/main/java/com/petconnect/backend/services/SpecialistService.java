@@ -1,9 +1,11 @@
 package com.petconnect.backend.services;
 
+import com.petconnect.backend.dto.AddressDTO;
 import com.petconnect.backend.dto.SpecialistCreateRequestDTO;
 import com.petconnect.backend.dto.SpecialistDTO;
 import com.petconnect.backend.dto.SpecialistUpdateRequestDTO;
 import com.petconnect.backend.entity.Address;
+import com.petconnect.backend.entity.Role;
 import com.petconnect.backend.entity.Specialist;
 import com.petconnect.backend.entity.User;
 import com.petconnect.backend.exceptions.ImageUploadException;
@@ -11,248 +13,31 @@ import com.petconnect.backend.exceptions.ResourceNotFoundException;
 import com.petconnect.backend.exceptions.UserAlreadyExistsException;
 import com.petconnect.backend.mappers.SpecialistMapper;
 import com.petconnect.backend.repositories.AddressRepository;
+import com.petconnect.backend.repositories.RoleRepository;
 import com.petconnect.backend.repositories.SpecialistRepository;
 import com.petconnect.backend.repositories.UserRepository;
-import jakarta.mail.MessagingException;
-import jakarta.mail.internet.MimeMessage;
-import org.hibernate.service.spi.ServiceException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
-
-//@Service
-//public class SpecialistService {
-//
-//    private final SpecialistRepository specialistRepository;
-//    private final SpecialistMapper specialistMapper;
-//    private final UploadService uploadService;
-//
-//    @Autowired
-//    public SpecialistService(SpecialistRepository specialistRepository, SpecialistMapper specialistMapper, UploadService uploadService) {
-//        this.specialistRepository = specialistRepository;
-//        this.specialistMapper = specialistMapper;
-//        this.uploadService = uploadService;
-//    }
-//
-//    public SpecialistDTO createSpecialist(SpecialistDTO specialistDTO, MultipartFile profileImage) throws IOException {
-//        Specialist specialist = specialistMapper.toEntity(specialistDTO);
-//
-//        // Handle profile image upload
-//        if (profileImage != null && !profileImage.isEmpty()) {
-//            Map<String, Object> uploadResult = uploadService.uploadImage(profileImage);
-//            specialist.setAvatarUrl((String) uploadResult.get("url"));
-//            specialist.setAvatarPublicId((String) uploadResult.get("public_id"));
-//        }
-//
-//        Specialist savedSpecialist = specialistRepository.save(specialist);
-//        return specialistMapper.toDTO(savedSpecialist);
-//    }
-//
-//    public List<SpecialistDTO> getAllSpecialists() {
-//        List<Specialist> specialists = specialistRepository.findAll();
-//        return specialists.stream()
-//                .map(specialistMapper::toDTO)
-//                .collect(Collectors.toList());
-//    }
-//
-//    public SpecialistDTO getSpecialistById(Long id) {
-//        Specialist specialist = specialistRepository.findById(id)
-//                .orElseThrow(() -> new ResourceNotFoundException("Specialist not found with id " + id));
-//        return specialistMapper.toDTO(specialist);
-//    }
-//
-//    public SpecialistDTO updateSpecialist(Long id, String firstName, String lastName, String email, String password,
-//                                          String mobileNumber, String speciality, String about,
-//                                          Long pincode, String city, String state, String locality,
-//                                          String country, MultipartFile profileImage) throws IOException {
-//        Specialist specialist = specialistRepository.findById(id)
-//                .orElseThrow(() -> new ResourceNotFoundException("Specialist not found with id " + id));
-//
-//        // Update entity fields only if provided
-//        if (firstName != null) specialist.setFirstName(firstName);
-//        if (lastName != null) specialist.setLastName(lastName);
-//        if (email != null) specialist.setEmail(email);
-//        if (password != null) specialist.setPassword(password);
-//        if (mobileNumber != null) specialist.setMobileNumber(mobileNumber);
-//        if (speciality != null) specialist.setSpeciality(speciality);
-//        if (about != null) specialist.setAbout(about);
-//
-//        // Convert and update address fields
-//        if (specialist.getAddress() == null) {
-//            specialist.setAddress(new Address());
-//        }
-//
-//        if (pincode != null) specialist.getAddress().setPincode(pincode);
-//        if (city != null) specialist.getAddress().setCity(city);
-//        if (state != null) specialist.getAddress().setState(state);
-//        if (locality != null) specialist.getAddress().setLocality(locality);
-//        if (country != null) specialist.getAddress().setCountry(country);
-//
-//        // Handle profile image upload
-//        if (profileImage != null && !profileImage.isEmpty()) {
-//            Map<String, Object> uploadResult;
-//            if (specialist.getAvatarPublicId() != null && !specialist.getAvatarPublicId().isEmpty()) {
-//                uploadResult = uploadService.updateImage(specialist.getAvatarPublicId(), profileImage);
-//            } else {
-//                uploadResult = uploadService.uploadImage(profileImage);
-//            }
-//            specialist.setAvatarUrl((String) uploadResult.get("url"));
-//            specialist.setAvatarPublicId((String) uploadResult.get("public_id"));
-//        }
-//
-//        Specialist updatedSpecialist = specialistRepository.save(specialist);
-//        return specialistMapper.toDTO(updatedSpecialist);
-//    }
-//
-//    @Transactional
-//    public void deleteSpecialist(Long id) {
-//        Specialist specialist = specialistRepository.findById(id)
-//                .orElseThrow(() -> new ResourceNotFoundException("Specialist not found with id " + id));
-//        specialistRepository.deleteById(id);
-//    }
-//}
-//##################################################################################################
-//import org.springframework.mail.javamail.JavaMailSender;
-//import org.springframework.mail.javamail.MimeMessageHelper;
-//import org.springframework.security.crypto.password.PasswordEncoder;
-//import java.util.UUID;
-//
-//@Service
-//public class SpecialistService {
-//
-//    private final SpecialistRepository specialistRepository;
-//    private final SpecialistMapper specialistMapper;
-//    private final JavaMailSender mailSender;
-//    private final PasswordEncoder passwordEncoder;
-//    private final UploadService uploadService;
-//
-//    @Autowired
-//    public SpecialistService(SpecialistRepository specialistRepository, SpecialistMapper specialistMapper, JavaMailSender mailSender, PasswordEncoder passwordEncoder, UploadService uploadService) {
-//        this.specialistRepository = specialistRepository;
-//        this.specialistMapper = specialistMapper;
-//        this.mailSender = mailSender;
-//        this.passwordEncoder = passwordEncoder;
-//        this.uploadService = uploadService;
-//    }
-//
-//    @Transactional
-//    public SpecialistDTO createSpecialist(SpecialistDTO specialistDTO, MultipartFile profileImage) throws IOException, MessagingException {
-//        specialistDTO.setPassword(passwordEncoder.encode(specialistDTO.getPassword()));
-//        Specialist specialist = specialistMapper.toEntity(specialistDTO);
-//
-//        // Handle profile image upload if necessary
-//        if (profileImage != null && !profileImage.isEmpty()) {
-//            // Assume uploadService exists to handle image uploads
-//            Map<String, Object> uploadResult = uploadService.uploadImage(profileImage);
-//            specialist.setAvatarUrl((String) uploadResult.get("url"));
-//            specialist.setAvatarPublicId((String) uploadResult.get("public_id"));
-//        }
-//
-//        Specialist savedSpecialist = specialistRepository.save(specialist);
-//        sendVerificationEmail(savedSpecialist);
-//        return specialistMapper.toDTO(savedSpecialist);
-//    }
-//
-//    private void sendVerificationEmail(Specialist specialist) throws MessagingException {
-//        String token = UUID.randomUUID().toString();
-//        // Save token in user
-//        String to = specialist.getEmail();
-//        String subject = "Email Verification";
-//        String text = "Click the link to verify your email: http://yourdomain.com/verify?token=" + token;
-//
-//        MimeMessage message = mailSender.createMimeMessage();
-//        MimeMessageHelper helper = new MimeMessageHelper(message);
-//
-//        helper.setTo(to);
-//        helper.setSubject(subject);
-//        helper.setText(text);
-//
-//        mailSender.send(message);
-//    }
-//
-//    public List<SpecialistDTO> getAllSpecialists() {
-//        List<Specialist> specialists = specialistRepository.findAll();
-//        return specialists.stream()
-//                .map(specialistMapper::toDTO)
-//                .collect(Collectors.toList());
-//    }
-//
-//    public SpecialistDTO getSpecialistById(Long id) {
-//        Specialist specialist = specialistRepository.findById(id)
-//                .orElseThrow(() -> new ResourceNotFoundException("Specialist not found with id " + id));
-//        return specialistMapper.toDTO(specialist);
-//    }
-//
-//    @Transactional
-//    public SpecialistDTO updateSpecialist(Long id, String firstName, String lastName, String email, String password,
-//                                          String mobileNumber, String speciality, String about,
-//                                          Long pincode, String city, String state, String locality,
-//                                          String country, MultipartFile profileImage) throws IOException {
-//        Specialist specialist = specialistRepository.findById(id)
-//                .orElseThrow(() -> new ResourceNotFoundException("Specialist not found with id " + id));
-//
-//        // Update entity fields only if provided
-//        if (firstName != null) specialist.setFirstName(firstName);
-//        if (lastName != null) specialist.setLastName(lastName);
-//        if (email != null) specialist.setEmail(email);
-//        if (password != null) specialist.setPassword(passwordEncoder.encode(password));
-//        if (mobileNumber != null) specialist.setMobileNumber(mobileNumber);
-//        if (speciality != null) specialist.setSpeciality(speciality);
-//        if (about != null) specialist.setAbout(about);
-//
-//        // Update address fields
-//        if (specialist.getAddress() == null) {
-//            specialist.setAddress(new Address());
-//        }
-//        if (pincode != null) specialist.getAddress().setPincode(pincode);
-//        if (city != null) specialist.getAddress().setCity(city);
-//        if (state != null) specialist.getAddress().setState(state);
-//        if (locality != null) specialist.getAddress().setLocality(locality);
-//        if (country != null) specialist.getAddress().setCountry(country);
-//
-//        // Handle profile image upload
-//        if (profileImage != null && !profileImage.isEmpty()) {
-//            Map<String, Object> uploadResult;
-//            if (specialist.getAvatarPublicId() != null && !specialist.getAvatarPublicId().isEmpty()) {
-//                uploadResult = uploadService.updateImage(specialist.getAvatarPublicId(), profileImage);
-//            } else {
-//                uploadResult = uploadService.uploadImage(profileImage);
-//            }
-//            specialist.setAvatarUrl((String) uploadResult.get("url"));
-//            specialist.setAvatarPublicId((String) uploadResult.get("public_id"));
-//        }
-//
-//        Specialist updatedSpecialist = specialistRepository.save(specialist);
-//        return specialistMapper.toDTO(updatedSpecialist);
-//    }
-//
-//    @Transactional
-//    public void deleteSpecialist(Long id) {
-//        Specialist specialist = specialistRepository.findById(id)
-//                .orElseThrow(() -> new ResourceNotFoundException("Specialist not found with id " + id));
-//        specialistRepository.deleteById(id);
-//    }
-//}
-
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import java.util.UUID;
 
 @Service
 public class SpecialistService {
 
     private static final Logger log = LoggerFactory.getLogger(SpecialistService.class);
-
 
     private final SpecialistRepository specialistRepository;
     private final UserRepository userRepository;
@@ -260,15 +45,17 @@ public class SpecialistService {
     private final PasswordEncoder passwordEncoder;
     private final UploadService uploadService;
     private final AddressRepository addressRepository;
+    private final RoleRepository roleRepository;
 
     @Autowired
-    public SpecialistService(SpecialistRepository specialistRepository, UserRepository userRepository, SpecialistMapper specialistMapper, PasswordEncoder passwordEncoder, UploadService uploadService, AddressRepository addressRepository) {
+    public SpecialistService(SpecialistRepository specialistRepository, UserRepository userRepository, SpecialistMapper specialistMapper, PasswordEncoder passwordEncoder, UploadService uploadService, AddressRepository addressRepository, RoleRepository roleRepository) {
         this.specialistRepository = specialistRepository;
         this.userRepository = userRepository;
         this.specialistMapper = specialistMapper;
         this.passwordEncoder = passwordEncoder;
         this.uploadService = uploadService;
         this.addressRepository = addressRepository;
+        this.roleRepository = roleRepository;
     }
 
     @Transactional
@@ -280,15 +67,14 @@ public class SpecialistService {
             throw new UserAlreadyExistsException("User with this email already exists but not verified.");
         }
 
-        Specialist specialist = specialistMapper.toEntity(specialistCreateRequestDTO); // Use the correct method
+        Specialist specialist = specialistMapper.toSpecialistEntity(specialistCreateRequestDTO);
         specialist.setPassword(passwordEncoder.encode(specialistCreateRequestDTO.getPassword()));
 
         Address address = specialist.getAddress();
         if (address != null) {
-            address = addressRepository.save(address); // Save Address FIRST
-            specialist.setAddress(address); // Associate saved Address
+            address = addressRepository.save(address);
+            specialist.setAddress(address);
         }
-
 
         try {
             handleImageUpload(specialist, profileImage);
@@ -297,9 +83,18 @@ public class SpecialistService {
             throw new ImageUploadException("Error handling profile image", e);
         }
 
+        Optional<Role> specialistRole = roleRepository.findByRoleName(Role.RoleName.SPECIALIST);
+        if (specialistRole.isPresent()) {
+            specialist.setRoles(Set.of(specialistRole.get()));
+        } else {
+            log.error("SPECIALIST role not found!");
+            throw new RuntimeException("SPECIALIST role not found!"); // Or custom exception
+        }
+
         Specialist savedSpecialist = specialistRepository.save(specialist);
         return specialistMapper.toDTO(savedSpecialist);
     }
+
 
     private void handleImageUpload(Specialist specialist, MultipartFile profileImage) throws IOException {
         if (profileImage != null && !profileImage.isEmpty()) {
@@ -315,33 +110,36 @@ public class SpecialistService {
     }
 
     public List<SpecialistDTO> getAllSpecialists() {
-        try {
-            List<Specialist> specialists = specialistRepository.findAll();
-            return specialists.stream()
-                    .map(specialistMapper::toDTO)
-                    .collect(Collectors.toList());
-        } catch (Exception e) {
-            throw new ServiceException("Error retrieving specialists", e);
-        }
+        List<Specialist> specialists = specialistRepository.findAll();
+        return specialists.stream()
+                .map(specialistMapper::toDTO)
+                .collect(Collectors.toList());
     }
 
     public SpecialistDTO getSpecialistById(Long id) {
-        try {
-            Specialist specialist = specialistRepository.findById(id)
-                    .orElseThrow(() -> new ResourceNotFoundException("Specialist not found with id " + id));
-            return specialistMapper.toDTO(specialist);
-        } catch (ResourceNotFoundException e) {
-            throw e;
-        } catch (Exception e) {
-            throw new ServiceException("Error retrieving specialist", e);
-        }
-    }
-
-    @Transactional
-    public SpecialistDTO updateSpecialist(Long id, SpecialistUpdateRequestDTO specialistUpdateRequestDTO, MultipartFile profileImage) {
         Specialist specialist = specialistRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Specialist not found with id " + id));
+        return specialistMapper.toDTO(specialist);
+    }
 
+
+    @Transactional
+    public SpecialistDTO updateSpecialist(SpecialistUpdateRequestDTO specialistUpdateRequestDTO, MultipartFile profileImage, UserDetails userDetails) {
+        // Retrieve the current user's username from UserDetails
+        String currentUsername = userDetails.getUsername();
+
+        // Use the UserRepository to find the User by the username
+        User user = userRepository.findByEmail(currentUsername)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with username " + currentUsername));
+
+        // Check if the user is a Specialist
+        if (!(user instanceof Specialist)) {
+            throw new ResourceNotFoundException("User is not a specialist");
+        }
+
+        Specialist specialist = (Specialist) user;
+
+        // Update only the provided fields
         if (specialistUpdateRequestDTO.getFirstName() != null) {
             specialist.setFirstName(specialistUpdateRequestDTO.getFirstName());
         }
@@ -354,56 +152,43 @@ public class SpecialistService {
         if (specialistUpdateRequestDTO.getMobileNumber() != null) {
             specialist.setMobileNumber(specialistUpdateRequestDTO.getMobileNumber());
         }
-        if (specialistUpdateRequestDTO.getAvatarUrl() != null) {
-            specialist.setAvatarUrl(specialistUpdateRequestDTO.getAvatarUrl());
-        }
-        if (specialistUpdateRequestDTO.getAvatarPublicId() != null) {
-            specialist.setAvatarPublicId(specialistUpdateRequestDTO.getAvatarPublicId());
-        }
-
-
-        // Update Specialist fields
-        if (specialistUpdateRequestDTO.getAbout() != null) {
-            specialist.setAbout(specialistUpdateRequestDTO.getAbout());
-        }
         if (specialistUpdateRequestDTO.getSpeciality() != null) {
             specialist.setSpeciality(specialistUpdateRequestDTO.getSpeciality());
         }
-
-
-        // Update Address (if present in DTO)
-        if (specialistUpdateRequestDTO.getPincode() != null ||
-                specialistUpdateRequestDTO.getCity() != null ||
-                specialistUpdateRequestDTO.getState() != null ||
-                specialistUpdateRequestDTO.getLocality() != null ||
-                specialistUpdateRequestDTO.getCountry() != null) {
-
-            if (specialist.getAddress() == null) {
-                specialist.setAddress(new Address()); // Create if it doesn't exist
-            }
-            Address address = specialist.getAddress();
-
-            if (specialistUpdateRequestDTO.getPincode() != null) {
-                address.setPincode(specialistUpdateRequestDTO.getPincode());
-            }
-            if (specialistUpdateRequestDTO.getCity() != null) {
-                address.setCity(specialistUpdateRequestDTO.getCity());
-            }
-            if (specialistUpdateRequestDTO.getState() != null) {
-                address.setState(specialistUpdateRequestDTO.getState());
-            }
-            if (specialistUpdateRequestDTO.getLocality() != null) {
-                address.setLocality(specialistUpdateRequestDTO.getLocality());
-            }
-            if (specialistUpdateRequestDTO.getCountry() != null) {
-                address.setCountry(specialistUpdateRequestDTO.getCountry());
-            }
+        if (specialistUpdateRequestDTO.getAbout() != null) {
+            specialist.setAbout(specialistUpdateRequestDTO.getAbout());
+        }
+        if (specialistUpdateRequestDTO.getPassword() != null) {
+            specialist.setPassword(specialistUpdateRequestDTO.getPassword());
         }
 
+        // Update address fields if provided
+        Address address = specialist.getAddress();
+        if (specialistUpdateRequestDTO.getAddressDTO() != null) {
+            AddressDTO addressDTO = specialistUpdateRequestDTO.getAddressDTO();
 
+            if (address == null) {
+                address = new Address();
+                specialist.setAddress(address);
+            }
 
-        if (specialistUpdateRequestDTO.getPassword() != null) {
-            specialist.setPassword(passwordEncoder.encode(specialistUpdateRequestDTO.getPassword()));
+            if (addressDTO.getPincode() != null) {
+                address.setPincode(addressDTO.getPincode());
+            }
+            if (addressDTO.getCity() != null) {
+                address.setCity(addressDTO.getCity());
+            }
+            if (addressDTO.getState() != null) {
+                address.setState(addressDTO.getState());
+            }
+            if (addressDTO.getLocality() != null) {
+                address.setLocality(addressDTO.getLocality());
+            }
+            if (addressDTO.getCountry() != null) {
+                address.setCountry(addressDTO.getCountry());
+            }
+
+            addressRepository.save(address); // Save the address
         }
 
         try {
@@ -413,26 +198,30 @@ public class SpecialistService {
             throw new ImageUploadException("Error handling profile image", e);
         }
 
-
-        try {
-            Specialist updatedSpecialist = specialistRepository.save(specialist);
-            return specialistMapper.toDTO(updatedSpecialist);
-        } catch (Exception e) {
-            log.error("Error updating specialist", e);
-            throw e;
-        }
+        Specialist updatedSpecialist = specialistRepository.save(specialist);
+        return specialistMapper.toDTO(updatedSpecialist);
     }
+
+
 
     @Transactional
-    public void deleteSpecialist(Long id) {
-        try {
-            Specialist specialist = specialistRepository.findById(id)
-                    .orElseThrow(() -> new ResourceNotFoundException("Specialist not found with id " + id));
-            specialistRepository.deleteById(id);
-        } catch (ResourceNotFoundException e) {
-            throw e;
-        } catch (Exception e) {
-            throw new ServiceException("Error deleting specialist", e);
+    public void deleteCurrentSpecialist(UserDetails userDetails) {
+        // Retrieve the current user's username from UserDetails
+        String currentUsername = userDetails.getUsername();
+
+        // Use the UserRepository to find the User by the username
+        User user = userRepository.findByEmail(currentUsername)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with username " + currentUsername));
+
+        // Check if the user is a Specialist
+        if (!(user instanceof Specialist)) {
+            throw new ResourceNotFoundException("User is not a specialist");
         }
+
+        Specialist specialist = (Specialist) user;
+
+        specialistRepository.delete(specialist); // Use specialistRepository.delete(specialist)
     }
+
+
 }

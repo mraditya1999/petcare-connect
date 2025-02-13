@@ -1,7 +1,7 @@
 package com.petconnect.backend.dto;
 
 public class SpecialistResponseDTO {
-    private Long id;
+    private Long userId;
     private String firstName;
     private String lastName;
     private String email;
@@ -9,17 +9,13 @@ public class SpecialistResponseDTO {
     private String speciality;
     private String about;
     private String avatarUrl;
-    private Long pincode;
-    private String city;
-    private String state;
-    private String locality;
-    private String country;
+    private AddressDTO address;
 
     public SpecialistResponseDTO() {
     }
 
-    public SpecialistResponseDTO(Long id, String firstName, String lastName, String email, String mobileNumber, String speciality, String about, String avatarUrl, Long pincode, String city, String state, String locality, String country) {
-        this.id = id;
+    public SpecialistResponseDTO(Long userId, String firstName, String lastName, String email, String mobileNumber, String speciality, String about, String avatarUrl, AddressDTO address) {
+        this.userId = userId;
         this.firstName = firstName;
         this.lastName = lastName;
         this.email = email;
@@ -27,19 +23,15 @@ public class SpecialistResponseDTO {
         this.speciality = speciality;
         this.about = about;
         this.avatarUrl = avatarUrl;
-        this.pincode = pincode;
-        this.city = city;
-        this.state = state;
-        this.locality = locality;
-        this.country = country;
+        this.address = address;
     }
 
     public Long getId() {
-        return id;
+        return userId;
     }
 
-    public void setId(Long id) {
-        this.id = id;
+    public void setId(Long userId) {
+        this.userId = userId;
     }
 
     public String getFirstName() {
@@ -98,43 +90,11 @@ public class SpecialistResponseDTO {
         this.avatarUrl = avatarUrl;
     }
 
-    public Long getPincode() {
-        return pincode;
+    public AddressDTO getAddress() {
+        return address;
     }
 
-    public void setPincode(Long pincode) {
-        this.pincode = pincode;
-    }
-
-    public String getCity() {
-        return city;
-    }
-
-    public void setCity(String city) {
-        this.city = city;
-    }
-
-    public String getState() {
-        return state;
-    }
-
-    public void setState(String state) {
-        this.state = state;
-    }
-
-    public String getLocality() {
-        return locality;
-    }
-
-    public void setLocality(String locality) {
-        this.locality = locality;
-    }
-
-    public String getCountry() {
-        return country;
-    }
-
-    public void setCountry(String country) {
-        this.country = country;
+    public void setAddress(AddressDTO address) {
+        this.address = address;
     }
 }

@@ -1,5 +1,6 @@
 package com.petconnect.backend.dto;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 import lombok.Data;
 
@@ -32,29 +33,14 @@ public class SpecialistCreateRequestDTO {
     @Size(max = 500, message = "About cannot exceed 500 characters")
     private String about;
 
-    @NotNull(message = "Pincode is required")
-    private Long pincode;
 
-    @NotBlank(message = "City is required")
-    @Size(max = 255, message = "City cannot exceed 255 characters")
-    private String city;
-
-    @NotBlank(message = "State is required")
-    @Size(max = 255, message = "State cannot exceed 255 characters")
-    private String state;
-
-    @NotBlank(message = "Locality is required")
-    @Size(max = 255, message = "Locality cannot exceed 255 characters")
-    private String locality;
-
-    @NotBlank(message = "Country is required")
-    @Size(max = 255, message = "Country cannot exceed 255 characters")
-    private String country;
+    @Valid
+    private AddressDTO addressDTO;
 
     public SpecialistCreateRequestDTO() {
     }
 
-    public SpecialistCreateRequestDTO(String firstName, String lastName, String email, String password, String mobileNumber, String speciality, String about, Long pincode, String city, String state, String locality, String country) {
+    public SpecialistCreateRequestDTO(String firstName, String lastName, String email, String password, String mobileNumber, String speciality, String about, AddressDTO addressDTO) {
         this.firstName = firstName;
         this.lastName = lastName;
         this.email = email;
@@ -62,11 +48,7 @@ public class SpecialistCreateRequestDTO {
         this.mobileNumber = mobileNumber;
         this.speciality = speciality;
         this.about = about;
-        this.pincode = pincode;
-        this.city = city;
-        this.state = state;
-        this.locality = locality;
-        this.country = country;
+        this.addressDTO = addressDTO;
     }
 
     public String getFirstName() {
@@ -125,43 +107,11 @@ public class SpecialistCreateRequestDTO {
         this.about = about;
     }
 
-    public Long getPincode() {
-        return pincode;
+    public AddressDTO getAddressDTO() {
+        return addressDTO;
     }
 
-    public void setPincode(Long pincode) {
-        this.pincode = pincode;
-    }
-
-    public String getCity() {
-        return city;
-    }
-
-    public void setCity(String city) {
-        this.city = city;
-    }
-
-    public String getState() {
-        return state;
-    }
-
-    public void setState(String state) {
-        this.state = state;
-    }
-
-    public String getLocality() {
-        return locality;
-    }
-
-    public void setLocality(String locality) {
-        this.locality = locality;
-    }
-
-    public String getCountry() {
-        return country;
-    }
-
-    public void setCountry(String country) {
-        this.country = country;
+    public void setAddressDTO(AddressDTO addressDTO) {
+        this.addressDTO = addressDTO;
     }
 }
