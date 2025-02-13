@@ -1,46 +1,45 @@
 package com.petconnect.backend.dto;
 
-import com.petconnect.backend.entity.Address;
-import lombok.Builder;
-
-@Builder
-public class SpecialistDTO {
-    private Long specialistId;
+public class SpecialistResponseDTO {
+    private Long id;
     private String firstName;
     private String lastName;
     private String email;
-    private String password;
     private String mobileNumber;
     private String speciality;
     private String about;
-    private AddressDTO address;
     private String avatarUrl;
-    private String avatarPublicId;
+    private Long pincode;
+    private String city;
+    private String state;
+    private String locality;
+    private String country;
 
-
-    public SpecialistDTO() {
+    public SpecialistResponseDTO() {
     }
 
-    public SpecialistDTO(Long specialistId, String firstName, String lastName, String email, String password, String mobileNumber, String speciality, String about, AddressDTO address, String avatarUrl, String avatarPublicId) {
-        this.specialistId = specialistId;
+    public SpecialistResponseDTO(Long id, String firstName, String lastName, String email, String mobileNumber, String speciality, String about, String avatarUrl, Long pincode, String city, String state, String locality, String country) {
+        this.id = id;
         this.firstName = firstName;
         this.lastName = lastName;
         this.email = email;
-        this.password = password;
         this.mobileNumber = mobileNumber;
         this.speciality = speciality;
         this.about = about;
-        this.address = address;
         this.avatarUrl = avatarUrl;
-        this.avatarPublicId = avatarPublicId;
+        this.pincode = pincode;
+        this.city = city;
+        this.state = state;
+        this.locality = locality;
+        this.country = country;
     }
 
-    public Long getSpecialistId() {
-        return specialistId;
+    public Long getId() {
+        return id;
     }
 
-    public void setSpecialistId(Long specialistId) {
-        this.specialistId = specialistId;
+    public void setId(Long id) {
+        this.id = id;
     }
 
     public String getFirstName() {
@@ -67,14 +66,6 @@ public class SpecialistDTO {
         this.email = email;
     }
 
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
     public String getMobileNumber() {
         return mobileNumber;
     }
@@ -99,14 +90,6 @@ public class SpecialistDTO {
         this.about = about;
     }
 
-    public AddressDTO getAddress() {
-        return address;
-    }
-
-    public void setAddress(AddressDTO address) {
-        this.address = address;
-    }
-
     public String getAvatarUrl() {
         return avatarUrl;
     }
@@ -115,11 +98,43 @@ public class SpecialistDTO {
         this.avatarUrl = avatarUrl;
     }
 
-    public String getAvatarPublicId() {
-        return avatarPublicId;
+    public Long getPincode() {
+        return pincode;
     }
 
-    public void setAvatarPublicId(String avatarPublicId) {
-        this.avatarPublicId = avatarPublicId;
+    public void setPincode(Long pincode) {
+        this.pincode = pincode;
+    }
+
+    public String getCity() {
+        return city;
+    }
+
+    public void setCity(String city) {
+        this.city = city;
+    }
+
+    public String getState() {
+        return state;
+    }
+
+    public void setState(String state) {
+        this.state = state;
+    }
+
+    public String getLocality() {
+        return locality;
+    }
+
+    public void setLocality(String locality) {
+        this.locality = locality;
+    }
+
+    public String getCountry() {
+        return country;
+    }
+
+    public void setCountry(String country) {
+        this.country = country;
     }
 }

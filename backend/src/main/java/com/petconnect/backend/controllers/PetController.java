@@ -2,7 +2,6 @@ package com.petconnect.backend.controllers;
 
 import com.petconnect.backend.dto.PetDTO;
 import com.petconnect.backend.services.PetService;
-import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
