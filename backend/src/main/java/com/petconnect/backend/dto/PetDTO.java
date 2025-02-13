@@ -21,6 +21,7 @@ public class PetDTO {
     private Double weight;
 
     private String avatarUrl;
+    private String avatarPublicId;  // Add this field
 
     @NotNull
     @Size(min = 1, max = 10)
@@ -46,12 +47,13 @@ public class PetDTO {
         this.species = species;
     }
 
-    public PetDTO(Long petId, String petName, Integer age, Double weight, String avatarUrl, String gender, String breed, String species) {
+    public PetDTO(Long petId, String petName, Integer age, Double weight, String avatarUrl, String avatarPublicId, String gender, String breed, String species) {
         this.petId = petId;
         this.petName = petName;
         this.age = age;
         this.weight = weight;
         this.avatarUrl = avatarUrl;
+        this.avatarPublicId = avatarPublicId;
         this.gender = gender;
         this.breed = breed;
         this.species = species;
@@ -96,6 +98,14 @@ public class PetDTO {
 
     public void setAvatarUrl(String avatarUrl) {
         this.avatarUrl = avatarUrl;
+    }
+
+    public String getAvatarPublicId() {
+        return avatarPublicId;
+    }
+
+    public void setAvatarPublicId(String avatarPublicId) {
+        this.avatarPublicId = avatarPublicId;
     }
 
     public String getGender() {

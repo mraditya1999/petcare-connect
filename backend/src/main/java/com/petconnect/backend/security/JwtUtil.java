@@ -1,5 +1,7 @@
 package com.petconnect.backend.security;
 
+import com.petconnect.backend.entity.Role;
+import com.petconnect.backend.entity.User;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -12,8 +14,10 @@ import javax.crypto.spec.SecretKeySpec;
 import java.security.Key;
 import java.util.Base64;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Component
 public class JwtUtil {
@@ -68,6 +72,20 @@ public class JwtUtil {
                 .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + expiration * 1000))
                 .signWith(secretKey, SignatureAlgorithm.HS512)
+                .compact();
+    }
+
+    public String createToken(User user) {
+        List<String> roles = user.getRoles().stream().map(Role::getAuthority).collect(Collectors.toList());
+
+        return Jwts.builder()
+                .setSubject(user.getEmail())
+                .claim("roles", roles)
+                .claim("userId", user.getUserId())
+                .claim("email", user.getEmail())
+                .setIssuedAt(new Date())
+                .setExpiration(new Date(System.currentTimeMillis() + expiration * 1000))
+                .signWith(secretKey,SignatureAlgorithm.HS512)
                 .compact();
     }
 

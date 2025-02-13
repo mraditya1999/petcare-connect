@@ -13,8 +13,15 @@ public class AddressDTO {
 
     public AddressDTO() {}
 
-    public AddressDTO(Long addressId, Long pincode, String city, String state, String country, String locality) {
+    public AddressDTO(Long addressId, Long pincode, String city, String state, String locality,String country) {
         this.addressId = addressId;
+        this.pincode = pincode;
+        this.city = city;
+        this.state = state;
+        this.country = country;
+        this.locality = locality;
+    }
+    public AddressDTO( Long pincode, String city, String state, String locality,String country) {
         this.pincode = pincode;
         this.city = city;
         this.state = state;

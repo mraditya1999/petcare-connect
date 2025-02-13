@@ -240,6 +240,7 @@ public class PetService {
                 logger.info("Uploading new profile image for pet");
                 Map<String, Object> uploadResult = uploadService.uploadImage(avatarFile);
                 petDTO.setAvatarUrl((String) uploadResult.get("url"));
+                petDTO.setAvatarPublicId((String) uploadResult.get("public_id"));
             }
 
             Pet pet = mapper.toEntity(petDTO);
@@ -312,19 +313,21 @@ public class PetService {
             throw new RuntimeException("Unauthorized to update this pet");
         }
 
-        existingPet.setPetName(petDTO.getPetName());
-        existingPet.setAge(petDTO.getAge());
-        existingPet.setWeight(petDTO.getWeight());
-        existingPet.setGender(Gender.valueOf(petDTO.getGender().toUpperCase())); // Convert String to Gender enum
-        existingPet.setBreed(petDTO.getBreed());
-        existingPet.setSpecies(petDTO.getSpecies());
+        if (petDTO.getPetName() != null) existingPet.setPetName(petDTO.getPetName());
+        if (petDTO.getAge() != null) existingPet.setAge(petDTO.getAge());
+        if (petDTO.getWeight() != null) existingPet.setWeight(petDTO.getWeight());
+        if (petDTO.getGender() != null) existingPet.setGender(Gender.valueOf(petDTO.getGender().toUpperCase()));
+        if (petDTO.getBreed() != null) existingPet.setBreed(petDTO.getBreed());
+        if (petDTO.getSpecies() != null) existingPet.setSpecies(petDTO.getSpecies());
 
         if (avatarFile != null && !avatarFile.isEmpty()) {
             logger.info("Uploading new profile image for pet");
             Map<String, Object> uploadResult = uploadService.uploadImage(avatarFile);
             existingPet.setAvatarUrl((String) uploadResult.get("url"));
         } else {
-            existingPet.setAvatarUrl(petDTO.getAvatarUrl());
+            if (petDTO.getAvatarUrl() != null) {
+                existingPet.setAvatarUrl(petDTO.getAvatarUrl());
+            }
         }
 
         Pet updatedPet = petRepository.save(existingPet);
@@ -332,8 +335,7 @@ public class PetService {
     }
 
     @Transactional
-    public void deletePetForUser(Long id) {
-        UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+    public void deletePetForUser(Long id,UserDetails userDetails) {
         String username = userDetails.getUsername();
 
         Pet existingPet = petRepository.findById(id)

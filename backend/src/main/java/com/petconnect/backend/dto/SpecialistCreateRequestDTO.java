@@ -1,27 +1,46 @@
 package com.petconnect.backend.dto;
 
-import lombok.Builder;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.*;
+import lombok.Data;
 
-@Builder
-public class SpecialistDTO {
-    private Long userId;
+public class SpecialistCreateRequestDTO {
+    @NotBlank(message = "First name is required")
+    @Size(max = 255, message = "First name cannot exceed 255 characters")
     private String firstName;
+
+    @NotBlank(message = "Last name is required")
+    @Size(max = 255, message = "Last name cannot exceed 255 characters")
     private String lastName;
+
+    @Email(message = "Invalid email format")
+    @NotBlank(message = "Email is required")
     private String email;
+
+    @NotBlank(message = "Password is required")
+    @Size(min = 6, message = "Password must be at least 6 characters")
     private String password;
+
+    @NotBlank(message = "Mobile number is required")
+    @Size(max = 20, message = "Mobile number cannot exceed 20 characters")
     private String mobileNumber;
+
+    @NotBlank(message = "Speciality is required")
+    @Size(max = 255, message = "Speciality cannot exceed 255 characters")
     private String speciality;
+
+    @NotBlank(message = "About is required")
+    @Size(max = 500, message = "About cannot exceed 500 characters")
     private String about;
-    private AddressDTO address;
-    private String avatarUrl;
-    private String avatarPublicId;
 
 
-    public SpecialistDTO() {
+    @Valid
+    private AddressDTO addressDTO;
+
+    public SpecialistCreateRequestDTO() {
     }
 
-    public SpecialistDTO(Long userId, String firstName, String lastName, String email, String password, String mobileNumber, String speciality, String about, AddressDTO address, String avatarUrl, String avatarPublicId) {
-        this.userId = userId;
+    public SpecialistCreateRequestDTO(String firstName, String lastName, String email, String password, String mobileNumber, String speciality, String about, AddressDTO addressDTO) {
         this.firstName = firstName;
         this.lastName = lastName;
         this.email = email;
@@ -29,17 +48,7 @@ public class SpecialistDTO {
         this.mobileNumber = mobileNumber;
         this.speciality = speciality;
         this.about = about;
-        this.address = address;
-        this.avatarUrl = avatarUrl;
-        this.avatarPublicId = avatarPublicId;
-    }
-
-    public Long getSpecialistId() {
-        return userId;
-    }
-
-    public void setSpecialistId(Long userId) {
-        this.userId = userId;
+        this.addressDTO = addressDTO;
     }
 
     public String getFirstName() {
@@ -98,27 +107,11 @@ public class SpecialistDTO {
         this.about = about;
     }
 
-    public AddressDTO getAddress() {
-        return address;
+    public AddressDTO getAddressDTO() {
+        return addressDTO;
     }
 
-    public void setAddress(AddressDTO address) {
-        this.address = address;
-    }
-
-    public String getAvatarUrl() {
-        return avatarUrl;
-    }
-
-    public void setAvatarUrl(String avatarUrl) {
-        this.avatarUrl = avatarUrl;
-    }
-
-    public String getAvatarPublicId() {
-        return avatarPublicId;
-    }
-
-    public void setAvatarPublicId(String avatarPublicId) {
-        this.avatarPublicId = avatarPublicId;
+    public void setAddressDTO(AddressDTO addressDTO) {
+        this.addressDTO = addressDTO;
     }
 }

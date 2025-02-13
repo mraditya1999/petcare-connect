@@ -1,44 +1,36 @@
 package com.petconnect.backend.dto;
 
-import lombok.Builder;
-
-@Builder
-public class SpecialistDTO {
+public class SpecialistResponseDTO {
     private Long userId;
     private String firstName;
     private String lastName;
     private String email;
-    private String password;
     private String mobileNumber;
     private String speciality;
     private String about;
-    private AddressDTO address;
     private String avatarUrl;
-    private String avatarPublicId;
+    private AddressDTO address;
 
-
-    public SpecialistDTO() {
+    public SpecialistResponseDTO() {
     }
 
-    public SpecialistDTO(Long userId, String firstName, String lastName, String email, String password, String mobileNumber, String speciality, String about, AddressDTO address, String avatarUrl, String avatarPublicId) {
+    public SpecialistResponseDTO(Long userId, String firstName, String lastName, String email, String mobileNumber, String speciality, String about, String avatarUrl, AddressDTO address) {
         this.userId = userId;
         this.firstName = firstName;
         this.lastName = lastName;
         this.email = email;
-        this.password = password;
         this.mobileNumber = mobileNumber;
         this.speciality = speciality;
         this.about = about;
-        this.address = address;
         this.avatarUrl = avatarUrl;
-        this.avatarPublicId = avatarPublicId;
+        this.address = address;
     }
 
-    public Long getSpecialistId() {
+    public Long getId() {
         return userId;
     }
 
-    public void setSpecialistId(Long userId) {
+    public void setId(Long userId) {
         this.userId = userId;
     }
 
@@ -66,14 +58,6 @@ public class SpecialistDTO {
         this.email = email;
     }
 
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
     public String getMobileNumber() {
         return mobileNumber;
     }
@@ -98,14 +82,6 @@ public class SpecialistDTO {
         this.about = about;
     }
 
-    public AddressDTO getAddress() {
-        return address;
-    }
-
-    public void setAddress(AddressDTO address) {
-        this.address = address;
-    }
-
     public String getAvatarUrl() {
         return avatarUrl;
     }
@@ -114,11 +90,11 @@ public class SpecialistDTO {
         this.avatarUrl = avatarUrl;
     }
 
-    public String getAvatarPublicId() {
-        return avatarPublicId;
+    public AddressDTO getAddress() {
+        return address;
     }
 
-    public void setAvatarPublicId(String avatarPublicId) {
-        this.avatarPublicId = avatarPublicId;
+    public void setAddress(AddressDTO address) {
+        this.address = address;
     }
 }

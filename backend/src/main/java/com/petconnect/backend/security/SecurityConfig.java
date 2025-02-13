@@ -41,6 +41,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests((requests) -> requests
                         .requestMatchers(AUTH_WHITELIST).permitAll()
                         .requestMatchers(HttpMethod.GET,"/forums/**","/specialists/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/specialists/**").hasRole("ADMIN")
                         .requestMatchers("/profile/**","/forums/**","/appointments/**","/pets/**").authenticated()
                         .anyRequest().authenticated())
                 .csrf(AbstractHttpConfigurer::disable)
