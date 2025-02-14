@@ -1,5 +1,6 @@
 package com.petconnect.backend.services;
 
+import com.petconnect.backend.dto.ApiResponse;
 import com.petconnect.backend.dto.UpdatePasswordRequest;
 import com.petconnect.backend.dto.UserDTO;
 import com.petconnect.backend.entity.Address;
@@ -12,12 +13,14 @@ import com.petconnect.backend.mappers.AddressMapper;
 import com.petconnect.backend.mappers.SpecialistMapper;
 import com.petconnect.backend.repositories.AddressRepository;
 import com.petconnect.backend.repositories.RoleRepository;
+import com.petconnect.backend.repositories.SpecialistRepository;
 import com.petconnect.backend.repositories.UserRepository;
 import com.petconnect.backend.mappers.UserMapper;
 import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -35,14 +38,16 @@ public class UserService {
     private final UploadService uploadService;
     private static final Logger logger = LoggerFactory.getLogger(UserService.class);
     private final SpecialistMapper specialistMapper;
+    private final SpecialistRepository specialistRepository;
 
     @Autowired
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, RoleRepository roleRepository, UserMapper userMapper, UploadService uploadService, AddressRepository addressRepository, AddressMapper addressMapper, SpecialistMapper specialistMapper) {
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, RoleRepository roleRepository, UserMapper userMapper, UploadService uploadService, AddressRepository addressRepository, AddressMapper addressMapper, SpecialistMapper specialistMapper, SpecialistRepository specialistRepository) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.userMapper = userMapper;
         this.uploadService = uploadService;
         this.specialistMapper = specialistMapper;
+        this.specialistRepository = specialistRepository;
     }
 
     public Object getUserProfile(String email) {
@@ -105,20 +110,33 @@ public class UserService {
         userRepository.save(currentUser);
         return userMapper.toDTO(currentUser);
     }
-
-    public void deleteUserProfile(String email) {
+    @Transactional
+    public void deleteUserProfile(UserDetails userDetails) {
+        String email = userDetails.getUsername();
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with email " + email));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + email));
+
+        // Check and delete the user's avatar if it exists
         if (user.getAvatarPublicId() != null) {
             try {
                 uploadService.deleteImage(user.getAvatarPublicId());
             } catch (IOException e) {
-                logger.error("Error deleting profile image from Cloudinary", e);
-                throw new ImageDeletionException("Error deleting profile image", e);
+                logger.error("Error deleting avatar with ID: {}", user.getAvatarPublicId(), e);
+                throw new ImageDeletionException("Error deleting avatar image", e);
             }
         }
+
+        if (user instanceof Specialist) {
+            Specialist specialist = (Specialist) user;
+            specialistRepository.delete(specialist);
+        }
+
         userRepository.delete(user);
+        logger.info("User (or Specialist) deleted with email: {}", email);
+
+        ResponseEntity.ok(new ApiResponse<>("User profile deleted successfully."));
     }
+
 
     @Transactional
     public void updatePassword(String email, UpdatePasswordRequest updatePasswordRequest, UserDetails userDetails) {

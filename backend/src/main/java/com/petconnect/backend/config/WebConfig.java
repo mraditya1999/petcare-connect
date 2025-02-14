@@ -67,12 +67,4 @@ public class WebConfig implements WebMvcConfigurer {
         return factory.createMultipartConfig();
     }
 
-//    @Override
-//    public void addResourceHandlers(ResourceHandlerRegistry registry) {
-//        registry.addResourceHandler("/**")
-//                .addResourceLocations("classpath:/static/")
-//                .setCachePeriod(3600); // Cache for 1 hour
-//    }
-
-
 }

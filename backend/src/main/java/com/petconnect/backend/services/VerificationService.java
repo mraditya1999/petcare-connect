@@ -67,10 +67,4 @@ public class VerificationService {
         tempUserStore.saveTemporaryUser(user.getVerificationToken(), user);
         emailService.sendVerificationEmail(user);
     }
-
-    public void sendResetEmail(User user) {
-        user.setResetToken(UUID.randomUUID().toString());
-        userRepository.save(user);
-        emailService.sendResetEmail(user);
-    }
 }
