@@ -4,6 +4,7 @@ import com.petconnect.backend.dto.UpdatePasswordRequest;
 import com.petconnect.backend.dto.UserDTO;
 import com.petconnect.backend.entity.Address;
 import com.petconnect.backend.entity.User;
+import com.petconnect.backend.exceptions.ImageDeletionException;
 import com.petconnect.backend.exceptions.ResourceNotFoundException;
 import com.petconnect.backend.mappers.AddressMapper;
 import com.petconnect.backend.repositories.AddressRepository;
@@ -81,9 +82,9 @@ public class UserService {
             logger.info("Uploading new profile image for user: {}", currentUser.getUserId());
             Map<String, Object> uploadResult;
             if (currentUser.getAvatarPublicId() != null && !currentUser.getAvatarPublicId().isEmpty()) {
-                uploadResult = uploadService.updateImage(currentUser.getAvatarPublicId(), profileImage);
+                uploadResult = uploadService.updateImage(currentUser.getAvatarPublicId(), profileImage, UploadService.ProfileType.USER);
             } else {
-                uploadResult = uploadService.uploadImage(profileImage);
+                uploadResult = uploadService.uploadImage(profileImage, UploadService.ProfileType.USER);
             }
             currentUser.setAvatarUrl((String) uploadResult.get("url"));
             currentUser.setAvatarPublicId((String) uploadResult.get("public_id"));
@@ -100,7 +101,8 @@ public class UserService {
             try {
                 uploadService.deleteImage(user.getAvatarPublicId());
             } catch (IOException e) {
-                e.printStackTrace();
+                logger.error("Error deleting profile image from Cloudinary", e);
+                throw new ImageDeletionException("Error deleting profile image", e);
             }
         }
         userRepository.delete(user);

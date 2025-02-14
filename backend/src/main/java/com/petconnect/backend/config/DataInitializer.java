@@ -3,6 +3,7 @@ package com.petconnect.backend.config;
 import com.petconnect.backend.entity.Address;
 import com.petconnect.backend.entity.Role;
 import com.petconnect.backend.entity.User;
+import com.petconnect.backend.exceptions.ResourceNotFoundException;
 import com.petconnect.backend.repositories.RoleRepository;
 import com.petconnect.backend.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,7 +48,7 @@ public class DataInitializer implements CommandLineRunner {
         if (!userRepository.existsByEmail("ay5480620@gmail.com")) {
             createUser("Aditya", "Yadav", "ay5480620@gmail.com", "@mrAditya1999", Role.RoleName.ADMIN, true, createAddress());
         }
-
+//
 //        if (!userRepository.existsByEmail("dbadaditya@gmail.com")) {
 //            createUser("Honey", "Singh", "dbadaditya@gmail.com", "@mrAditya1999", Role.RoleName.USER, true ,createAddress());
 //        }
@@ -62,9 +63,6 @@ public class DataInitializer implements CommandLineRunner {
         user.setVerified(isVerified);
         user.setRoles(new HashSet<>(Set.of(roleRepository.findByRoleName(role).orElseThrow(() -> new IllegalArgumentException("Role not found")))));
         user.setAddress(address);
-
-        // Log or debug here
-        System.out.println("User verified: " + user.isVerified());
 
         userRepository.save(user);
     }
