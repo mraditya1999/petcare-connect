@@ -8,7 +8,6 @@ import com.petconnect.backend.dto.SpecialistUpdateRequestDTO;
 import com.petconnect.backend.dto.AddressDTO;
 import com.petconnect.backend.mappers.SpecialistMapper;
 import com.petconnect.backend.services.SpecialistService;
-import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -37,6 +36,7 @@ public class SpecialistController {
         this.specialistService = specialistService;
         this.specialistMapper = specialistMapper;
     }
+
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<SpecialistDTO> createSpecialist(

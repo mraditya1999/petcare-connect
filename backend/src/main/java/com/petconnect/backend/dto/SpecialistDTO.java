@@ -8,7 +8,7 @@ public class SpecialistDTO {
     private String firstName;
     private String lastName;
     private String email;
-    private String password;
+//    private String password;
     private String mobileNumber;
     private String speciality;
     private String about;
@@ -20,12 +20,11 @@ public class SpecialistDTO {
     public SpecialistDTO() {
     }
 
-    public SpecialistDTO(Long SpecialistId, String firstName, String lastName, String email, String password, String mobileNumber, String speciality, String about, AddressDTO address, String avatarUrl, String avatarPublicId) {
+    public SpecialistDTO(Long SpecialistId, String firstName, String lastName, String email, String mobileNumber, String speciality, String about, AddressDTO address, String avatarUrl, String avatarPublicId) {
         this.SpecialistId = SpecialistId;
         this.firstName = firstName;
         this.lastName = lastName;
         this.email = email;
-        this.password = password;
         this.mobileNumber = mobileNumber;
         this.speciality = speciality;
         this.about = about;
@@ -64,14 +63,6 @@ public class SpecialistDTO {
 
     public void setEmail(String email) {
         this.email = email;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
     }
 
     public String getMobileNumber() {

@@ -3,6 +3,7 @@ package com.petconnect.backend.services;
 import com.petconnect.backend.entity.Role;
 import com.petconnect.backend.entity.User;
 import com.petconnect.backend.exceptions.AuthenticationException;
+import com.petconnect.backend.exceptions.ResourceNotFoundException;
 import com.petconnect.backend.exceptions.UserAlreadyExistsException;
 import com.petconnect.backend.repositories.RoleRepository;
 import com.petconnect.backend.repositories.UserRepository;
@@ -38,7 +39,7 @@ public class AuthService implements UserDetailsService {
     private final JwtUtil jwtUtil;
 
     @Autowired
-    public AuthService(UserRepository userRepository, RoleRepository roleRepository, @Lazy  PasswordEncoder passwordEncoder,
+    public AuthService(UserRepository userRepository, RoleRepository roleRepository, @Lazy PasswordEncoder passwordEncoder,
                        TempUserStore tempUserStore, EmailService emailService, JwtUtil jwtUtil) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
@@ -129,10 +130,23 @@ public class AuthService implements UserDetailsService {
     public boolean verifyUser(String verificationToken) {
         User tempUser = tempUserStore.getTemporaryUser(verificationToken);
         if (tempUser != null) {
+            logger.info("Verifying user with token: {}", verificationToken);
+
+            // Log initial state
+            logger.info("Initial isVerified status: {}", tempUser.isVerified());
+
             tempUser.setVerified(true);
             tempUser.setVerificationToken(null); // Clear the token
+
+            // Log state before saving
+            logger.info("Before saving: isVerified={}", tempUser.isVerified());
             userRepository.save(tempUser);
-            logger.info("User verified with token: {}", verificationToken);
+
+            // Retrieve the user again to verify the change
+            User verifiedUser = userRepository.findByEmail(tempUser.getEmail())
+                    .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+            logger.info("After saving: isVerified={}", verifiedUser.isVerified());
+
             return true;
         }
         logger.warn("Verification token invalid or expired: {}", verificationToken);

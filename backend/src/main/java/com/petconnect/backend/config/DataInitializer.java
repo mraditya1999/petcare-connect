@@ -3,6 +3,7 @@ package com.petconnect.backend.config;
 import com.petconnect.backend.entity.Address;
 import com.petconnect.backend.entity.Role;
 import com.petconnect.backend.entity.User;
+import com.petconnect.backend.exceptions.ResourceNotFoundException;
 import com.petconnect.backend.repositories.RoleRepository;
 import com.petconnect.backend.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -67,6 +68,13 @@ public class DataInitializer implements CommandLineRunner {
         System.out.println("User verified: " + user.isVerified());
 
         userRepository.save(user);
+
+        userRepository.save(user);
+
+        // Retrieve the user again to verify the change
+        User savedUser = userRepository.findByEmail(user.getEmail())
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        System.out.println("After saving - User verified: " + savedUser.isVerified());
     }
 
 
