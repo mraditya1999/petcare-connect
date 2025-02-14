@@ -30,6 +30,10 @@ public class Specialist extends User {
         this.speciality = speciality;
     }
 
+    public Long getSpecialistId() {
+        return getUserId();
+    }
+
     public String getAbout() {
         return about;
     }

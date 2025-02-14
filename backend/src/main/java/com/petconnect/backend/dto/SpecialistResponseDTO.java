@@ -1,7 +1,7 @@
 package com.petconnect.backend.dto;
 
 public class SpecialistResponseDTO {
-    private Long userId;
+    private Long specialistId;
     private String firstName;
     private String lastName;
     private String email;
@@ -14,8 +14,8 @@ public class SpecialistResponseDTO {
     public SpecialistResponseDTO() {
     }
 
-    public SpecialistResponseDTO(Long userId, String firstName, String lastName, String email, String mobileNumber, String speciality, String about, String avatarUrl, AddressDTO address) {
-        this.userId = userId;
+    public SpecialistResponseDTO(Long specialistId, String firstName, String lastName, String email, String mobileNumber, String speciality, String about, String avatarUrl, AddressDTO address) {
+        this.specialistId = specialistId;
         this.firstName = firstName;
         this.lastName = lastName;
         this.email = email;
@@ -26,12 +26,12 @@ public class SpecialistResponseDTO {
         this.address = address;
     }
 
-    public Long getId() {
-        return userId;
+    public Long getSpecialistId() {
+        return specialistId ;
     }
 
-    public void setId(Long userId) {
-        this.userId = userId;
+    public void setSpecialistId(Long specialistId ) {
+        this.specialistId    = specialistId ;
     }
 
     public String getFirstName() {

@@ -2,7 +2,6 @@ package com.petconnect.backend.dto;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
-import lombok.Data;
 
 public class SpecialistCreateRequestDTO {
     @NotBlank(message = "First name is required")
