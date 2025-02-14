@@ -23,8 +23,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -95,7 +93,6 @@ public class SpecialistService {
         return specialistMapper.toDTO(savedSpecialist);
     }
 
-
     private void handleImageUpload(Specialist specialist, MultipartFile profileImage) throws IOException {
         if (profileImage != null && !profileImage.isEmpty()) {
             Map<String, Object> uploadResult;
@@ -122,7 +119,6 @@ public class SpecialistService {
         return specialistMapper.toDTO(specialist);
     }
 
-
     @Transactional
     public SpecialistDTO updateSpecialist(SpecialistUpdateRequestDTO specialistUpdateRequestDTO, MultipartFile profileImage, UserDetails userDetails) {
         // Retrieve the current user's username from UserDetails
@@ -130,7 +126,7 @@ public class SpecialistService {
 
         // Use the UserRepository to find the User by the username
         User user = userRepository.findByEmail(currentUsername)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with username " + currentUsername));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with email " + currentUsername));
 
         // Check if the user is a Specialist
         if (!(user instanceof Specialist)) {
@@ -159,7 +155,7 @@ public class SpecialistService {
             specialist.setAbout(specialistUpdateRequestDTO.getAbout());
         }
         if (specialistUpdateRequestDTO.getPassword() != null) {
-            specialist.setPassword(specialistUpdateRequestDTO.getPassword());
+            specialist.setPassword(passwordEncoder.encode(specialistUpdateRequestDTO.getPassword())); // Ensure the password is encoded
         }
 
         // Update address fields if provided
@@ -202,8 +198,6 @@ public class SpecialistService {
         return specialistMapper.toDTO(updatedSpecialist);
     }
 
-
-
     @Transactional
     public void deleteCurrentSpecialist(UserDetails userDetails) {
         // Retrieve the current user's username from UserDetails
@@ -211,7 +205,7 @@ public class SpecialistService {
 
         // Use the UserRepository to find the User by the username
         User user = userRepository.findByEmail(currentUsername)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with username " + currentUsername));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with email " + currentUsername));
 
         // Check if the user is a Specialist
         if (!(user instanceof Specialist)) {
@@ -222,6 +216,4 @@ public class SpecialistService {
 
         specialistRepository.delete(specialist); // Use specialistRepository.delete(specialist)
     }
-
-
 }
