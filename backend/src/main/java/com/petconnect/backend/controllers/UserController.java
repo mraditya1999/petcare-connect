@@ -30,10 +30,11 @@ public class UserController {
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponse<UserDTO>> getUserProfile(@AuthenticationPrincipal UserDetails userDetails) {
+    public ResponseEntity<ApiResponse<?>> getUserProfile(@AuthenticationPrincipal UserDetails userDetails) {
         logger.info("Fetching profile for user: {}", userDetails.getUsername());
-        UserDTO userDTO = userService.getUserProfile(userDetails.getUsername());
-        ApiResponse<UserDTO> apiResponse = new ApiResponse<>("Profile fetched successfully", userDTO);
+        Object userProfile = userService.getUserProfile(userDetails.getUsername());
+
+        ApiResponse<Object> apiResponse = new ApiResponse<>("Profile fetched successfully", userProfile);
         return ResponseEntity.ok(apiResponse);
     }
 
