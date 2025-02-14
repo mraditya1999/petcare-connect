@@ -48,7 +48,7 @@ public class DataInitializer implements CommandLineRunner {
         if (!userRepository.existsByEmail("ay5480620@gmail.com")) {
             createUser("Aditya", "Yadav", "ay5480620@gmail.com", "@mrAditya1999", Role.RoleName.ADMIN, true, createAddress());
         }
-
+//
 //        if (!userRepository.existsByEmail("dbadaditya@gmail.com")) {
 //            createUser("Honey", "Singh", "dbadaditya@gmail.com", "@mrAditya1999", Role.RoleName.USER, true ,createAddress());
 //        }
@@ -64,17 +64,7 @@ public class DataInitializer implements CommandLineRunner {
         user.setRoles(new HashSet<>(Set.of(roleRepository.findByRoleName(role).orElseThrow(() -> new IllegalArgumentException("Role not found")))));
         user.setAddress(address);
 
-        // Log or debug here
-        System.out.println("User verified: " + user.isVerified());
-
         userRepository.save(user);
-
-        userRepository.save(user);
-
-        // Retrieve the user again to verify the change
-        User savedUser = userRepository.findByEmail(user.getEmail())
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-        System.out.println("After saving - User verified: " + savedUser.isVerified());
     }
 
 

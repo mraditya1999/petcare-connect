@@ -333,7 +333,6 @@ public class SpecialistController {
         this.specialistMapper = specialistMapper;
     }
 
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<String>> createSpecialist(
             @RequestParam("firstName") String firstName,
@@ -380,20 +379,6 @@ public class SpecialistController {
         return ResponseEntity.ok(new ApiResponse<>("Specialist created successfully. Verification email sent."));
     }
 
-    @PostMapping("/verify-email")
-    public ResponseEntity<ApiResponse<String>> verifySpecialist(@Valid @RequestBody Map<String, String> request) {
-        String token = request.get("verificationToken");
-        boolean isVerified = specialistService.verifySpecialist(token);
-
-        if (isVerified) {
-            logger.info("Specialist verified successfully with token: {}", token);
-            ApiResponse<String> apiResponse = new ApiResponse<>("Specialist verified and registered successfully.");
-            return ResponseEntity.ok(apiResponse);
-        } else {
-            logger.warn("Invalid or expired verification token: {}", token);
-            throw new ResourceNotFoundException("Invalid or expired verification token.");
-        }
-    }
 
     @PutMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponse<SpecialistResponseDTO>> updateCurrentSpecialist(

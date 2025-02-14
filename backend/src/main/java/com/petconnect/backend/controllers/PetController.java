@@ -45,12 +45,6 @@ public class PetController {
     }
 
     @GetMapping
-    public ResponseEntity<List<PetDTO>> getAllPets() {
-        List<PetDTO> pets = petService.getAllPets();
-        return ResponseEntity.ok(pets);
-    }
-
-    @GetMapping("/user")
     public ResponseEntity<List<PetDTO>> getAllPetsForUser(@AuthenticationPrincipal UserDetails userDetails) {
         List<PetDTO> pets = petService.getAllPetsForUser();
         return ResponseEntity.ok(pets);
