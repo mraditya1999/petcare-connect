@@ -3,10 +3,13 @@ package com.petconnect.backend.services;
 import com.petconnect.backend.dto.UpdatePasswordRequest;
 import com.petconnect.backend.dto.UserDTO;
 import com.petconnect.backend.entity.Address;
+import com.petconnect.backend.entity.Role;
+import com.petconnect.backend.entity.Specialist;
 import com.petconnect.backend.entity.User;
 import com.petconnect.backend.exceptions.ImageDeletionException;
 import com.petconnect.backend.exceptions.ResourceNotFoundException;
 import com.petconnect.backend.mappers.AddressMapper;
+import com.petconnect.backend.mappers.SpecialistMapper;
 import com.petconnect.backend.repositories.AddressRepository;
 import com.petconnect.backend.repositories.RoleRepository;
 import com.petconnect.backend.repositories.UserRepository;
@@ -31,18 +34,27 @@ public class UserService {
     private final UserMapper userMapper;
     private final UploadService uploadService;
     private static final Logger logger = LoggerFactory.getLogger(UserService.class);
+    private final SpecialistMapper specialistMapper;
 
     @Autowired
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, RoleRepository roleRepository, UserMapper userMapper, UploadService uploadService, AddressRepository addressRepository, AddressMapper addressMapper) {
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, RoleRepository roleRepository, UserMapper userMapper, UploadService uploadService, AddressRepository addressRepository, AddressMapper addressMapper, SpecialistMapper specialistMapper) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.userMapper = userMapper;
         this.uploadService = uploadService;
+        this.specialistMapper = specialistMapper;
     }
 
-    public UserDTO getUserProfile(String email) {
+    public Object getUserProfile(String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        for (Role role : user.getRoles()) {
+            if (role.getRoleName().equals(Role.RoleName.SPECIALIST)) {
+                return specialistMapper.toSpecialistResponseDTO((Specialist) user);
+            }
+        }
+
         return userMapper.toDTO(user);
     }
 
