@@ -16,14 +16,5 @@ public class PetValidator {
         if (petDTO.getWeight() == null || petDTO.getWeight() < 0) {
             throw new IllegalArgumentException("Invalid weight");
         }
-//        if (petDTO.getOwnerFirstName() == null || petDTO.getOwnerFirstName().isEmpty()) {
-//            throw new IllegalArgumentException("Owner first name is required");
-//        }
-//        if (petDTO.getOwnerLastName() == null || petDTO.getOwnerLastName().isEmpty()) {
-//            throw new IllegalArgumentException("Owner last name is required");
-//        }
-//        if (petDTO.getOwnerMobileNumber() == null || petDTO.getOwnerMobileNumber().isEmpty()) {
-//            throw new IllegalArgumentException("Owner mobile number is required");
-//        }
     }
 }

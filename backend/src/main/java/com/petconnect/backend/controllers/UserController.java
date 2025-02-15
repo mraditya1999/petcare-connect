@@ -87,7 +87,7 @@ public class UserController {
         logger.info("Received request to delete profile for user: {}", userDetails.getUsername());
 
         try {
-            userService.deleteUserProfile(userDetails.getUsername());
+            userService.deleteUserProfile(userDetails);
             logger.info("User profile deleted successfully for user: {}", userDetails.getUsername());
             ApiResponse<Void> apiResponse = new ApiResponse<>("Profile deleted successfully", null);
             return ResponseEntity.ok(apiResponse);

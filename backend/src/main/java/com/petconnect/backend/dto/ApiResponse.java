@@ -16,7 +16,6 @@ public class ApiResponse<T> {
         this.data = data;
     }
 
-    // Getters and Setters
     public String getMessage() {
         return message;
     }

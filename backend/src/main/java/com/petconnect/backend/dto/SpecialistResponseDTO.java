@@ -100,6 +100,8 @@
 //}
 package com.petconnect.backend.dto;
 
+import java.util.Set;
+
 public class SpecialistResponseDTO extends UserDTO {
     private String speciality;
     private String about;
@@ -107,9 +109,8 @@ public class SpecialistResponseDTO extends UserDTO {
     // Default constructor
     public SpecialistResponseDTO() {}
 
-    // Parameterized constructor
-    public SpecialistResponseDTO(Long userId, String firstName, String lastName, String email, AddressDTO address, String avatarUrl, String avatarPublicId, String mobileNumber, String speciality, String about) {
-        super(userId, firstName, lastName, email, address, avatarUrl, avatarPublicId, mobileNumber);
+    public SpecialistResponseDTO(Long userId, String firstName, String lastName, String email, AddressDTO address, String avatarUrl, String avatarPublicId, String mobileNumber, Set<RoleDTO> roles, String speciality, String about) {
+        super(userId, firstName, lastName, email, address, avatarUrl, avatarPublicId, mobileNumber, roles);
         this.speciality = speciality;
         this.about = about;
     }

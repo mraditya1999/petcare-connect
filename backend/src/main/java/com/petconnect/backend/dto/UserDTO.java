@@ -1,11 +1,9 @@
 package com.petconnect.backend.dto;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import lombok.*;
+import lombok.Builder;
 
-//@Data
-//@NoArgsConstructor
-//@AllArgsConstructor
+import java.util.Set;
+
 @Builder
 public class UserDTO {
     private Long userId;
@@ -16,6 +14,7 @@ public class UserDTO {
     private String avatarUrl;
     private String avatarPublicId;
     private String mobileNumber;
+    private Set<RoleDTO> roles;
 
     public UserDTO() {
     }
@@ -26,7 +25,7 @@ public class UserDTO {
         this.mobileNumber = mobileNumber;
     }
 
-    public UserDTO(Long userId, String firstName, String lastName, String email, AddressDTO address, String avatarUrl, String avatarPublicId, String mobileNumber) {
+    public UserDTO(Long userId, String firstName, String lastName, String email, AddressDTO address, String avatarUrl, String avatarPublicId, String mobileNumber, Set<RoleDTO> roles) {
         this.userId = userId;
         this.firstName = firstName;
         this.lastName = lastName;
@@ -35,6 +34,7 @@ public class UserDTO {
         this.avatarUrl = avatarUrl;
         this.avatarPublicId = avatarPublicId;
         this.mobileNumber = mobileNumber;
+        this.roles = roles;
     }
 
     public Long getUserId() {
@@ -101,6 +101,14 @@ public class UserDTO {
         this.mobileNumber = mobileNumber;
     }
 
+    public Set<RoleDTO> getRoles() {
+        return roles;
+    }
+
+    public void setRoles(Set<RoleDTO> roles) {
+        this.roles = roles;
+    }
+
     @Override
     public String toString() {
         return "UserDTO{" +
@@ -112,6 +120,7 @@ public class UserDTO {
                 ", avatarUrl='" + avatarUrl + '\'' +
                 ", avatarPublicId='" + avatarPublicId + '\'' +
                 ", mobileNumber='" + mobileNumber + '\'' +
+                ", roles=" + roles +
                 '}';
     }
 }

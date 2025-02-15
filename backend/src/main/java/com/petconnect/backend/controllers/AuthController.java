@@ -5,6 +5,7 @@ import com.petconnect.backend.entity.Role;
 import com.petconnect.backend.entity.User;
 import com.petconnect.backend.exceptions.ResourceNotFoundException;
 import com.petconnect.backend.exceptions.UserAlreadyExistsException;
+import com.petconnect.backend.repositories.UserRepository;
 import com.petconnect.backend.services.EmailService;
 import com.petconnect.backend.services.AuthService;
 import com.petconnect.backend.services.UserService;
@@ -35,13 +36,15 @@ public class AuthController {
     private final EmailService emailService;
     private final UserMapper userMapper;
     private static final Logger logger = LoggerFactory.getLogger(AuthController.class);
+    private final UserRepository userRepository;
 
     @Autowired
-    public AuthController(AuthService authService, UserService userService, EmailService emailService, UserMapper userMapper) {
+    public AuthController(AuthService authService, UserService userService, EmailService emailService, UserMapper userMapper, UserRepository userRepository) {
         this.authService = authService;
         this.userService = userService;
         this.emailService = emailService;
         this.userMapper = userMapper;
+        this.userRepository = userRepository;
     }
 
     @PostMapping("/register")
@@ -102,7 +105,7 @@ public class AuthController {
     @PostMapping("/forget-password")
     public ResponseEntity<ApiResponse<String>> forgetPassword(@Valid @RequestBody Map<String, String> request) {
         String email = request.get("email");
-        Optional<User> userOptional = userService.findByEmail(email);
+        Optional<User> userOptional = userRepository.findByEmail(email);
         if (userOptional.isPresent()) {
             User user = userOptional.get();
             String resetToken = UUID.randomUUID().toString();
