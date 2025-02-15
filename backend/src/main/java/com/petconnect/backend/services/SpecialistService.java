@@ -8,14 +8,16 @@ import com.petconnect.backend.exceptions.ResourceNotFoundException;
 import com.petconnect.backend.exceptions.UserAlreadyExistsException;
 import com.petconnect.backend.mappers.SpecialistMapper;
 import com.petconnect.backend.repositories.SpecialistRepository;
-import com.petconnect.backend.repositories.RoleRepository;
 import com.petconnect.backend.repositories.UserRepository;
 import com.petconnect.backend.repositories.AddressRepository;
+import com.petconnect.backend.utils.RoleAssignmentUtil;
 import com.petconnect.backend.utils.TempUserStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -33,7 +35,7 @@ public class SpecialistService {
 
     private final SpecialistRepository specialistRepository;
     private final UserRepository userRepository;
-    private final RoleRepository roleRepository;
+    private final RoleAssignmentUtil roleAssignmentUtil;
     private final AddressRepository addressRepository;
     private final PasswordEncoder passwordEncoder;
     private final TempUserStore tempUserStore;
@@ -42,12 +44,12 @@ public class SpecialistService {
     private final VerificationService verificationService;
 
     @Autowired
-    public SpecialistService(SpecialistRepository specialistRepository, UserRepository userRepository, RoleRepository roleRepository,
+    public SpecialistService(SpecialistRepository specialistRepository, UserRepository userRepository, RoleAssignmentUtil roleAssignmentUtil,
                              AddressRepository addressRepository, @Lazy PasswordEncoder passwordEncoder, TempUserStore tempUserStore,
                              SpecialistMapper specialistMapper, UploadService uploadService, @Lazy VerificationService verificationService) {
         this.specialistRepository = specialistRepository;
         this.userRepository = userRepository;
-        this.roleRepository = roleRepository;
+        this.roleAssignmentUtil = roleAssignmentUtil;
         this.addressRepository = addressRepository;
         this.passwordEncoder = passwordEncoder;
         this.tempUserStore = tempUserStore;
@@ -56,8 +58,27 @@ public class SpecialistService {
         this.verificationService = verificationService;
     }
 
+    public Page<SpecialistDTO> getAllSpecialists(Pageable pageable) {
+        return specialistRepository.findAll(pageable).map(specialistMapper::toDTO);
+    }
+
+    public SpecialistDTO getSpecialistById(Long id) {
+        Specialist specialist = specialistRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Specialist not found with id " + id));
+        return specialistMapper.toDTO(specialist);
+    }
+
     @Transactional
-    public SpecialistDTO createSpecialist(SpecialistCreateRequestDTO specialistCreateRequestDTO, MultipartFile profileImage) throws IOException {
+    public SpecialistDTO updateSpecialist(SpecialistUpdateRequestDTO specialistUpdateRequestDTO, MultipartFile profileImage, UserDetails userDetails) throws IOException {
+        Specialist specialist = (Specialist) userRepository.findByEmail(userDetails.getUsername())
+                .orElseThrow(() -> new ResourceNotFoundException("Specialist not found with email: " + userDetails.getUsername()));
+        return updateSpecialist(specialist, specialistUpdateRequestDTO, profileImage);
+    }
+
+
+//    ADMIN SERVICES
+    @Transactional
+    public SpecialistDTO createSpecialistByAdmin(SpecialistCreateRequestDTO specialistCreateRequestDTO, MultipartFile profileImage) throws IOException {
         if (userRepository.existsByEmail(specialistCreateRequestDTO.getEmail())) {
             logger.warn("Specialist already exists with email: {}", specialistCreateRequestDTO.getEmail());
             throw new UserAlreadyExistsException("Specialist already exists with this email.");
@@ -66,55 +87,32 @@ public class SpecialistService {
         Specialist specialist = specialistMapper.toSpecialistEntity(specialistCreateRequestDTO);
         specialist.setPassword(passwordEncoder.encode(specialistCreateRequestDTO.getPassword()));
         specialist.setVerificationToken(UUID.randomUUID().toString());
-        specialist.setVerified(false);
+        specialist.setVerified(true);  // Set verified to true for admin-created specialists
 
         // Assign roles
         assignRolesToSpecialist(specialist);
 
         // Handle profile image upload if it exists
-        if (profileImage != null && !profileImage.isEmpty()) {
-            Map<String, String> imageInfo = handleProfileImageUpload(profileImage);
-            specialist.setAvatarUrl(imageInfo.get("avatarUrl"));
-            specialist.setAvatarPublicId(imageInfo.get("avatarPublicId"));
-        }
+        handleProfileImageUpload(profileImage, specialist);
 
-        // Save the specialist temporarily
-        tempUserStore.saveTemporaryUser(specialist.getVerificationToken(), specialist);
-        verificationService.sendVerificationEmail(specialist);
-        logger.info("Specialist registered with email: {}", specialist.getEmail());
+        // Save the specialist
+        specialistRepository.save(specialist);
+        logger.info("Specialist created by admin with email: {}", specialist.getEmail());
 
         return specialistMapper.toDTO(specialist);
     }
 
-    private void assignRolesToSpecialist(Specialist specialist) {
-        Role role = roleRepository.findByRoleName(Role.RoleName.SPECIALIST)
-                .orElseThrow(() -> new RuntimeException("SPECIALIST role not found"));
-        specialist.setRoles(Set.of(role));
-    }
-
-    public Map<String, String> handleProfileImageUpload(MultipartFile profileImage) throws IOException {
-        Map<String, Object> uploadResult = uploadService.uploadImage(profileImage, UploadService.ProfileType.SPECIALIST);
-
-        String avatarUrl = (String) uploadResult.get("url");
-        String avatarPublicId = (String) uploadResult.get("public_id");
-
-        Map<String, String> imageInfo = new HashMap<>();
-        imageInfo.put("avatarUrl", avatarUrl);
-        imageInfo.put("avatarPublicId", avatarPublicId);
-        return imageInfo;
-    }
 
     @Transactional
-    public SpecialistDTO updateSpecialist(SpecialistUpdateRequestDTO specialistUpdateRequestDTO, MultipartFile profileImage, UserDetails userDetails) throws IOException {
-        Specialist specialist = (Specialist) userRepository.findByEmail(userDetails.getUsername())
-                .orElseThrow(() -> new ResourceNotFoundException("Specialist not found with email: " + userDetails.getUsername()));
+    public SpecialistDTO updateSpecialistByAdmin(Long id, SpecialistUpdateRequestDTO specialistUpdateRequestDTO, MultipartFile profileImage) throws IOException {
+        Specialist specialist = specialistRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Specialist not found with id " + id));
+        return updateSpecialist(specialist, specialistUpdateRequestDTO, profileImage);
+    }
 
+    private SpecialistDTO updateSpecialist(Specialist specialist, SpecialistUpdateRequestDTO specialistUpdateRequestDTO, MultipartFile profileImage) throws IOException {
         // Handle profile image upload
-        if (profileImage != null && !profileImage.isEmpty()) {
-            Map<String, String> imageInfo = handleProfileImageUpload(profileImage);
-            specialist.setAvatarUrl(imageInfo.get("avatarUrl"));
-            specialist.setAvatarPublicId(imageInfo.get("avatarPublicId"));
-        }
+        handleProfileImageUpload(profileImage, specialist);
 
         // Update specialist fields
         if (specialistUpdateRequestDTO.getFirstName() != null) {
@@ -138,17 +136,19 @@ public class SpecialistService {
         if (specialistUpdateRequestDTO.getPassword() != null) {
             specialist.setPassword(passwordEncoder.encode(specialistUpdateRequestDTO.getPassword()));
         }
+        updateAddressDetails(specialist, specialistUpdateRequestDTO.getAddressDTO());
 
-        // Update address fields if provided
-        if (specialistUpdateRequestDTO.getAddressDTO() != null) {
-            AddressDTO addressDTO = specialistUpdateRequestDTO.getAddressDTO();
+        specialistRepository.save(specialist);
+        return specialistMapper.toDTO(specialist);
+    }
+
+    private void updateAddressDetails(Specialist specialist, AddressDTO addressDTO) {
+        if (addressDTO != null) {
             Address address = specialist.getAddress();
-
             if (address == null) {
                 address = new Address();
                 specialist.setAddress(address);
             }
-
             if (addressDTO.getPincode() != null) {
                 address.setPincode(addressDTO.getPincode());
             }
@@ -164,24 +164,40 @@ public class SpecialistService {
             if (addressDTO.getCountry() != null) {
                 address.setCountry(addressDTO.getCountry());
             }
-
-            // Save the address
             addressRepository.save(address);
         }
-
-        specialistRepository.save(specialist);
-        return specialistMapper.toDTO(specialist);
     }
 
-    public List<SpecialistDTO> getAllSpecialists() {
-        return specialistRepository.findAll().stream()
-                .map(specialistMapper::toDTO)
-                .collect(Collectors.toList());
-    }
-
-    public SpecialistDTO getSpecialistById(Long id) {
+    @Transactional
+    public void deleteSpecialistByAdmin(Long id) {
         Specialist specialist = specialistRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Specialist not found with id " + id));
-        return specialistMapper.toDTO(specialist);
+        specialistRepository.delete(specialist);
+        logger.info("Deleted specialist with ID: {}", id);
+    }
+
+    public Page<SpecialistDTO> searchSpecialists(String keyword, Pageable pageable) {
+        Page<Specialist> specialists = specialistRepository.findByFirstNameContainingOrSpecialityContaining(keyword, keyword, pageable);
+        return specialists.map(specialistMapper::toDTO);
+    }
+
+    public void assignRolesToSpecialist(Specialist specialist) {
+        roleAssignmentUtil.assignRoles(specialist, Role.RoleName.SPECIALIST, null);
+    }
+
+    private void handleProfileImageUpload(MultipartFile profileImage, Specialist specialist) throws IOException {
+        if (profileImage != null && !profileImage.isEmpty()) {
+            Map<String, String> imageInfo = uploadProfileImage(profileImage);
+            specialist.setAvatarUrl(imageInfo.get("avatarUrl"));
+            specialist.setAvatarPublicId(imageInfo.get("avatarPublicId"));
+        }
+    }
+
+    private Map<String, String> uploadProfileImage(MultipartFile profileImage) throws IOException {
+        Map<String, Object> uploadResult = uploadService.uploadImage(profileImage, UploadService.ProfileType.SPECIALIST);
+        return Map.of(
+                "avatarUrl", (String) uploadResult.get("url"),
+                "avatarPublicId", (String) uploadResult.get("public_id")
+        );
     }
 }

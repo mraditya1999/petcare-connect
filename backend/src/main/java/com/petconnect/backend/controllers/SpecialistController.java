@@ -4,6 +4,11 @@ import com.petconnect.backend.dto.*;
 import com.petconnect.backend.mappers.SpecialistMapper;
 import com.petconnect.backend.services.SpecialistService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -32,51 +37,6 @@ public class SpecialistController {
     public SpecialistController(SpecialistService specialistService, SpecialistMapper specialistMapper) {
         this.specialistService = specialistService;
         this.specialistMapper = specialistMapper;
-    }
-
-    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<ApiResponse<String>> createSpecialist(
-            @RequestParam("firstName") String firstName,
-            @RequestParam("lastName") String lastName,
-            @RequestParam("email") String email,
-            @RequestParam("password") String password,
-            @RequestParam("mobileNumber") String mobileNumber,
-            @RequestParam("speciality") String speciality,
-            @RequestParam("about") String about,
-            @RequestPart(value = "profileImage", required = false) MultipartFile profileImage,
-            @RequestParam("pincode") Long pincode,
-            @RequestParam("city") String city,
-            @RequestParam("state") String state,
-            @RequestParam("locality") String locality,
-            @RequestParam("country") String country) throws IOException {
-
-        SpecialistCreateRequestDTO requestDTO = new SpecialistCreateRequestDTO();
-        requestDTO.setFirstName(firstName);
-        requestDTO.setLastName(lastName);
-        requestDTO.setEmail(email);
-        requestDTO.setPassword(password);
-        requestDTO.setMobileNumber(mobileNumber);
-        requestDTO.setSpeciality(speciality);
-        requestDTO.setAbout(about);
-
-        AddressDTO addressDTO = new AddressDTO();
-        addressDTO.setPincode(pincode);
-        addressDTO.setCity(city);
-        addressDTO.setState(state);
-        addressDTO.setLocality(locality);
-        addressDTO.setCountry(country);
-        requestDTO.setAddressDTO(addressDTO);
-
-        SpecialistDTO createdSpecialist = specialistService.createSpecialist(requestDTO, profileImage);
-
-        // Check if profileImage was uploaded and set avatar URL and public ID
-        if (profileImage != null && !profileImage.isEmpty()) {
-            Map<String, String> imageInfo = specialistService.handleProfileImageUpload(profileImage);
-            createdSpecialist.setAvatarUrl(imageInfo.get("avatarUrl"));
-            createdSpecialist.setAvatarPublicId(imageInfo.get("avatarPublicId"));
-        }
-
-        return ResponseEntity.ok(new ApiResponse<>("Specialist created successfully. Verification email sent."));
     }
 
 
@@ -119,19 +79,32 @@ public class SpecialistController {
         return ResponseEntity.ok(new ApiResponse<>("Specialist updated successfully", specialistResponseDTO));
     }
 
-    @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<ApiResponse<List<SpecialistResponseDTO>>> getAllSpecialists() {
-        List<SpecialistDTO> specialists = specialistService.getAllSpecialists();
-        List<SpecialistResponseDTO> specialistResponseDTOS = specialists.stream()
-                .map(specialistDTO -> specialistMapper.toSpecialistResponseDTO(specialistDTO))
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(new ApiResponse<>("Specialists retrieved successfully", specialistResponseDTOS));
+    @GetMapping("/specialists")
+    public ResponseEntity<ApiResponse<Page<SpecialistDTO>>> getAllSpecialists(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "specialistId") String sortBy,
+            @RequestParam(defaultValue = "asc") String sortDir) {
+        try {
+            Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.fromString(sortDir), sortBy));
+            Page<SpecialistDTO> specialists = specialistService.getAllSpecialists(pageable);
+            logger.info("Fetched all specialists with pagination and sorting");
+            return ResponseEntity.ok(new ApiResponse<>("Fetched all specialists", specialists));
+        } catch (Exception e) {
+            logger.error("Error fetching specialists: {}", e.getMessage());
+            return new ResponseEntity<>(new ApiResponse<>("Error fetching specialists"), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
-    @GetMapping(value = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<ApiResponse<SpecialistResponseDTO>> getSpecialistById(@PathVariable Long id) {
-        SpecialistDTO specialist = specialistService.getSpecialistById(id);
-        SpecialistResponseDTO specialistResponseDTO = specialistMapper.toSpecialistResponseDTO(specialist);
-        return ResponseEntity.ok(new ApiResponse<>("Specialist retrieved successfully", specialistResponseDTO));
+    @GetMapping("/specialists/{id}")
+    public ResponseEntity<ApiResponse<SpecialistDTO>> getSpecialistById(@PathVariable Long id) {
+        try {
+            SpecialistDTO specialist = specialistService.getSpecialistById(id);
+            logger.info("Fetched specialist with ID: {}", id);
+            return ResponseEntity.ok(new ApiResponse<>("Fetched specialist", specialist));
+        } catch (Exception e) {
+            logger.error("Error fetching specialist with ID {}: {}", id, e.getMessage());
+            return new ResponseEntity<>(new ApiResponse<>("Specialist not found"), HttpStatus.NOT_FOUND);
+        }
     }
 }

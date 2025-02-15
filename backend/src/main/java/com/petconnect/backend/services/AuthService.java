@@ -5,6 +5,7 @@ import com.petconnect.backend.entity.User;
 import com.petconnect.backend.exceptions.AuthenticationException;
 import com.petconnect.backend.exceptions.UserAlreadyExistsException;
 import com.petconnect.backend.repositories.RoleRepository;
+import com.petconnect.backend.utils.RoleAssignmentUtil;
 import com.petconnect.backend.repositories.UserRepository;
 import com.petconnect.backend.security.JwtUtil;
 import com.petconnect.backend.security.UserDetailsServiceImpl;
@@ -31,17 +32,17 @@ public class AuthService implements UserDetailsService {
     private static final Logger logger = LoggerFactory.getLogger(AuthService.class);
 
     private final UserRepository userRepository;
-    private final RoleRepository roleRepository;
+    private final RoleAssignmentUtil roleAssignmentUtil;
     private final PasswordEncoder passwordEncoder;
     private final VerificationService verificationService;
     private final JwtUtil jwtUtil;
     private final TempUserStore tempUserStore;
 
     @Autowired
-    public AuthService(UserRepository userRepository, RoleRepository roleRepository, @Lazy PasswordEncoder passwordEncoder,
+    public AuthService(UserRepository userRepository, RoleAssignmentUtil roleAssignmentUtil, RoleRepository roleRepository, @Lazy PasswordEncoder passwordEncoder,
                        @Lazy VerificationService verificationService, JwtUtil jwtUtil, TempUserStore tempUserStore) {
         this.userRepository = userRepository;
-        this.roleRepository = roleRepository;
+        this.roleAssignmentUtil = roleAssignmentUtil;
         this.passwordEncoder = passwordEncoder;
         this.verificationService = verificationService;
         this.jwtUtil = jwtUtil;
@@ -80,24 +81,9 @@ public class AuthService implements UserDetailsService {
         logger.info("User registered with email: {}", user.getEmail());
     }
 
-    private void assignRolesToUser(User user) {
+    public void assignRolesToUser(User user) {
         boolean isFirstUser = userRepository.count() == 0;
-        Set<Role> roles = new HashSet<>();
-
-        if (isFirstUser) {
-            roles.add(fetchRole(Role.RoleName.ADMIN));
-            roles.add(fetchRole(Role.RoleName.USER));
-        } else {
-            roles.add(fetchRole(Role.RoleName.USER));
-        }
-        user.setRoles(roles);
-    }
-    private Role fetchRole(Role.RoleName roleName) {
-        return roleRepository.findByRoleName(roleName)
-                .orElseThrow(() -> {
-                    logger.error("{} role not found", roleName);
-                    return new RuntimeException(roleName + " role not found");
-                });
+        roleAssignmentUtil.assignRoles(user, Role.RoleName.USER, isFirstUser ? Role.RoleName.ADMIN : null);
     }
 
     public Optional<User> authenticateUser(String email, String password) {
