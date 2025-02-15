@@ -36,10 +36,13 @@ public class PetController {
             @RequestParam("weight") Double weight,
             @RequestParam("gender") String gender,
             @RequestParam("species") String species,
-            @RequestParam(value = "avatarFile", required = false) MultipartFile avatarFile) throws IOException {
+            @RequestParam(value = "avatarFile", required = false) MultipartFile avatarFile
+            ) throws IOException {
+
+        String username = userDetails.getUsername();
 
         PetDTO petDTO = new PetDTO(name, breed, age, weight, gender, species);
-        PetDTO createdPet = petService.createPetForUser(petDTO, avatarFile);
+        PetDTO createdPet = petService.createPetForUser(petDTO, avatarFile,username);
         logger.info("Pet created for user: {}", userDetails.getUsername());
         return ResponseEntity.ok(createdPet);
     }
@@ -51,8 +54,8 @@ public class PetController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<PetDTO> getPetById(@PathVariable Long id, @AuthenticationPrincipal UserDetails userDetails) {
-        PetDTO pet = petService.getPetById(id);
+    public ResponseEntity<PetDTO> getPetOfUserById(@PathVariable Long id, @AuthenticationPrincipal UserDetails userDetails) {
+        PetDTO pet = petService.getPetOfUserById(id);
         return ResponseEntity.ok(pet);
     }
 
