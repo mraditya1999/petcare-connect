@@ -13,28 +13,25 @@ import com.petconnect.backend.repositories.CommentRepository;
 import com.petconnect.backend.repositories.ForumRepository;
 import com.petconnect.backend.repositories.LikeRepository;
 import com.petconnect.backend.repositories.UserRepository;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
 public class ForumService {
 
-    private static final Logger logger = LoggerFactory.getLogger(ForumService.class);
+    private static final String USER_NOT_FOUND = "User not found with email ";
+    private static final String FORUM_NOT_FOUND = "Forum not found with id ";
+    private static final String COMMENT_NOT_FOUND = "Comment not found with id ";
+
 
     private final ForumRepository forumRepository;
     private final UserRepository userRepository;
@@ -62,57 +59,43 @@ public class ForumService {
     @Transactional(readOnly = true)
     public Page<ForumDTO> getAllForums(Pageable pageable) {
         Page<Forum> forums = forumRepository.findAll(pageable);
-
-        return forums.map(forum -> {
-            ForumDTO forumDTO = forumMapper.toDTO(forum);
-
-            User user = userRepository.findById(forum.getUserId())
-                    .orElseThrow(() -> new ResourceNotFoundException("User not found with id " + forum.getUserId()));
-
-            forumDTO.setFirstName(user.getFirstName());
-            forumDTO.setLastName(user.getLastName());
-            forumDTO.setEmail(user.getEmail());
-
-            forumDTO.setLikesCount(likeService.getLikesCountForForum(forum.getForumId()));
-            forumDTO.setCommentsCount(commentService.getCommentsCountByForumId(forum.getForumId()));
-
-            return forumDTO;
-        });
+        return forums.map(this::convertToForumDTO);
     }
-
 
     @Transactional(readOnly = true)
     public ForumDTO getForumById(String forumId) {
         Forum forum = forumRepository.findById(forumId)
                 .orElseThrow(() -> new ResourceNotFoundException("Forum not found with id " + forumId));
+        return convertToForumDTO(forum);
+    }
 
-        ForumDTO forumDTO = forumMapper.toDTO(forum);
+    @Transactional(readOnly = true)
+    public List<ForumDTO> getTopFeaturedForums() {
+        Pageable topThree = PageRequest.of(0, 3, Sort.by(Sort.Direction.DESC, "likes.size"));
+        Page<Forum> forums = forumRepository.findAll(topThree);
+        return forums.stream().map(this::convertToForumDTO).collect(Collectors.toList());
+    }
 
-        User user = userRepository.findById(forum.getUserId())
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with id " + forum.getUserId()));
+    @Transactional(readOnly = true)
+    public List<ForumDTO> searchForums(String keyword) {
+        List<Forum> forums = forumRepository.findByTitleContainingIgnoreCaseOrContentContainingIgnoreCase(keyword, keyword);
+        return forums.stream().map(this::convertToForumDTO).collect(Collectors.toList());
+    }
 
-        forumDTO.setFirstName(user.getFirstName());
-        forumDTO.setLastName(user.getLastName());
-        forumDTO.setEmail(user.getEmail());
+    @Transactional(readOnly = true)
+    public List<ForumDTO> searchForumsByTags(List<String> tags) {
+        List<Forum> forums = forumRepository.findByTagsIn(tags);
+        return forums.stream().map(this::convertToForumDTO).collect(Collectors.toList());
+    }
 
-//        // Fetch likes for the forum and add to ForumDTO
-//        List<LikeDTO> likes = likeService.getLikesByForumId(forumId).stream()
-//                .map(likeMapper::toDTO)
-//                .collect(Collectors.toList());
-//        forumDTO.setLikes(likes);
-
-        // Fetch comments for the forum and add to ForumDTO
-//        List<CommentDTO> comments = commentService.getAllCommentsByForumId(forumId).stream()
-//                .map(commentMapper::toDTO)
-//                .collect(Collectors.toList());
-//        forumDTO.setComments(comments);
-
-        return forumDTO;
+    @Transactional(readOnly = true)
+    public List<ForumDTO> sortForums(String field) {
+        List<Forum> forums = forumRepository.findAll(Sort.by(Sort.Direction.DESC, field));
+        return forums.stream().map(this::convertToForumDTO).collect(Collectors.toList());
     }
 
     @Transactional
     public ForumDTO createForum(String email, ForumCreateDTO forumCreateDTO) {
-
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with email " + email));
 
@@ -123,21 +106,11 @@ public class ForumService {
         forum.setTags(forumCreateDTO.getTags());
 
         forum = forumRepository.save(forum);
-        ForumDTO result = forumMapper.toDTO(forum);
-
-        result.setFirstName(user.getFirstName());
-        result.setLastName(user.getLastName());
-        result.setEmail(user.getEmail());
-        result.setLikesCount(0L);
-        result.setCommentsCount(0L);
-        result.setCreatedAt(forum.getCreatedAt());
-        result.setUpdatedAt(forum.getUpdatedAt());
-
-        return result;
+        return convertToForumDTO(forum);
     }
 
     @Transactional
-    public ForumDTO updateForum(String forumId, String email, UpdateForumDTO updateForumDTO) {
+    public ForumDTO updateForum(String email, String forumId, UpdateForumDTO updateForumDTO) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with email " + email));
 
@@ -159,210 +132,189 @@ public class ForumService {
         }
 
         forum = forumRepository.save(forum);
-        return forumMapper.toDTO(forum);
+        return convertToForumDTO(forum);
     }
 
     @Transactional
-    public void deleteForum(String forumId, @AuthenticationPrincipal UserDetails userDetails) {
-        User user = userRepository.findByEmail(userDetails.getUsername())
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with email " + userDetails.getUsername()));
+    public void deleteForum(String email, String forumId) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with email " + email));
 
         Forum forum = forumRepository.findById(forumId)
                 .orElseThrow(() -> new ResourceNotFoundException("Forum not found with id " + forumId));
 
-        if (!forum.getUserId().equals((user.getUserId()))) {
+        if (!forum.getUserId().equals(user.getUserId())) {
             throw new IllegalArgumentException("You can only delete your own forums.");
         }
 
         // Delete all associated likes
         likeRepository.deleteByForumId(forumId);
 
-        // Delete all associated comments
-        commentRepository.deleteByForumId(forumId);
+        // Delete all associated comments and their sub-comments
+        deleteCommentsByForumId(forumId);
 
         // Delete the forum itself
         forumRepository.delete(forum);
     }
 
     @Transactional
-    public void deleteComment(String forumId, String commentId, String email) {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with email " + email));
-
-        forumRepository.findById(forumId)
-                .orElseThrow(() -> new ResourceNotFoundException("Forum not found with id " + forumId));
-
-        Comment comment = commentRepository.findById(commentId)
-                .orElseThrow(() -> new ResourceNotFoundException("Comment not found with id " + commentId));
-
-        System.out.println("Authenticated User ID: " + user.getUserId());
-        System.out.println("Comment User ID: " + comment.getUserId());
-
-        if (!comment.getUserId().equals(user.getUserId())) {
-            throw new IllegalArgumentException("You can only delete your own comments.");
+    public void deleteCommentsByForumId(String forumId) {
+        List<Comment> comments = commentRepository.findByForumId(forumId);
+        for (Comment comment : comments) {
+            deleteCommentAndSubComments(comment);
         }
+    }
 
+    public Page<Comment> getCommentsByForumId(String forumId, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return commentRepository.findByForumId(forumId, pageable);
+    }
+
+
+    @Transactional
+    public void deleteCommentAndSubComments(Comment comment) {
+        List<Comment> subComments = commentRepository.findByParentId(comment.getCommentId());
+        for (Comment subComment : subComments) {
+            deleteCommentAndSubComments(subComment);
+        }
+        likeRepository.deleteByCommentId(comment.getCommentId());
         commentRepository.delete(comment);
     }
 
-
     @Transactional(readOnly = true)
-    public List<ForumDTO> getMyForums(String email) {
-
+    public Page<ForumDTO> getMyForums(String email, int page, int size) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with email " + email));
 
-        List<Forum> forums = forumRepository.findByUserId(user.getUserId());
-
-        return forums.stream().map(forum -> {
-            ForumDTO forumDTO = forumMapper.toDTO(forum);
-            forumDTO.setFirstName(user.getFirstName());
-            forumDTO.setLastName(user.getLastName());
-            forumDTO.setEmail(user.getEmail());
-            forumDTO.setLikesCount(likeService.getLikesCountForForum(forum.getForumId()));
-            forumDTO.setCommentsCount(commentService.getCommentsCountByForumId(forum.getForumId()));
-            return forumDTO;
-        }).collect(Collectors.toList());
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Forum> forums = forumRepository.findByUserId(user.getUserId(), pageable);
+        return forums.map(this::convertToForumDTO);
     }
 
 
-    @Transactional(readOnly = true)
-    public List<ForumDTO> searchForums(String keyword) {
-        List<Forum> forums = forumRepository.findByTitleContainingIgnoreCaseOrContentContainingIgnoreCase(keyword, keyword);
-        return forums.stream().map(forum -> {
-            ForumDTO forumDTO = forumMapper.toDTO(forum);
-
-            User user = userRepository.findById(forum.getUserId())
-                    .orElseThrow(() -> new ResourceNotFoundException("User not found with id " + forum.getUserId()));
-
-            forumDTO.setFirstName(user.getFirstName());
-            forumDTO.setLastName(user.getLastName());
-            forumDTO.setEmail(user.getEmail());
-
-            return forumDTO;
-        }).collect(Collectors.toList());
+    public ForumDTO convertToForumDTO(Forum forum) {
+        ForumDTO forumDTO = forumMapper.toDTO(forum);
+        User user = userRepository.findById(forum.getUserId())
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id " + forum.getUserId()));
+        forumDTO.setFirstName(user.getFirstName());
+        forumDTO.setLastName(user.getLastName());
+        forumDTO.setEmail(user.getEmail());
+        forumDTO.setLikesCount(likeService.getLikesCountForForum(forum.getForumId()));
+        forumDTO.setCommentsCount(commentService.getCommentsCountByForumId(forum.getForumId()));
+        return forumDTO;
     }
 
-    @Transactional(readOnly = true)
-    public List<ForumDTO> sortForums(String field) {
-        List<Forum> forums = forumRepository.findAll(Sort.by(Sort.Direction.DESC, field));
-        return forums.stream().map(forum -> {
-            ForumDTO forumDTO = forumMapper.toDTO(forum);
-
-            User user = userRepository.findById(forum.getUserId())
-                    .orElseThrow(() -> new ResourceNotFoundException("User not found with id " + forum.getUserId()));
-
-            forumDTO.setFirstName(user.getFirstName());
-            forumDTO.setLastName(user.getLastName());
-            forumDTO.setEmail(user.getEmail());
-
-            return forumDTO;
-        }).collect(Collectors.toList());
-    }
-
-    @Transactional(readOnly = true)
-    public List<ForumDTO> getTopFeaturedForums() {
-        Pageable topThree = PageRequest.of(0, 3, Sort.by(Sort.Direction.DESC, "likes.size"));
-        Page<Forum> forums = forumRepository.findAll(topThree);
-        return forums.stream().map(forum -> {
-            ForumDTO forumDTO = forumMapper.toDTO(forum);
-
-            User user = userRepository.findById(forum.getUserId())
-                    .orElseThrow(() -> new ResourceNotFoundException("User not found with id " + forum.getUserId()));
-
-            forumDTO.setFirstName(user.getFirstName());
-            forumDTO.setLastName(user.getLastName());
-            forumDTO.setEmail(user.getEmail());
-
-            return forumDTO;
-        }).collect(Collectors.toList());
-    }
-
-    @Transactional
-    public Map<String, String> toggleLikeOnForum(String forumId, String email) {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with email " + email));
-
-        forumRepository.findById(forumId)
-                .orElseThrow(() -> new ResourceNotFoundException("Forum not found with id " + forumId));
-
-        Long userId = user.getUserId();
-
-        // Find existing like (using a query in the repository)
-        Optional<Like> existingLike = likeRepository.findByUserIdAndForumId(userId, forumId);
-
-        Map<String, String> response = new HashMap<>();
-        if (existingLike.isPresent()) {
-            likeRepository.delete(existingLike.get());
-            response.put("message", "Forum unliked successfully");
-        } else {
-            Like like = new Like();
-            like.setForumId(forumId);
-            like.setUserId(userId);
-            likeRepository.save(like);
-            response.put("message", "Forum liked successfully");
-        }
-
-        return response;
-    }
-
-    @Transactional
-    public CommentDTO commentOnForum(String forumId, String email, CommentDTO commentDTO) {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with email " + email));
-
-        forumRepository.findById(forumId)
-                .orElseThrow(() -> new ResourceNotFoundException("Forum not found with id " + forumId));
-
-        Comment comment = new Comment();
-        comment.setForumId(forumId);
-        comment.setUserId(user.getUserId());
-        comment.setText(commentDTO.getText());
-        comment = commentRepository.save(comment);
-
-        CommentDTO savedCommentDTO = commentMapper.toDTO(comment);
-        savedCommentDTO.setFirstName(user.getFirstName());
-        savedCommentDTO.setLastName(user.getLastName());
-        savedCommentDTO.setEmail(user.getEmail());
-
-        return savedCommentDTO;
-    }
+//
+//    @Transactional
+//    public void deleteComment(String forumId, String commentId, String email) {
+//        User user = userRepository.findByEmail(email)
+//                .orElseThrow(() -> new ResourceNotFoundException("User not found with email " + email));
+//
+//        forumRepository.findById(forumId)
+//                .orElseThrow(() -> new ResourceNotFoundException("Forum not found with id " + forumId));
+//
+//        Comment comment = commentRepository.findById(commentId)
+//                .orElseThrow(() -> new ResourceNotFoundException("Comment not found with id " + commentId));
+//
+//        if (!comment.getUserId().equals(user.getUserId())) {
+//            throw new IllegalArgumentException("You can only delete your own comments.");
+//        }
+//
+//        commentRepository.delete(comment);
+//    }
 
 
 //    ADMIN SERVICES
 
     @Transactional
-    public ForumDTO updateForumById(String forumId, ForumDTO forumDTO) {
+    public ForumDTO updateForumById(String forumId, UpdateForumDTO updateForumDTO) {
         Forum forum = forumRepository.findById(forumId)
-                .orElseThrow(() -> new ResourceNotFoundException("Forum not found with id " + forumId));
+                .orElseThrow(() -> new ResourceNotFoundException(FORUM_NOT_FOUND + forumId));
 
-        if (forumDTO.getTitle() != null) {
-            forum.setTitle(forumDTO.getTitle());
+        if (updateForumDTO.getTitle() != null) {
+            forum.setTitle(updateForumDTO.getTitle());
         }
-        if (forumDTO.getContent() != null) {
-            forum.setContent(forumDTO.getContent());
+        if (updateForumDTO.getContent() != null) {
+            forum.setContent(updateForumDTO.getContent());
         }
-        if (forumDTO.getTags() != null) {
-            forum.setTags(forumDTO.getTags());
+        if (updateForumDTO.getTags() != null) {
+            forum.setTags(updateForumDTO.getTags());
         }
 
         forum = forumRepository.save(forum);
-        return forumMapper.toDTO(forum);
+        return convertToForumDTO(forum);
     }
 
     @Transactional
     public void deleteForumById(String forumId) {
         Forum forum = forumRepository.findById(forumId)
-                .orElseThrow(() -> new ResourceNotFoundException("Forum not found with id " + forumId));
-
-        // Delete all associated likes
+                .orElseThrow(() -> new ResourceNotFoundException(FORUM_NOT_FOUND + forumId));
+        // Delete all associated likes and comments
         likeRepository.deleteByForumId(forumId);
-
-        // Delete all associated comments
         commentRepository.deleteByForumId(forumId);
-
-        // Delete the forum itself
         forumRepository.delete(forum);
     }
 
+//    @Transactional
+//    public Map<String, String> toggleLikeOnForum(String forumId, String email) {
+//        User user = getUserByEmail(email);
+//        Forum forum = getForum(forumId);
+//
+//        Long userId = user.getUserId();
+//        Optional<Like> existingLike = likeRepository.findByUserIdAndForumId(userId, forumId);
+//
+//        Map<String, String> response = new HashMap<>();
+//        if (existingLike.isPresent()) {
+//            likeRepository.delete(existingLike.get());
+//            response.put("message", "Forum unliked successfully");
+//        } else {
+//            Like like = new Like();
+//            like.setForumId(forumId);
+//            like.setUserId(userId);
+//            likeRepository.save(like);
+//            response.put("message", "Forum liked successfully");
+//        }
+//
+//        return response;
+//    }
+//
+//    private Forum getForum(String forumId) {
+//        return forumRepository.findById(forumId)
+//                .orElseThrow(() -> new ResourceNotFoundException(FORUM_NOT_FOUND + forumId));
+//    }
+//
+//    private Comment getComment(String commentId) {
+//        return commentRepository.findById(commentId)
+//                .orElseThrow(() -> new ResourceNotFoundException(COMMENT_NOT_FOUND + commentId));
+//    }
+
+//    public User getUserByEmail(String email) {
+//        return userRepository.findByEmail(email)
+//                .orElseThrow(() -> new ResourceNotFoundException(USER_NOT_FOUND + email));
+//    }
+
+//    private void updateForumDetails(Forum forum, UpdateForumDTO updateForumDTO) {
+//        if (updateForumDTO.getTitle() != null) {
+//            forum.setTitle(updateForumDTO.getTitle());
+//        }
+//        if (updateForumDTO.getContent() != null) {
+//            forum.setContent(updateForumDTO.getContent());
+//        }
+//        if (updateForumDTO.getTags() != null) {
+//            forum.setTags(updateForumDTO.getTags());
+//        }
+//    }
+
+//    private void deleteAssociatedLikesAndComments(String forumId) {
+//        likeRepository.deleteByForumId(forumId);
+//        commentRepository.deleteByForumId(forumId);
+//    }
+
+
+//    @Transactional
+//    public void deleteAnyComment(String commentId) {
+//        Comment comment = commentRepository.findById(commentId)
+//                .orElseThrow(() -> new ResourceNotFoundException("Comment not found with id " + commentId));
+//        commentRepository.delete(comment);
+//    }
 }

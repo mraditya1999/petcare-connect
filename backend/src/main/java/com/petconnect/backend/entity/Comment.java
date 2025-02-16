@@ -1,6 +1,6 @@
 package com.petconnect.backend.entity;
 
-import jakarta.persistence.EntityListeners;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.data.annotation.CreatedDate;
@@ -9,14 +9,16 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
-import org.springframework.data.mongodb.core.mapping.DBRef;
 
 import java.util.Date;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Set;
 
 @EntityListeners(AuditingEntityListener.class)
 @Document(collection = "comments")
 public class Comment {
+
     @Id
     private String commentId;
 
@@ -35,24 +37,34 @@ public class Comment {
     @Field("created_at")
     private Date createdAt;
 
-    @DBRef
-    private Forum forum;
+    @ElementCollection
+    private Set<Long> likedByUsers = new HashSet<>();
 
-    private AtomicInteger likes = new AtomicInteger(0);
+    @OneToMany(mappedBy = "comment", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<Like> likes = new HashSet<>();
+
+    @Indexed
+    private String parentId;
+
+    @OneToMany(mappedBy = "parentId", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<Comment> replies = new HashSet<>();
 
     public Comment() {
     }
 
-    public Comment(String commentId, String forumId, Long userId, String text, Date createdAt, Forum forum, AtomicInteger likes) {
+    public Comment(String commentId, String forumId, Long userId, String text, Date createdAt, Set<Long> likedByUsers, Set<Like> likes, String parentId, Set<Comment> replies) {
         this.commentId = commentId;
         this.forumId = forumId;
         this.userId = userId;
         this.text = text;
         this.createdAt = createdAt;
-        this.forum = forum;
+        this.likedByUsers = likedByUsers;
         this.likes = likes;
+        this.parentId = parentId;
+        this.replies = replies;
     }
 
+    // Getters and setters
     public String getCommentId() {
         return commentId;
     }
@@ -93,23 +105,48 @@ public class Comment {
         this.createdAt = createdAt;
     }
 
-    public Forum getForum() {
-        return forum;
+    public Set<Long> getLikedByUsers() {
+        return likedByUsers;
     }
 
-    public void setForum(Forum forum) {
-        this.forum = forum;
+    public void setLikedByUsers(Set<Long> likedByUsers) {
+        this.likedByUsers = likedByUsers;
     }
 
-    public int getLikes() {
-        return likes.get();
+    public Set<Like> getLikes() {
+        return likes;
     }
 
-    public void addLike() {
-        this.likes.incrementAndGet();
+    public void setLikes(Set<Like> likes) {
+        this.likes = likes;
     }
 
-    public void removeLike() {
-        this.likes.decrementAndGet();
+    public String getParentId() {
+        return parentId;
+    }
+
+    public void setParentId(String parentId) {
+        this.parentId = parentId;
+    }
+
+    public Set<Comment> getReplies() {
+        return replies;
+    }
+
+    public void setReplies(Set<Comment> replies) {
+        this.replies = replies;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Comment)) return false;
+        Comment comment = (Comment) o;
+        return Objects.equals(commentId, comment.commentId);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(commentId);
     }
 }
