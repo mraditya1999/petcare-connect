@@ -11,10 +11,10 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
 
 import java.util.Date;
+import java.util.Objects;
 
 @EntityListeners(AuditingEntityListener.class)
 @Document(collection = "likes")
-
 public class Like {
     @Id
     private String likeId;
@@ -22,6 +22,10 @@ public class Like {
     @NotNull
     @Indexed
     private String forumId;
+
+    @NotNull
+    @Indexed
+    private String commentId;  // Added field for comment ID
 
     @NotNull
     @Indexed
@@ -37,14 +41,16 @@ public class Like {
     public Like() {
     }
 
-    public Like(String likeId, String forumId, Long userId, Date createdAt, Forum forumPost) {
+    public Like(String likeId, String forumId, String commentId, Long userId, Date createdAt, Forum forumPost) {
         this.likeId = likeId;
         this.forumId = forumId;
+        this.commentId = commentId;
         this.userId = userId;
         this.createdAt = createdAt;
         this.forumPost = forumPost;
     }
 
+    // Getters and setters
     public String getLikeId() {
         return likeId;
     }
@@ -59,6 +65,14 @@ public class Like {
 
     public void setForumId(String forumId) {
         this.forumId = forumId;
+    }
+
+    public String getCommentId() {
+        return commentId;
+    }
+
+    public void setCommentId(String commentId) {
+        this.commentId = commentId;
     }
 
     public Long getUserId() {
@@ -83,5 +97,18 @@ public class Like {
 
     public void setForumPost(Forum forumPost) {
         this.forumPost = forumPost;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Like)) return false;
+        Like like = (Like) o;
+        return Objects.equals(likeId, like.likeId);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(likeId);
     }
 }

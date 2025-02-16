@@ -1,10 +1,13 @@
 package com.petconnect.backend.controllers;
 
 import com.petconnect.backend.dto.*;
+import com.petconnect.backend.entity.Comment;
+import com.petconnect.backend.entity.Like;
 import com.petconnect.backend.entity.Role;
-import com.petconnect.backend.services.PetService;
-import com.petconnect.backend.services.SpecialistService;
-import com.petconnect.backend.services.UserService;
+import com.petconnect.backend.exceptions.ResourceNotFoundException;
+import com.petconnect.backend.mappers.CommentMapper;
+import com.petconnect.backend.mappers.LikeMapper;
+import com.petconnect.backend.services.*;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,8 +23,11 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/admin")
@@ -32,12 +38,22 @@ public class AdminController {
     private final SpecialistService specialistService;
 
     private static final Logger logger = LoggerFactory.getLogger(AdminController.class);
+    private final ForumService forumService;
+    private final LikeService likeService;
+    private final LikeMapper likeMapper;
+    private final CommentMapper commentMapper;
+    private final CommentService commentService;
 
     @Autowired
-    public AdminController(UserService userService, PetService petService, SpecialistService specialistService) {
+    public AdminController(UserService userService, PetService petService, SpecialistService specialistService, ForumService forumService, LikeService likeService, LikeMapper likeMapper, CommentMapper commentMapper, CommentService commentService) {
         this.userService = userService;
         this.petService = petService;
         this.specialistService = specialistService;
+        this.forumService = forumService;
+        this.likeService = likeService;
+        this.likeMapper = likeMapper;
+        this.commentMapper = commentMapper;
+        this.commentService = commentService;
     }
 
     // Endpoint to get all users with pagination and sorting
@@ -280,4 +296,166 @@ public class AdminController {
         petService.deletePetById(id);
     }
 
+//    ########################################################################################################
+    /**
+     * Update a forum by its ID.
+     *
+     * @param forumId the forum ID
+     * @param updateForumDTO the forum update data
+     * @return the updated forum details
+     */
+    @PutMapping("/forums/{forumId}")
+    public ResponseEntity<ApiResponse<ForumDTO>> updateForumById(@PathVariable String forumId, @RequestBody UpdateForumDTO updateForumDTO) {
+        try {
+            ForumDTO updatedForum = forumService.updateForumById(forumId, updateForumDTO);
+            ApiResponse<ForumDTO> apiResponse = new ApiResponse<>("Forum updated successfully", updatedForum);
+            return ResponseEntity.ok(apiResponse);
+        } catch (ResourceNotFoundException e) {
+            ApiResponse<ForumDTO> response = new ApiResponse<>(e.getMessage(), null);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+        }
+    }
+
+    /**
+     * Delete a forum by its ID.
+     *
+     * @param forumId the forum ID
+     * @return a response indicating the result of the deletion
+     */
+    @DeleteMapping("/forums/{forumId}")
+    public ResponseEntity<ApiResponse<Void>> deleteForumById(@PathVariable String forumId) {
+        try {
+            forumService.deleteForumById(forumId);
+            ApiResponse<Void> apiResponse = new ApiResponse<>("Forum deleted successfully", null);
+            return ResponseEntity.ok(apiResponse);
+        } catch (ResourceNotFoundException e) {
+            ApiResponse<Void> response = new ApiResponse<>(e.getMessage(), null);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+        }
+    }
+
+
+    //    ######################################################################################################################
+
+    @GetMapping("/likes")
+    public ResponseEntity<ApiResponse<List<LikeDTO>>> getAllLikes() {
+        logger.debug("Fetching all likes");
+        List<LikeDTO> likes = likeService.getAllLikes().stream()
+                .map(likeMapper::toDTO)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(new ApiResponse<>("Likes fetched successfully", likes));
+    }
+
+    @GetMapping("/likes/{likeId}")
+    public ResponseEntity<ApiResponse<LikeDTO>> getLikeById(@PathVariable String likeId) {
+        logger.debug("Fetching like with ID: {}", likeId);
+        Optional<Like> like = likeService.getLikeById(likeId);
+        return like.map(value -> ResponseEntity.ok(new ApiResponse<>("Like fetched successfully", likeMapper.toDTO(value))))
+                .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(new ApiResponse<>("Like not found", null)));
+    }
+
+    /**
+     * Fetch likes for a comment by its ID.
+     *
+     * @param commentId the comment ID
+     * @return a response containing a list of likes for the specified comment
+     */
+    @GetMapping("/comment/{commentId}/likes")
+    public ResponseEntity<ApiResponse<List<LikeDTO>>> getLikesByCommentId(@PathVariable String commentId) {
+        List<LikeDTO> likes = likeService.getAllLikesByCommentId(commentId).stream()
+                .map(likeMapper::toDTO)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(new ApiResponse<>("Likes fetched successfully", likes));
+    }
+    //    ######################################################################################################################
+
+    /**
+     * Fetch all comments with pagination.
+     *
+     * @param page the page number (default is 0)
+     * @param size the page size (default is 5)
+     * @return a paginated list of comments
+     */
+    @GetMapping("/comments")
+    public ResponseEntity<ApiResponse<Page<CommentDTO>>> getAllComments(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "5") int size) {
+        logger.debug("Fetching all comments with pagination");
+        Page<CommentDTO> comments = commentService.getAllComments(PageRequest.of(page, size))
+                .map(commentMapper::toDTO);
+        return ResponseEntity.ok(new ApiResponse<>("Comments fetched successfully", comments));
+    }
+
+    /**
+     * Fetch a comment by its ID.
+     *
+     * @param commentId the comment ID
+     * @return the comment with the specified ID
+     */
+    @GetMapping("/{commentId}")
+    public ResponseEntity<ApiResponse<CommentDTO>> getCommentById(@PathVariable String commentId) {
+        logger.debug("Fetching comment with ID: {}", commentId);
+        Optional<Comment> comment = commentService.getCommentById(commentId);
+        return comment.map(value -> ResponseEntity.ok(new ApiResponse<>("Comment fetched successfully", commentMapper.toDTO(value))))
+                .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(new ApiResponse<>("Comment not found", null)));
+    }
+
+    /**
+     * Update a comment by its ID.
+     *
+     * @param commentId the comment ID
+     * @param commentDTO the updated comment data
+     * @return the updated comment
+     */
+    @PutMapping("/{commentId}")
+    public ResponseEntity<ApiResponse<CommentDTO>> updateCommentById(@PathVariable String commentId, @Valid @RequestBody CommentDTO commentDTO) {
+        logger.debug("Updating comment with ID: {}", commentId);
+        Optional<CommentDTO> updatedComment = commentService.updateCommentByIdAdmin(commentId, commentDTO);
+        if (updatedComment.isPresent()) {
+            ApiResponse<CommentDTO> apiResponse = new ApiResponse<>("Comment updated successfully", updatedComment.get());
+            return ResponseEntity.ok(apiResponse);
+        } else {
+            ApiResponse<CommentDTO> apiResponse = new ApiResponse<>("Comment not found", null);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(apiResponse);
+        }
+    }
+
+    /**
+     * Delete a comment by its ID.
+     *
+     * @param commentId the comment ID
+     * @return a response indicating the result of the deletion
+     */
+    @DeleteMapping("/{commentId}")
+    public ResponseEntity<ApiResponse<Void>> deleteCommentByIdAdmin(@PathVariable String commentId) {
+        logger.debug("Deleting comment with ID: {}", commentId);
+        boolean deleted = commentService.deleteCommentById(commentId);
+        if (deleted) {
+            ApiResponse<Void> apiResponse = new ApiResponse<>("Comment deleted successfully", null);
+            return ResponseEntity.ok(apiResponse);
+        } else {
+            ApiResponse<Void> apiResponse = new ApiResponse<>("Comment not found", null);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(apiResponse);
+        }
+    }
+
+    /**
+     * Delete any comment by its ID.
+     *
+     * @param commentId the comment ID
+     * @return a response indicating the result of the deletion
+     */
+//    @DeleteMapping("/comments/{commentId}")
+//    public ResponseEntity<ApiResponse<Void>> deleteAnyComment(@PathVariable String commentId) {
+//        try {
+//            commentService.deleteAnyComment(commentId);
+//            ApiResponse<Void> apiResponse = new ApiResponse<>("Comment deleted successfully", null);
+//            return ResponseEntity.ok(apiResponse);
+//        } catch (ResourceNotFoundException e) {
+//            ApiResponse<Void> response = new ApiResponse<>(e.getMessage(), null);
+//            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+//        }
+//    }
 }

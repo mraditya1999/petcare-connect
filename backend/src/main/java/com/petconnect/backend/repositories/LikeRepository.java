@@ -15,4 +15,7 @@ public interface LikeRepository extends MongoRepository<Like, String> {
     Optional<Like> findByUserIdAndForumId(Long userId, String forumId);
     List<Like> findByForumId(String forumId);
     void deleteByForumId(String forumId);
+    void deleteByCommentId(String commentId);
+    List<Like> findByCommentId(String commentId);
+    Optional<Like> findByUserIdAndCommentId(Long userId, String commentId);
 }

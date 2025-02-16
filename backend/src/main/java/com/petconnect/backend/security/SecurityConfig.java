@@ -40,10 +40,10 @@ public class SecurityConfig {
         http.cors(withDefaults())
                 .authorizeHttpRequests((requests) -> requests
                         .requestMatchers(AUTH_WHITELIST).permitAll()
-                        .requestMatchers(HttpMethod.GET, "/forums/**", "/specialists/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/forums/**", "/specialists/**","/comments/**","/likes/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/specialists/**").hasRole("ADMIN")
                         .requestMatchers("/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/profile/**", "/forums/**", "/appointments/**", "/pets/**").authenticated()
+                        .requestMatchers("/profile/**", "/forums/**", "/appointments/**", "/pets/**","/comments/**","/likes/**").authenticated()
                         .anyRequest().authenticated())
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

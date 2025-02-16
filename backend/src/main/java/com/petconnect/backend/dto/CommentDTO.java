@@ -1,21 +1,25 @@
 package com.petconnect.backend.dto;
 
 import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
 
 public class CommentDTO {
     private String commentId;
     private String forumId;
-    private String userId;
+    private Long userId;
     private String text;
     private Date createdAt;
     private String firstName;
     private String lastName;
     private String email;
+    private String parentId;
+    private Set<Long> likedByUsers = new HashSet<>();
 
     public CommentDTO() {
     }
 
-    public CommentDTO(String commentId, String forumId, String userId, String text, Date createdAt, String firstName, String lastName, String email) {
+    public CommentDTO(String commentId, String forumId, Long userId, String text, Date createdAt, String firstName, String lastName, String email, String parentId, Set<Long> likedByUsers) {
         this.commentId = commentId;
         this.forumId = forumId;
         this.userId = userId;
@@ -24,6 +28,8 @@ public class CommentDTO {
         this.firstName = firstName;
         this.lastName = lastName;
         this.email = email;
+        this.parentId = parentId;
+        this.likedByUsers = likedByUsers;
     }
 
     // Getters and Setters
@@ -43,11 +49,11 @@ public class CommentDTO {
         this.forumId = forumId;
     }
 
-    public String getUserId() {
+    public Long getUserId() {
         return userId;
     }
 
-    public void setUserId(String userId) {
+    public void setUserId(Long userId) {
         this.userId = userId;
     }
 
@@ -89,5 +95,21 @@ public class CommentDTO {
 
     public void setEmail(String email) {
         this.email = email;
+    }
+
+    public String getParentId() {
+        return parentId;
+    }
+
+    public void setParentId(String parentId) {
+        this.parentId = parentId;
+    }
+
+    public Set<Long> getLikedByUsers() {
+        return likedByUsers;
+    }
+
+    public void setLikedByUsers(Set<Long> likedByUsers) {
+        this.likedByUsers = likedByUsers;
     }
 }
