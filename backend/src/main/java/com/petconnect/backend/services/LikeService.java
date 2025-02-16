@@ -41,7 +41,7 @@ public class LikeService {
     }
 
 
-    public boolean checkIfUserLikedForum(String userId, String forumId) {
+    public boolean checkIfUserLikedForum(Long userId, String forumId) {
         return likeRepository.existsByUserIdAndForumId(userId, forumId);
     }
 
@@ -50,7 +50,7 @@ public class LikeService {
     }
 
     @Transactional
-    public void toggleLike(String userId, String forumId) {
+    public void toggleLike(Long userId, String forumId) {
         Optional<Like> existingLike = likeRepository.findByUserIdAndForumId(userId, forumId);
 
         if (existingLike.isPresent()) {
@@ -62,4 +62,6 @@ public class LikeService {
             likeRepository.save(newLike);
         }
     }
+
+
 }

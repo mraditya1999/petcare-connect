@@ -10,8 +10,9 @@ import java.util.Optional;
 
 @Repository
 public interface LikeRepository extends MongoRepository<Like, String> {
-    boolean existsByUserIdAndForumId(String userId, String forumId);
+    boolean existsByUserIdAndForumId(Long userId, String forumId);
     long countByForumId(String forumId);
-    Optional<Like> findByUserIdAndForumId(String userId, String forumId); // Add this as well
+    Optional<Like> findByUserIdAndForumId(Long userId, String forumId);
     List<Like> findByForumId(String forumId);
+    void deleteByForumId(String forumId);
 }

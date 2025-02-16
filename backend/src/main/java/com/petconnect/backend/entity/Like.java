@@ -25,7 +25,7 @@ public class Like {
 
     @NotNull
     @Indexed
-    private String userId;
+    private Long userId;
 
     @CreatedDate
     @Field("created_at")
@@ -37,7 +37,7 @@ public class Like {
     public Like() {
     }
 
-    public Like(String likeId, String forumId, String userId, Date createdAt, Forum forumPost) {
+    public Like(String likeId, String forumId, Long userId, Date createdAt, Forum forumPost) {
         this.likeId = likeId;
         this.forumId = forumId;
         this.userId = userId;
@@ -61,11 +61,11 @@ public class Like {
         this.forumId = forumId;
     }
 
-    public String getUserId() {
+    public Long getUserId() {
         return userId;
     }
 
-    public void setUserId(String userId) {
+    public void setUserId(Long userId) {
         this.userId = userId;
     }
 

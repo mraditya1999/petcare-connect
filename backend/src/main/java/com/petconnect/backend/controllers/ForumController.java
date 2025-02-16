@@ -1,28 +1,22 @@
     package com.petconnect.backend.controllers;
 
-    import com.petconnect.backend.dto.ApiResponse;
-    import com.petconnect.backend.dto.CommentDTO;
-    import com.petconnect.backend.dto.ForumDTO;
-    import com.petconnect.backend.dto.LikeDTO;
-    import com.petconnect.backend.entity.Forum;
+    import com.petconnect.backend.dto.*;
     import com.petconnect.backend.exceptions.ResourceNotFoundException;
     import com.petconnect.backend.services.ForumService;
-    import com.petconnect.backend.mappers.ForumMapper;
     import jakarta.validation.Valid;
     import org.slf4j.Logger;
     import org.slf4j.LoggerFactory;
     import org.springframework.beans.factory.annotation.Autowired;
+    import org.springframework.data.domain.Page;
+    import org.springframework.data.domain.PageRequest;
+    import org.springframework.data.domain.Sort;
     import org.springframework.http.HttpStatus;
     import org.springframework.http.ResponseEntity;
-    import org.springframework.security.core.Authentication;
     import org.springframework.security.core.annotation.AuthenticationPrincipal;
-    import org.springframework.security.core.context.SecurityContextHolder;
     import org.springframework.security.core.userdetails.UserDetails;
     import org.springframework.web.bind.annotation.*;
-
     import java.util.List;
-    import java.util.Optional;
-    import java.util.stream.Collectors;
+    import java.util.Map;
 
     @RestController
     @RequestMapping("/forums")
@@ -36,29 +30,37 @@
             this.forumService = forumService;
         }
 
-        @GetMapping("/{forumId}")
-        public ResponseEntity<ApiResponse<ForumDTO>> getForum(@PathVariable String forumId) {
-            ForumDTO forumDTO = forumService.getForum(forumId);
-            ApiResponse<ForumDTO> apiResponse = new ApiResponse<>("Forum fetched successfully", forumDTO);
-            return ResponseEntity.ok(apiResponse);
-        }
-
         @GetMapping
-        public ResponseEntity<List<ForumDTO>> getAllForums() {
-            List<ForumDTO> forums = forumService.getAllForums();
+        public ResponseEntity<Page<ForumDTO>> getAllForums(
+                @RequestParam(defaultValue = "0") int page,
+                @RequestParam(defaultValue = "10") int size,
+                @RequestParam(defaultValue = "createdAt") String sortBy,
+                @RequestParam(defaultValue = "asc") String sortDir) {
+
+            Sort sort = Sort.by(sortDir.equalsIgnoreCase("asc") ? Sort.Direction.ASC : Sort.Direction.DESC, sortBy);
+            PageRequest pageRequest = PageRequest.of(page, size, sort);
+            Page<ForumDTO> forums = forumService.getAllForums(pageRequest);
+
             return ResponseEntity.ok(forums);
         }
 
 
+        @GetMapping("/{forumId}")
+        public ResponseEntity<ApiResponse<ForumDTO>> getForumById(@PathVariable String forumId) {
+            ForumDTO forumDTO = forumService.getForumById(forumId);
+            ApiResponse<ForumDTO> apiResponse = new ApiResponse<>("Forum fetched successfully", forumDTO);
+            return ResponseEntity.ok(apiResponse);
+        }
+
         @PostMapping
-        public ResponseEntity<ApiResponse<ForumDTO>> createForum(@AuthenticationPrincipal UserDetails userDetails, @Valid @RequestBody ForumDTO forumDTO) {
-            ForumDTO createdForum = forumService.createForum(userDetails.getUsername(), forumDTO);
+        public ResponseEntity<ApiResponse<ForumDTO>> createForum(@AuthenticationPrincipal UserDetails userDetails, @Valid @RequestBody ForumCreateDTO forumCreateDTO) {
+            ForumDTO createdForum = forumService.createForum(userDetails.getUsername(), forumCreateDTO);
             ApiResponse<ForumDTO> apiResponse = new ApiResponse<>("Forum created successfully", createdForum);
             return ResponseEntity.status(HttpStatus.CREATED).body(apiResponse);
         }
 
         @PutMapping("/{forumId}")
-        public ResponseEntity<ApiResponse<ForumDTO>> updateForum(@PathVariable String forumId, @AuthenticationPrincipal UserDetails userDetails, @RequestBody ForumDTO forumDTO) {
+        public ResponseEntity<ApiResponse<ForumDTO>> updateForum(@PathVariable String forumId, @AuthenticationPrincipal UserDetails userDetails, @RequestBody UpdateForumDTO forumDTO) {
             try {
                 ForumDTO updatedForumDTO = forumService.updateForum(forumId, userDetails.getUsername(), forumDTO);
                 ApiResponse<ForumDTO> apiResponse = new ApiResponse<>("Forum updated successfully", updatedForumDTO);
@@ -74,6 +76,27 @@
                 ApiResponse<ForumDTO> errorResponse = new ApiResponse<>("An error occurred: " + e.getMessage(), null);
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
             }
+        }
+
+        // Search forums by keyword
+        @GetMapping("/search")
+        public ResponseEntity<List<ForumDTO>> searchForums(@RequestParam String keyword) {
+            List<ForumDTO> forums = forumService.searchForums(keyword);
+            return ResponseEntity.ok(forums);
+        }
+
+        // Sort forums by a specified field
+        @GetMapping("/sort")
+        public ResponseEntity<List<ForumDTO>> sortForums(@RequestParam String field) {
+            List<ForumDTO> forums = forumService.sortForums(field);
+            return ResponseEntity.ok(forums);
+        }
+
+        // Fetch top 3 featured forums with the most likes
+        @GetMapping("/top-featured")
+        public ResponseEntity<List<ForumDTO>> getTopFeaturedForums() {
+            List<ForumDTO> forums = forumService.getTopFeaturedForums();
+            return ResponseEntity.ok(forums);
         }
 
         @DeleteMapping("/{forumId}")
@@ -96,9 +119,9 @@
         }
 
         @PostMapping("/{forumId}/like")
-        public ResponseEntity<ApiResponse<LikeDTO>> likeForum(@PathVariable String forumId, @AuthenticationPrincipal UserDetails userDetails) {
-            LikeDTO like = forumService.likeForum(forumId, userDetails.getUsername());
-            ApiResponse<LikeDTO> apiResponse = new ApiResponse<>("Forum liked successfully", like);
+        public ResponseEntity<ApiResponse<String>> toggleLikeOnForum(@PathVariable String forumId, @AuthenticationPrincipal UserDetails userDetails) {
+            Map<String, String> result = forumService.toggleLikeOnForum(forumId, userDetails.getUsername());
+            ApiResponse<String> apiResponse = new ApiResponse<>(result.get("message"));
             return ResponseEntity.ok(apiResponse);
         }
 
@@ -108,6 +131,26 @@
             ApiResponse<CommentDTO> apiResponse = new ApiResponse<>("Comment added successfully", comment);
             return ResponseEntity.ok(apiResponse);
         }
+
+        @DeleteMapping("/{forumId}/comment/{commentId}")
+        public ResponseEntity<ApiResponse<Void>> deleteComment(@PathVariable String forumId, @PathVariable String commentId, @AuthenticationPrincipal UserDetails userDetails) {
+            try {
+                forumService.deleteComment(forumId, commentId, userDetails.getUsername());
+                ApiResponse<Void> apiResponse = new ApiResponse<>("Comment deleted successfully", null);
+                return ResponseEntity.ok(apiResponse);
+            } catch (ResourceNotFoundException e) {
+                ApiResponse<Void> response = new ApiResponse<>(e.getMessage(), null);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+            } catch (IllegalArgumentException e) {
+                ApiResponse<Void> response = new ApiResponse<>(e.getMessage(), null);
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+            } catch (Exception e) {
+                e.printStackTrace();
+                ApiResponse<Void> errorResponse = new ApiResponse<>("An error occurred: " + e.getMessage(), null);
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+            }
+        }
+
 
         @GetMapping("/my-forums")
         public ResponseEntity<List<ForumDTO>> getMyForums(@AuthenticationPrincipal UserDetails userDetails) {

@@ -12,6 +12,7 @@ import org.springframework.data.mongodb.core.mapping.Field;
 import org.springframework.data.mongodb.core.mapping.DBRef;
 
 import java.util.Date;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @EntityListeners(AuditingEntityListener.class)
 @Document(collection = "comments")
@@ -25,7 +26,7 @@ public class Comment {
 
     @NotNull
     @Indexed
-    private String userId;
+    private Long userId;
 
     @NotBlank
     private String text;
@@ -37,16 +38,19 @@ public class Comment {
     @DBRef
     private Forum forum;
 
+    private AtomicInteger likes = new AtomicInteger(0);
+
     public Comment() {
     }
 
-    public Comment(String commentId, String forumId, String userId, String text, Date createdAt, Forum forum) {
+    public Comment(String commentId, String forumId, Long userId, String text, Date createdAt, Forum forum, AtomicInteger likes) {
         this.commentId = commentId;
         this.forumId = forumId;
         this.userId = userId;
         this.text = text;
         this.createdAt = createdAt;
         this.forum = forum;
+        this.likes = likes;
     }
 
     public String getCommentId() {
@@ -65,11 +69,11 @@ public class Comment {
         this.forumId = forumId;
     }
 
-    public String getUserId() {
+    public Long getUserId() {
         return userId;
     }
 
-    public void setUserId(String userId) {
+    public void setUserId(Long userId) {
         this.userId = userId;
     }
 
@@ -95,5 +99,17 @@ public class Comment {
 
     public void setForum(Forum forum) {
         this.forum = forum;
+    }
+
+    public int getLikes() {
+        return likes.get();
+    }
+
+    public void addLike() {
+        this.likes.incrementAndGet();
+    }
+
+    public void removeLike() {
+        this.likes.decrementAndGet();
     }
 }

@@ -14,6 +14,10 @@ import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
@@ -46,10 +50,8 @@ public class PetService {
     }
 
     @Transactional
-    public PetDTO createPetForUser(@Valid PetDTO petDTO, MultipartFile avatarFile) throws IOException {
+    public PetDTO createPetForUser(@Valid PetDTO petDTO, MultipartFile avatarFile, @AuthenticationPrincipal String username) throws IOException {
         try {
-            UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-            String username = userDetails.getUsername();
 
             User petOwner = userRepository.findByEmail(username)
                     .orElseThrow(() -> {
@@ -81,12 +83,6 @@ public class PetService {
         }
     }
 
-    public List<PetDTO> getAllPets() {
-        return petRepository.findAll().stream()
-                .map(petMapper::toDTO)
-                .collect(Collectors.toList());
-    }
-
     @Transactional
     public List<PetDTO> getAllPetsForUser() {
         UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -95,7 +91,7 @@ public class PetService {
         User user = userRepository.findByEmail(username)
                 .orElseThrow(() -> {
                     logger.error("User not found with email: {}", username);
-                    throw new ResourceNotFoundException("User not found");
+                    return new ResourceNotFoundException("User not found");
                 });
 
         return petRepository.findAllByPetOwner(user).stream()
@@ -103,7 +99,7 @@ public class PetService {
                 .collect(Collectors.toList());
     }
 
-    public PetDTO getPetById(Long id) {
+    public PetDTO getPetOfUserById(Long id) {
         UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         String username = userDetails.getUsername();
 
@@ -193,10 +189,6 @@ public class PetService {
                 uploadService.deleteImage(existingPet.getAvatarPublicId());
             } catch (IOException e) {
                 logger.error("Error deleting avatar with ID: {}", existingPet.getAvatarPublicId(), e);
-                // Consider whether to throw an exception or just log the error.
-                // If you throw an exception, the transaction will rollback.
-                // If you just log, the pet will be deleted even if the image deletion fails.
-                // Choose the behavior that best suits your needs. For example:
                 throw new ImageDeletionException("Error deleting avatar image", e);
             }
         }
@@ -204,4 +196,95 @@ public class PetService {
         petRepository.deleteById(id);
         logger.info("Pet deleted with ID: {}", id);
     }
+
+
+
+//    ADMIN SERVICES
+public Page<PetDTO> getAllPets(int page, int size) {
+    Pageable pageable = PageRequest.of(page, size);
+    Page<Pet> petPage = petRepository.findAll(pageable);
+    return petPage.map(petMapper::toDTO);
+}
+
+    public PetDTO getPetById(Long id) {
+        Pet pet = petRepository.findById(id)
+                .orElseThrow(() -> {
+                    logger.error("Pet not found with ID: {}", id);
+                    throw new ResourceNotFoundException("Pet not found");
+                });
+
+        return petMapper.toDTO(pet);
+    }
+
+    @Transactional
+    public PetDTO updatePetById(Long id, @Valid PetDTO petDTO, MultipartFile avatarFile) throws IOException {
+        Pet existingPet = petRepository.findById(id)
+                .orElseThrow(() -> {
+                    logger.error("Pet not found with ID: {}", id);
+                    throw new ResourceNotFoundException("Pet not found");
+                });
+
+        if (petDTO.getPetName() != null) existingPet.setPetName(petDTO.getPetName());
+        if (petDTO.getAge() != null) existingPet.setAge(petDTO.getAge());
+        if (petDTO.getWeight() != null) existingPet.setWeight(petDTO.getWeight());
+        if (petDTO.getGender() != null) existingPet.setGender(Gender.valueOf(petDTO.getGender().toUpperCase()));
+        if (petDTO.getBreed() != null) existingPet.setBreed(petDTO.getBreed());
+        if (petDTO.getSpecies() != null) existingPet.setSpecies(petDTO.getSpecies());
+
+        if (avatarFile != null && !avatarFile.isEmpty()) {
+            // Delete old image first
+            if (existingPet.getAvatarPublicId() != null && !existingPet.getAvatarPublicId().isEmpty()) {
+                logger.info("Deleting old profile image for pet with ID: {}", existingPet.getPetId());
+                try {
+                    uploadService.deleteImage(existingPet.getAvatarPublicId());
+                } catch (IOException e) {
+                    logger.error("Error deleting old avatar with ID: {}", existingPet.getAvatarPublicId(), e);
+                    throw new ImageDeletionException("Error deleting old avatar image", e);
+                }
+            }
+
+            // Upload new image
+            logger.info("Uploading new profile image for pet");
+            Map<String, Object> uploadResult = uploadService.uploadImage(avatarFile, UploadService.ProfileType.PET);
+            existingPet.setAvatarUrl((String) uploadResult.get("url"));
+            existingPet.setAvatarPublicId((String) uploadResult.get("public_id"));
+        } else {
+            if (petDTO.getAvatarUrl() != null) {
+                existingPet.setAvatarUrl(petDTO.getAvatarUrl());
+            }
+        }
+
+        Pet updatedPet = petRepository.save(existingPet);
+        return petMapper.toDTO(updatedPet);
+    }
+
+
+    @Transactional
+    public void deletePetById(Long id) {
+        Pet existingPet = petRepository.findById(id)
+                .orElseThrow(() -> {
+                    logger.error("Pet not found with ID: {}", id);
+                    throw new ResourceNotFoundException("Pet not found");
+                });
+
+        // Remove references from User table
+        User petOwner = existingPet.getPetOwner();
+        petOwner.getPets().remove(existingPet);
+        userRepository.save(petOwner);
+
+        // Check and delete the pet's avatar if it exists
+        if (existingPet.getAvatarPublicId() != null && !existingPet.getAvatarPublicId().isEmpty()) {
+            try {
+                uploadService.deleteImage(existingPet.getAvatarPublicId());
+            } catch (IOException e) {
+                logger.error("Error deleting avatar with ID: {}", existingPet.getAvatarPublicId(), e);
+                throw new ImageDeletionException("Error deleting avatar image", e);
+            }
+        }
+
+        petRepository.deleteById(id);
+        logger.info("Pet deleted with ID: {}", id);
+    }
+
+
 }

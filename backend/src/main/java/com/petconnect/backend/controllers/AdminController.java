@@ -5,6 +5,7 @@ import com.petconnect.backend.entity.Role;
 import com.petconnect.backend.services.PetService;
 import com.petconnect.backend.services.SpecialistService;
 import com.petconnect.backend.services.UserService;
+import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -255,5 +256,28 @@ public class AdminController {
     }
 
 //    ######################################################################################################################
+
+    @GetMapping("/pets")
+    public Page<PetDTO> getAllPets(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return petService.getAllPets(page, size);
+    }
+
+    @GetMapping("/pets/{id}")
+    public PetDTO getPetById(@PathVariable Long id) {
+        return petService.getPetById(id);
+    }
+
+    @PutMapping("/pets/{id}")
+    public PetDTO updatePetById(@PathVariable Long id, @Valid @RequestPart PetDTO petDTO,
+                            @RequestPart(required = false) MultipartFile avatarFile) throws IOException {
+        return petService.updatePetById(id, petDTO, avatarFile);
+    }
+
+    @DeleteMapping("/pets/{id}")
+    public void deletePetById(@PathVariable Long id) {
+        petService.deletePetById(id);
+    }
 
 }

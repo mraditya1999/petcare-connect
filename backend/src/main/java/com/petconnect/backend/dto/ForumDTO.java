@@ -1,57 +1,44 @@
 package com.petconnect.backend.dto;
 
-import com.petconnect.backend.dto.LikeDTO;
-
 import java.util.Date;
 import java.util.List;
 
 public class ForumDTO {
     private String forumId;
-    private String userId;
+    private String title;
+    private String content;
+    private List<String> tags;
     private String firstName;
     private String lastName;
     private String email;
-    private String title;
-    private String content;
+    private Long likesCount = 0L;
+    private Long commentsCount = 0L;
     private Date createdAt;
     private Date updatedAt;
-    private List<CommentDTO> comments;
-    private List<LikeDTO> likes;
-    private List<String> tags;
 
     public ForumDTO() {
     }
 
-    public ForumDTO(String forumId, String userId, String firstName, String lastName, String email, String title, String content, Date createdAt, Date updatedAt, List<CommentDTO> comments, List<LikeDTO> likes, List<String> tags) {
+    public ForumDTO(String forumId, String title, String content, List<String> tags, String firstName, String lastName, String email, Long likesCount, Long commentsCount, Date createdAt, Date updatedAt) {
         this.forumId = forumId;
-        this.userId = userId;
+        this.title = title;
+        this.content = content;
+        this.tags = tags;
         this.firstName = firstName;
         this.lastName = lastName;
         this.email = email;
-        this.title = title;
-        this.content = content;
+        this.likesCount = likesCount;
+        this.commentsCount = commentsCount;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
-        this.comments = comments;
-        this.likes = likes;
-        this.tags = tags;
     }
 
-    // Getters and Setters
     public String getForumId() {
         return forumId;
     }
 
     public void setForumId(String forumId) {
         this.forumId = forumId;
-    }
-
-    public String getUserId() {
-        return userId;
-    }
-
-    public void setUserId(String userId) {
-        this.userId = userId;
     }
 
     public String getTitle() {
@@ -68,38 +55,6 @@ public class ForumDTO {
 
     public void setContent(String content) {
         this.content = content;
-    }
-
-    public Date getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(Date createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public Date getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(Date updatedAt) {
-        this.updatedAt = updatedAt;
-    }
-
-    public List<CommentDTO> getComments() {
-        return comments;
-    }
-
-    public void setComments(List<CommentDTO> comments) {
-        this.comments = comments;
-    }
-
-    public List<LikeDTO> getLikes() {
-        return likes;
-    }
-
-    public void setLikes(List<LikeDTO> likes) {
-        this.likes = likes;
     }
 
     public List<String> getTags() {
@@ -132,5 +87,37 @@ public class ForumDTO {
 
     public void setEmail(String email) {
         this.email = email;
+    }
+
+    public Long getLikesCount() {
+        return likesCount;
+    }
+
+    public void setLikesCount(Long likesCount) {
+        this.likesCount = likesCount;
+    }
+
+    public Long getCommentsCount() {
+        return commentsCount;
+    }
+
+    public void setCommentsCount(Long commentsCount) {
+        this.commentsCount = commentsCount;
+    }
+
+    public Date getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(Date createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public Date getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(Date updatedAt) {
+        this.updatedAt = updatedAt;
     }
 }
