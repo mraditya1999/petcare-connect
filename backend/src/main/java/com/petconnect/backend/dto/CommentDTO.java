@@ -8,6 +8,23 @@ public class CommentDTO {
     private String userId;
     private String text;
     private Date createdAt;
+    private String firstName;
+    private String lastName;
+    private String email;
+
+    public CommentDTO() {
+    }
+
+    public CommentDTO(String commentId, String forumId, String userId, String text, Date createdAt, String firstName, String lastName, String email) {
+        this.commentId = commentId;
+        this.forumId = forumId;
+        this.userId = userId;
+        this.text = text;
+        this.createdAt = createdAt;
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.email = email;
+    }
 
     // Getters and Setters
     public String getCommentId() {
@@ -48,5 +65,29 @@ public class CommentDTO {
 
     public void setCreatedAt(Date createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public String getFirstName() {
+        return firstName;
+    }
+
+    public void setFirstName(String firstName) {
+        this.firstName = firstName;
+    }
+
+    public String getLastName() {
+        return lastName;
+    }
+
+    public void setLastName(String lastName) {
+        this.lastName = lastName;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
     }
 }

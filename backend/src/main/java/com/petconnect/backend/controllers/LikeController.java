@@ -99,7 +99,7 @@ public class LikeController {
         }
 
         Long userId = user.get().getUserId(); // Now you have the userId
-        boolean liked = likeService.checkIfUserLikedForum(String.valueOf(userId), forumId);
+        boolean liked = likeService.checkIfUserLikedForum(userId, forumId);
         long likesCount = likeService.getLikesCountForForum(forumId);
 
         Map<String, Object> response = new HashMap<>();
@@ -129,13 +129,13 @@ public class LikeController {
         long likesCount;
 
         try {
-            likeService.toggleLike(String.valueOf(userId), forumId);
+            likeService.toggleLike(userId, forumId);
             likesCount = likeService.getLikesCountForForum(forumId);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponse<>(e.getMessage(), null));
         }
 
-        boolean liked = likeService.checkIfUserLikedForum(String.valueOf(userId), forumId);
+        boolean liked = likeService.checkIfUserLikedForum(userId, forumId);
         Map<String, Object> response = new HashMap<>();
         response.put("liked", liked);
         response.put("likesCount", likesCount);

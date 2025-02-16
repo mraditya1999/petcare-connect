@@ -52,7 +52,7 @@ public class CommentController {
     @GetMapping("/forum/{forumId}")
     public ResponseEntity<ApiResponse<List<CommentDTO>>> getCommentsByForumId(@PathVariable String forumId) {
         logger.debug("Fetching comments for forum ID: {}", forumId);
-        List<CommentDTO> comments = commentService.getCommentsByForumId(forumId).stream()
+        List<CommentDTO> comments = commentService.getAllCommentsByForumId(forumId).stream()
                 .map(commentMapper::toDTO)
                 .collect(Collectors.toList());
         return ResponseEntity.ok(new ApiResponse<>("Comments fetched successfully", comments));
@@ -68,18 +68,28 @@ public class CommentController {
     }
 
     @PutMapping("/{commentId}")
-    public ResponseEntity<ApiResponse<CommentDTO>> updateComment(@PathVariable String commentId, @Valid @RequestBody CommentDTO commentDTO) {
+    public ResponseEntity<ApiResponse<CommentDTO>> updateCommentById(@PathVariable String commentId, @Valid @RequestBody CommentDTO commentDTO) {
         logger.debug("Updating comment with ID: {}", commentId);
-        Optional<Comment> updatedComment = commentService.updateComment(commentId, commentMapper.toEntity(commentDTO));
+        Optional<Comment> updatedComment = commentService.updateCommentById(commentId, commentMapper.toEntity(commentDTO));
         return updatedComment.map(value -> ResponseEntity.ok(new ApiResponse<>("Comment updated successfully", commentMapper.toDTO(value))))
                 .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND)
                         .body(new ApiResponse<>("Comment not found", null)));
     }
 
     @DeleteMapping("/{commentId}")
-    public ResponseEntity<ApiResponse<Void>> deleteComment(@PathVariable String commentId) {
+    public ResponseEntity<ApiResponse<Void>> deleteCommentById(@PathVariable String commentId) {
         logger.debug("Deleting comment with ID: {}", commentId);
-        commentService.deleteComment(commentId);
+        commentService.deleteCommentById(commentId);
         return ResponseEntity.ok(new ApiResponse<>("Comment deleted successfully", null));
+    }
+
+    @PostMapping("/{commentId}/like")
+    public void likeComment(@PathVariable String commentId) {
+        commentService.likeComment(commentId);
+    }
+
+    @PostMapping("/{commentId}/unlike")
+    public void unlikeComment(@PathVariable String commentId) {
+        commentService.unlikeComment(commentId);
     }
 }

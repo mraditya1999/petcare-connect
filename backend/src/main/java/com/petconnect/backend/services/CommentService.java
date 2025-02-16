@@ -26,7 +26,7 @@ public class CommentService {
         return commentRepository.findById(commentId);
     }
 
-    public List<Comment> getCommentsByForumId(String forumId) {
+    public List<Comment> getAllCommentsByForumId(String forumId) {
         return commentRepository.findByForumId(forumId);
     }
 
@@ -36,7 +36,7 @@ public class CommentService {
     }
 
     @Transactional
-    public Optional<Comment> updateComment(String commentId, Comment comment) {
+    public Optional<Comment> updateCommentById(String commentId, Comment comment) {
         return commentRepository.findById(commentId)
                 .map(existingComment -> {
                     existingComment.setText(comment.getText());
@@ -45,7 +45,28 @@ public class CommentService {
     }
 
     @Transactional
-    public void deleteComment(String commentId) {
+    public void deleteCommentById(String commentId) {
         commentRepository.deleteById(commentId);
+    }
+
+
+    public void likeComment(String commentId) {
+        Optional<Comment> commentOptional = commentRepository.findById(commentId);
+        commentOptional.ifPresent(comment -> {
+            comment.addLike();
+            commentRepository.save(comment);
+        });
+    }
+
+    public void unlikeComment(String commentId) {
+        Optional<Comment> commentOptional = commentRepository.findById(commentId);
+        commentOptional.ifPresent(comment -> {
+            comment.removeLike();
+            commentRepository.save(comment);
+        });
+    }
+
+    public long getCommentsCountByForumId(String forumId) {
+        return commentRepository.countByForumId(forumId);
     }
 }
