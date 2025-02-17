@@ -1,8 +1,10 @@
 package com.petconnect.backend.services;
 
+import com.petconnect.backend.entity.Role;
 import com.petconnect.backend.entity.User;
 import com.petconnect.backend.exceptions.ResourceNotFoundException;
 import com.petconnect.backend.repositories.UserRepository;
+import com.petconnect.backend.utils.RoleAssignmentUtil;
 import com.petconnect.backend.utils.TempUserStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,6 +14,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
@@ -23,13 +27,15 @@ public class VerificationService {
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
     private final TempUserStore tempUserStore;
+    private final RoleAssignmentUtil roleAssignmentUtil;
 
     @Autowired
-    public VerificationService(UserRepository userRepository, @Lazy PasswordEncoder passwordEncoder, EmailService emailService, TempUserStore tempUserStore) {
+    public VerificationService(UserRepository userRepository, @Lazy PasswordEncoder passwordEncoder, EmailService emailService, TempUserStore tempUserStore, RoleAssignmentUtil roleAssignmentUtil) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.emailService = emailService;
         this.tempUserStore = tempUserStore;
+        this.roleAssignmentUtil = roleAssignmentUtil;
     }
 
     /**
@@ -47,6 +53,8 @@ public class VerificationService {
             tempUser.setVerified(true);
             tempUser.setVerificationToken(null);
 
+            assignRolesToUser(tempUser);
+
             userRepository.save(tempUser);
             logger.info("User verified and saved with token: {}", verificationToken);
             return true;
@@ -54,6 +62,16 @@ public class VerificationService {
             logger.warn("Verification token invalid or expired: {}", verificationToken);
             throw new ResourceNotFoundException("Invalid or expired verification token.");
         }
+    }
+
+    public void assignRolesToUser(User user) {
+        boolean isFirstVerifiedUser = userRepository.countByIsVerified(true) == 0;
+        Set<Role.RoleName> roles = new HashSet<>();
+        roles.add(Role.RoleName.USER);
+        if (isFirstVerifiedUser) {
+            roles.add(Role.RoleName.ADMIN);
+        }
+        roleAssignmentUtil.assignRoles(user, roles);
     }
 
     /**

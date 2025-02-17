@@ -1,26 +1,25 @@
-package com.petconnect.backend.dto;
+package com.petconnect.backend.dto.user;
 
 
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 
 public class UserUpdateDTO {
 
-    @Size(min = 2, max = 50, message = "First name must be between 2 and 50 characters")
+    @NotBlank(message = "First name is mandatory")
+    @Size(min = 3, max = 50, message = "First name must be between 3 and 50 characters")
     private String firstName;
 
+    @NotBlank(message = "Last name is mandatory")
     @Size(min = 2, max = 50, message = "Last name must be between 2 and 50 characters")
     private String lastName;
 
-    @Email(message = "Invalid email format")
-    private String email;
+//    @Email(message = "Invalid email format")
+//    private String email;
 
-    @Pattern(regexp = "^\\d{10}$", message = "Mobile number must be 10 digits") // Adjust regex if needed
+    @Pattern(regexp = "^\\d{10}$", message = "Mobile number must be 10 digits")
     private String mobileNumber;
 
-    @Min(value = 100000, message = "Pincode must be at least 6 digits") // If pincode is a number
+    @Min(value = 100000, message = "Pincode must be at least 6 digits")
     private Long pincode;
 
     @Size(max = 100, message = "City cannot exceed 100 characters")
@@ -55,13 +54,13 @@ public class UserUpdateDTO {
         this.lastName = lastName;
     }
 
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
+//    public String getEmail() {
+//        return email;
+//    }
+//
+//    public void setEmail(String email) {
+//        this.email = email;
+//    }
 
     public String getMobileNumber() {
         return mobileNumber;

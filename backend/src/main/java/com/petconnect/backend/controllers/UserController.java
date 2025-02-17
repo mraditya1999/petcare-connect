@@ -1,6 +1,9 @@
 package com.petconnect.backend.controllers;
 
 import com.petconnect.backend.dto.*;
+import com.petconnect.backend.dto.user.UpdatePasswordRequestDTO;
+import com.petconnect.backend.dto.user.UserDTO;
+import com.petconnect.backend.dto.user.UserUpdateDTO;
 import com.petconnect.backend.exceptions.ResourceNotFoundException;
 import com.petconnect.backend.services.UserService;
 import jakarta.validation.Valid;
@@ -36,10 +39,20 @@ public class UserController {
      * @return the response entity containing the user profile
      */
     @GetMapping
-    public ResponseEntity<ApiResponse<Object>> getUserProfile(@AuthenticationPrincipal UserDetails userDetails) {
+    public ResponseEntity<ApiResponse<UserDTO>> getUserProfile(@AuthenticationPrincipal UserDetails userDetails) {
         logger.info("Fetching profile for user: {}", userDetails.getUsername());
-        Object userProfile = userService.getUserProfile(userDetails.getUsername());
-        return ResponseEntity.ok(new ApiResponse<>("Profile fetched successfully", userProfile));
+
+        try {
+            UserDTO userProfile = userService.getUserProfile(userDetails.getUsername());
+            logger.info("Profile fetched successfully for user: {}", userDetails.getUsername());
+            return ResponseEntity.ok(new ApiResponse<>("Profile fetched successfully", userProfile));
+        } catch (ResourceNotFoundException e) {
+            logger.error("User not found: {}", userDetails.getUsername(), e);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiResponse<>("User not found", null));
+        } catch (Exception e) {
+            logger.error("An error occurred while fetching the profile for user: {}", userDetails.getUsername(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponse<>("An error occurred while fetching the profile", null));
+        }
     }
 
     /**
@@ -59,7 +72,8 @@ public class UserController {
         logger.info("Received request to update user profile for: {}", userDetails.getUsername());
 
         try {
-            UserDTO updatedUserDTO = userService.updateUserProfile(userDetails.getUsername(), userUpdateDTO, profileImage);
+            String username = userDetails.getUsername();
+            UserDTO updatedUserDTO = userService.updateUserProfile(username,userUpdateDTO, profileImage);
             logger.info("User profile updated successfully: {}", updatedUserDTO);
             return ResponseEntity.ok(new ApiResponse<>("Profile updated successfully", updatedUserDTO));
         } catch (ResourceNotFoundException e) {
@@ -81,14 +95,14 @@ public class UserController {
      * @return the response entity indicating the deletion status
      */
     @DeleteMapping
-    public ResponseEntity<ApiResponse<Void>> deleteUserProfile(@AuthenticationPrincipal UserDetails userDetails) {
+    public ResponseEntity<ApiResponse<String>> deleteUserProfile(@AuthenticationPrincipal UserDetails userDetails) {
         logger.info("Received request to delete profile for user: {}", userDetails.getUsername());
 
         try {
             userService.deleteUserProfile(userDetails);
-            logger.info("User profile deleted successfully for user: {}", userDetails.getUsername());
-            ApiResponse<Void> apiResponse = new ApiResponse<>("Profile deleted successfully", null);
-            return ResponseEntity.ok(apiResponse);
+            String successMessage = "Profile deleted successfully for user: " + userDetails.getUsername();
+            logger.info(successMessage);
+            return ResponseEntity.ok(new ApiResponse<>("Profile deleted successfully",successMessage));
         } catch (ResourceNotFoundException e) {
             logger.error("User not found: ", e);
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiResponse<>(e.getMessage(), null));
@@ -101,18 +115,20 @@ public class UserController {
     /**
      * Updates the user password.
      *
-     * @param updatePasswordRequest the request containing the new password details
+     * @param updatePasswordRequestDTO the request containing the new password details
      * @param userDetails the authenticated user's details
      * @return the response entity indicating the password update status
      */
     @PutMapping("/update-password")
-    public ResponseEntity<ApiResponse<Void>> updatePassword(
-            @Valid @RequestBody UpdatePasswordRequest updatePasswordRequest,
+    public ResponseEntity<ApiResponse<String>> updatePassword(
+            @Valid @RequestBody UpdatePasswordRequestDTO updatePasswordRequestDTO,
             @AuthenticationPrincipal UserDetails userDetails) {
 
         try {
-            userService.updatePassword(userDetails.getUsername(), updatePasswordRequest, userDetails);
-            return ResponseEntity.ok(new ApiResponse<>("Password updated successfully", null));
+            userService.updatePassword(userDetails.getUsername(), updatePasswordRequestDTO, userDetails);
+            String successMessage = "Password has been updated successfully for user:  " + userDetails.getUsername();
+            logger.info(successMessage);
+            return ResponseEntity.ok(new ApiResponse<>("Password updated successfully", successMessage));
         } catch (ResourceNotFoundException e) {
             logger.error("User not found: ", e);
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiResponse<>(e.getMessage(), null));

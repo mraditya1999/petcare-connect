@@ -1,7 +1,7 @@
 //package com.petconnect.backend.services;
 //
 //import com.petconnect.backend.dto.CommentDTO;
-//import com.petconnect.backend.dto.UserDTO;
+//import com.petconnect.backend.dto.user.UserDTO;
 //import com.petconnect.backend.entity.Comment;
 //import com.petconnect.backend.entity.User;
 //import com.petconnect.backend.exceptions.ResourceNotFoundException;
@@ -199,7 +199,7 @@
 package com.petconnect.backend.services;
 
 import com.petconnect.backend.dto.CommentDTO;
-import com.petconnect.backend.dto.UserDTO;
+import com.petconnect.backend.dto.user.UserDTO;
 import com.petconnect.backend.entity.Comment;
 import com.petconnect.backend.entity.User;
 import com.petconnect.backend.exceptions.ResourceNotFoundException;

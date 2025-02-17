@@ -1,6 +1,8 @@
 package com.petconnect.backend.controllers;
 
 import com.petconnect.backend.dto.*;
+import com.petconnect.backend.dto.user.UserDTO;
+import com.petconnect.backend.dto.user.UserUpdateDTO;
 import com.petconnect.backend.entity.Comment;
 import com.petconnect.backend.entity.Like;
 import com.petconnect.backend.entity.Role;
@@ -70,7 +72,7 @@ public class AdminController {
      * @param sortDir the sort direction (default is "asc")
      * @return a response entity containing a page of users
      */
-    @GetMapping
+    @GetMapping("/users")
     public ResponseEntity<ApiResponse<Page<UserDTO>>> getAllUsers(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -86,6 +88,28 @@ public class AdminController {
             return new ResponseEntity<>(new ApiResponse<>("Error fetching users"), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
+    /**
+     * Get user by ID.
+     *
+     * @param userId the ID of the user to retrieve
+     * @return a response entity containing the user data
+     */
+    @GetMapping("/users/{userId}")
+    public ResponseEntity<ApiResponse<UserDTO>> getUserById(@PathVariable Long userId) {
+        try {
+            UserDTO user = userService.getUserById(userId);
+            logger.info("Fetched user with ID: {}", userId);
+            return ResponseEntity.ok(new ApiResponse<>("Fetched user successfully", user));
+        } catch (ResourceNotFoundException e) {
+            logger.error("User not found with ID: {}", userId, e);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiResponse<>("User not found with Id: "+ userId, null));
+        } catch (Exception e) {
+            logger.error("Error fetching user with ID: {}", userId, e);
+            return new ResponseEntity<>(new ApiResponse<>("Error fetching user"), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
     /**
      * Get a user by their ID.
      *
@@ -93,44 +117,40 @@ public class AdminController {
      * @return a response entity containing the user
      */
 
-    @PutMapping("/{id}")
-    public ResponseEntity<ApiResponse<Object>> updateUserById(
-            @PathVariable Long id, @Valid @RequestBody UserUpdateDTO userUpdateDTO,
+    /**
+     * Update a user by their ID.
+     *
+     * @param id the user ID
+     * @param userUpdateDTO the DTO containing user update information
+     * @param profileImage the profile image file (optional)
+     * @return a response entity containing the updated user data
+     * @throws IOException if an I/O error occurs
+     */
+    @PutMapping(value = "/users/{id}", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
+    public ResponseEntity<ApiResponse<UserDTO>> updateUserById(
+            @PathVariable Long id,
+            @Valid @ModelAttribute UserUpdateDTO userUpdateDTO,
             @RequestParam(value = "profileImage", required = false) MultipartFile profileImage) throws IOException {
 
+        logger.info("Received request to update user profile for ID: {}", id);
+
         try {
-            String avatarUrl = null;
-            String avatarPublicId = null;
-
-            if (profileImage != null && !profileImage.isEmpty()) {
-                Map<String, Object> uploadResult;
-                UserDTO existingUser = userService.getUserById(id);
-
-                if (existingUser != null && existingUser.getAvatarPublicId() != null && !existingUser.getAvatarPublicId().isEmpty()) {
-                    uploadResult = uploadService.updateImage(existingUser.getAvatarPublicId(), profileImage, UploadService.ProfileType.USER);
-                } else {
-                    uploadResult = uploadService.uploadImage(profileImage, UploadService.ProfileType.USER);
-                }
-                avatarUrl = (String) uploadResult.get("url");
-                avatarPublicId = (String) uploadResult.get("public_id");
-            }
-
-            UserDTO updatedUser = userService.updateUserById(id, userUpdateDTO, avatarUrl, avatarPublicId);
+            UserDTO updatedUser = userService.updateUserById(id, userUpdateDTO, profileImage);
             logger.info("Updated user profile with ID: {}", id);
             return ResponseEntity.ok(new ApiResponse<>("Updated user profile", updatedUser));
 
-        } catch (UserNotFoundException e) {
-            logger.error("User not found: {}", e.getMessage());
-            return new ResponseEntity<>(new ApiResponse<>("User not found"), HttpStatus.NOT_FOUND);
+        } catch (ResourceNotFoundException e) {
+            logger.error("User not found with ID: {}", id, e);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiResponse<>("User not found", null));
         } catch (IllegalArgumentException e) {
             logger.error("Invalid input: {}", e.getMessage());
-            return new ResponseEntity<>(new ApiResponse<>("Invalid input"), HttpStatus.BAD_REQUEST);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse<>("Invalid input", null));
         } catch (IOException e) {
             logger.error("IO Error: {}", e.getMessage(), e);
-            return new ResponseEntity<>(new ApiResponse<>("Error updating user profile"), HttpStatus.INTERNAL_SERVER_ERROR);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponse<>("Error updating user profile", null));
         } catch (Exception e) {
             logger.error("Unexpected error: {}", e.getMessage(), e);
-            return new ResponseEntity<>(new ApiResponse<>("Error updating user profile"), HttpStatus.INTERNAL_SERVER_ERROR);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponse<>("Error updating user profile", null));
         }
     }
 
@@ -140,7 +160,7 @@ public class AdminController {
      * @param id the user ID
      * @return a response entity with a deletion status
      */
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/users/{id}")
     public ResponseEntity<ApiResponse<String>> deleteUserById(@PathVariable Long id) {
         try {
             userService.deleteUserById(id);
@@ -165,7 +185,7 @@ public class AdminController {
      * @param sortDir the sort direction (default is "asc")
      * @return a response entity containing a page of users
      */
-    @GetMapping("/search")
+    @GetMapping("/users/search")
     public ResponseEntity<ApiResponse<Page<UserDTO>>> searchUsers(
             @RequestParam String keyword,
             @RequestParam(defaultValue = "0") int page,
@@ -190,7 +210,7 @@ public class AdminController {
      * @param roleNames the new roles
      * @return a response entity with an update status
      */
-    @PostMapping("/{id}/roles")
+    @PostMapping("/users/{id}/roles")
     public ResponseEntity<ApiResponse<String>> updateUserRoles(
             @PathVariable Long id, @RequestBody Set<Role.RoleName> roleNames) {
         try {
