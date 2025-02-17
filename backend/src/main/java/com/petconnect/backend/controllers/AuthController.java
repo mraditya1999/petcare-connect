@@ -125,14 +125,18 @@ public class AuthController {
     public ResponseEntity<ApiResponse<String>> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
         String token = request.getToken();
         String newPassword = request.getNewPassword();
+
+        logger.info("Received reset request for token: {}", token);
+
         boolean isReset = authService.resetPassword(token, newPassword);
+
         if (isReset) {
             logger.info("Password reset successfully with token: {}", token);
-            ApiResponse<String> apiResponse = new ApiResponse<>("Password reset successfully");
-            return ResponseEntity.ok(apiResponse);
+            return ResponseEntity.ok(new ApiResponse<>("Password reset successfully"));
         } else {
-            logger.warn("Invalid reset token: {}", token);
-            throw new ResourceNotFoundException("Invalid reset token");
+            logger.warn("Password reset failed: New password cannot be the same as the old password.");
+            return ResponseEntity.badRequest().body(new ApiResponse<>("New password cannot be the same as the old password."));  // ✅ Correct error message
         }
     }
+
 }

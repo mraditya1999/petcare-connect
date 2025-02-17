@@ -64,22 +64,29 @@ public class VerificationService {
 
     @Transactional
     public boolean resetPassword(String resetToken, String newPassword) {
-        User user = userRepository.findByResetToken(resetToken)
-                .orElseThrow(() -> new ResourceNotFoundException("Invalid reset token."));
+        logger.info("Reset token received: {}", resetToken);
 
-        // Assuming the old password is stored as a hash, compare the hashes
+        User user = userRepository.findByResetToken(resetToken).orElse(null);
+
+        if (user == null) {
+            logger.warn("Invalid reset token: {}", resetToken);
+            throw new ResourceNotFoundException("Invalid reset token.");
+        }
+
+        logger.info("User found for reset token: {}", user.getEmail());
+
         if (passwordEncoder.matches(newPassword, user.getPassword())) {
-            logger.warn("New password cannot be the same as the old password: {}", resetToken);
+            logger.warn("New password cannot be the same as the old password.");
             return false;
         }
 
         user.setPassword(passwordEncoder.encode(newPassword));
-        user.setResetToken(null);
+        user.setResetToken(null); // Nullify only after successful reset
         userRepository.save(user);
-        logger.info("Password reset for user with token: {}", resetToken);
+
+        logger.info("Password reset successful for user: {}", user.getEmail());
         return true;
     }
-
 
     public void sendVerificationEmail(User user) {
         user.setVerificationToken(UUID.randomUUID().toString());

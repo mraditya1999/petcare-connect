@@ -1,10 +1,12 @@
 package com.petconnect.backend.exceptions;
 
 import com.petconnect.backend.dto.ApiResponse;
+import com.petconnect.backend.dto.ErrorResponseDTO;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -12,10 +14,10 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.context.request.WebRequest;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -25,25 +27,13 @@ public class GlobalExceptionHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
-    // Helper method to create ErrorResponse
-    private ErrorResponse createErrorResponse(String message, String details, HttpStatus status) {
-        return ErrorResponse.builder()
-                .message(message)
-                .details(details)
-                .statusCode(status.value())
-                .build();
-    }
-
-    @ExceptionHandler(ResourceNotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleResourceNotFoundException(ResourceNotFoundException ex, WebRequest request) {
-        logger.error("ResourceNotFoundException: {}", ex.getMessage(), ex);
-        ErrorResponse errorResponse = createErrorResponse(ex.getMessage(), request.getDescription(false), HttpStatus.NOT_FOUND);
-        return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
+    // Consistent Error Response (Using ApiResponse)
+    private <T> ResponseEntity<ApiResponse<T>> createErrorResponse(String message, T details, HttpStatus status) {
+        return new ResponseEntity<>(new ApiResponse<>(message, details), status);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ResponseEntity<ErrorResponse> handleMethodArgumentNotValidException(MethodArgumentNotValidException ex, WebRequest request) {
+    public ResponseEntity<ApiResponse<Object>> handleMethodArgumentNotValid(MethodArgumentNotValidException ex) {
         Map<String, String> errors = new HashMap<>();
         ex.getBindingResult().getAllErrors().forEach((error) -> {
             String fieldName = ((FieldError) error).getField();
@@ -52,47 +42,58 @@ public class GlobalExceptionHandler {
         });
 
         logger.error("MethodArgumentNotValidException: {}", errors, ex);
-        ErrorResponse errorResponse = createErrorResponse("Validation Failed", errors.toString(), HttpStatus.BAD_REQUEST);
-        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+
+        ErrorResponseDTO errorResponse = new ErrorResponseDTO("Validation Failed", errors); // Use Map directly
+        return createErrorResponse("Validation Failed", errorResponse, HttpStatus.BAD_REQUEST);
     }
 
+
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<ApiResponse<Object>> handleResourceNotFoundException(ResourceNotFoundException ex, WebRequest request) {
+        logger.error("ResourceNotFoundException: {}", ex.getMessage(), ex);
+        return createErrorResponse(ex.getMessage(), null, HttpStatus.NOT_FOUND); // Consistent response
+    }
+
+
+
     @ExceptionHandler(AuthenticationException.class)
-    public ResponseEntity<ErrorResponse> handleAuthenticationException(AuthenticationException ex, WebRequest request) {
+    public ResponseEntity<ApiResponse<Object>> handleAuthenticationException(AuthenticationException ex, WebRequest request) {
         logger.error("AuthenticationException: {}", ex.getMessage(), ex);
-        ErrorResponse errorResponse = createErrorResponse(ex.getMessage(), request.getDescription(false), HttpStatus.UNAUTHORIZED);
-        return new ResponseEntity<>(errorResponse, HttpStatus.UNAUTHORIZED);
+        return createErrorResponse(ex.getMessage(), null, HttpStatus.UNAUTHORIZED); // Consistent response
     }
 
     @ExceptionHandler(ConstraintViolationException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ResponseEntity<ErrorResponse> handleConstraintViolationException(ConstraintViolationException ex, WebRequest request) {
+    public ResponseEntity<ApiResponse<Object>> handleConstraintViolationException(ConstraintViolationException ex, WebRequest request) {
         Set<ConstraintViolation<?>> violations = ex.getConstraintViolations();
         String errorMessage = violations.stream()
                 .map(ConstraintViolation::getMessage)
                 .collect(Collectors.joining(", "));
 
         logger.error("ConstraintViolationException: {}", errorMessage, ex);
-        ErrorResponse errorResponse = createErrorResponse("Constraint Violations: " + errorMessage, request.getDescription(false), HttpStatus.BAD_REQUEST);
-        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+        return createErrorResponse("Constraint Violations: " + errorMessage, null, HttpStatus.BAD_REQUEST); // Consistent response
     }
 
     @ExceptionHandler(AccessDeniedException.class)
-    public ResponseEntity<ErrorResponse> handleAccessDeniedException(AccessDeniedException ex, WebRequest request) {
+    public ResponseEntity<ApiResponse<Object>> handleAccessDeniedException(AccessDeniedException ex, WebRequest request) {
         logger.error("AccessDeniedException: {}", ex.getMessage(), ex);
-        ErrorResponse errorResponse = createErrorResponse("Access Denied", request.getDescription(false), HttpStatus.FORBIDDEN);
-        return new ResponseEntity<>(errorResponse, HttpStatus.FORBIDDEN);
+        return createErrorResponse("Access Denied", null, HttpStatus.FORBIDDEN); // Consistent response
     }
 
     @ExceptionHandler(UserNotFoundException.class)
-    public ResponseEntity<ApiResponse<String>> handleUserNotFoundException(UserNotFoundException e) {
+    public ResponseEntity<ApiResponse<Object>> handleUserNotFoundException(UserNotFoundException e) {
         logger.error("User not found: {}", e.getMessage(), e);
-        return new ResponseEntity<>(new ApiResponse<>("User not found"), HttpStatus.NOT_FOUND);
+        return createErrorResponse("User not found", null, HttpStatus.NOT_FOUND); // Consistent response
     }
 
+    @ExceptionHandler(ImageUploadException.class)
+    public ResponseEntity<ApiResponse<Object>> handleImageUploadException(ImageUploadException ex) {
+        return createErrorResponse(ex.getMessage(), null, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse> handleGlobalException(Exception ex, WebRequest request) {
+    public ResponseEntity<ApiResponse<Object>> handleGlobalException(Exception ex, WebRequest request) {
         logger.error("Exception: {}", ex.getMessage(), ex);
-        ErrorResponse errorResponse = createErrorResponse("An error occurred: " + ex.getMessage(), request.getDescription(false), HttpStatus.INTERNAL_SERVER_ERROR);
-        return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+        return createErrorResponse("An error occurred: " + ex.getMessage(), null, HttpStatus.INTERNAL_SERVER_ERROR); // Consistent response
     }
 }

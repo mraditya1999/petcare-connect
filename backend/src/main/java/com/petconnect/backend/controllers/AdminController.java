@@ -26,6 +26,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -33,20 +34,20 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/admin")
 public class AdminController {
-
     private final UserService userService;
     private final PetService petService;
     private final SpecialistService specialistService;
-
-    private static final Logger logger = LoggerFactory.getLogger(AdminController.class);
     private final ForumService forumService;
     private final LikeService likeService;
     private final LikeMapper likeMapper;
     private final CommentMapper commentMapper;
     private final CommentService commentService;
 
+    private static final Logger logger = LoggerFactory.getLogger(AdminController.class);
+    private final UploadService uploadService;
+
     @Autowired
-    public AdminController(UserService userService, PetService petService, SpecialistService specialistService, ForumService forumService, LikeService likeService, LikeMapper likeMapper, CommentMapper commentMapper, CommentService commentService) {
+    public AdminController(UserService userService, PetService petService, SpecialistService specialistService, ForumService forumService, LikeService likeService, LikeMapper likeMapper, CommentMapper commentMapper, CommentService commentService, UploadService uploadService) {
         this.userService = userService;
         this.petService = petService;
         this.specialistService = specialistService;
@@ -55,6 +56,7 @@ public class AdminController {
         this.likeMapper = likeMapper;
         this.commentMapper = commentMapper;
         this.commentService = commentService;
+        this.uploadService = uploadService;
     }
 
 //    ############################################################# USER #########################################################
@@ -80,29 +82,55 @@ public class AdminController {
             logger.info("Fetched all users with pagination and sorting");
             return ResponseEntity.ok(new ApiResponse<>("Fetched all users", users));
         } catch (Exception e) {
-            logger.error("Error fetching users: {}", e.getMessage());
+            logger.error("Error fetching users: {}", e.getMessage(), e);
             return new ResponseEntity<>(new ApiResponse<>("Error fetching users"), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-
     /**
      * Get a user by their ID.
      *
      * @param id the user ID
      * @return a response entity containing the user
      */
-    @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<UserDTO>> getUserById(@PathVariable Long id) {
+
+    @PutMapping("/{id}")
+    public ResponseEntity<ApiResponse<Object>> updateUserById(
+            @PathVariable Long id, @Valid @RequestBody UserUpdateDTO userUpdateDTO,
+            @RequestParam(value = "profileImage", required = false) MultipartFile profileImage) throws IOException {
+
         try {
-            UserDTO user = userService.getUserById(id);
-            logger.info("Fetched user with ID: {}", id);
-            return ResponseEntity.ok(new ApiResponse<>("Fetched user", user));
+            String avatarUrl = null;
+            String avatarPublicId = null;
+
+            if (profileImage != null && !profileImage.isEmpty()) {
+                Map<String, Object> uploadResult;
+                UserDTO existingUser = userService.getUserById(id);
+
+                if (existingUser != null && existingUser.getAvatarPublicId() != null && !existingUser.getAvatarPublicId().isEmpty()) {
+                    uploadResult = uploadService.updateImage(existingUser.getAvatarPublicId(), profileImage, UploadService.ProfileType.USER);
+                } else {
+                    uploadResult = uploadService.uploadImage(profileImage, UploadService.ProfileType.USER);
+                }
+                avatarUrl = (String) uploadResult.get("url");
+                avatarPublicId = (String) uploadResult.get("public_id");
+            }
+
+            UserDTO updatedUser = userService.updateUserById(id, userUpdateDTO, avatarUrl, avatarPublicId);
+            logger.info("Updated user profile with ID: {}", id);
+            return ResponseEntity.ok(new ApiResponse<>("Updated user profile", updatedUser));
+
         } catch (UserNotFoundException e) {
-            logger.error("Error fetching user with ID {}: {}", id, e.getMessage());
+            logger.error("User not found: {}", e.getMessage());
             return new ResponseEntity<>(new ApiResponse<>("User not found"), HttpStatus.NOT_FOUND);
+        } catch (IllegalArgumentException e) {
+            logger.error("Invalid input: {}", e.getMessage());
+            return new ResponseEntity<>(new ApiResponse<>("Invalid input"), HttpStatus.BAD_REQUEST);
+        } catch (IOException e) {
+            logger.error("IO Error: {}", e.getMessage(), e);
+            return new ResponseEntity<>(new ApiResponse<>("Error updating user profile"), HttpStatus.INTERNAL_SERVER_ERROR);
         } catch (Exception e) {
-            logger.error("Error fetching user with ID {}: {}", id, e.getMessage());
-            return new ResponseEntity<>(new ApiResponse<>("Error fetching user"), HttpStatus.INTERNAL_SERVER_ERROR);
+            logger.error("Unexpected error: {}", e.getMessage(), e);
+            return new ResponseEntity<>(new ApiResponse<>("Error updating user profile"), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -119,55 +147,11 @@ public class AdminController {
             logger.info("Deleted user with ID: {}", id);
             return ResponseEntity.ok(new ApiResponse<>("User profile deleted successfully"));
         } catch (UserNotFoundException e) {
-            logger.error("Error deleting user with ID {}: {}", id, e.getMessage());
+            logger.error("User not found: {}", e.getMessage());
             return new ResponseEntity<>(new ApiResponse<>("User not found"), HttpStatus.NOT_FOUND);
         } catch (Exception e) {
-            logger.error("Error deleting user with ID {}: {}", id, e.getMessage());
+            logger.error("Error deleting user: {}", e.getMessage(), e);
             return new ResponseEntity<>(new ApiResponse<>("Error deleting user"), HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    /**
-     * Update a user by their ID.
-     *
-     * @param id           the user ID
-     * @param firstName    the new first name
-     * @param lastName     the new last name
-     * @param email        the new email
-     * @param mobileNumber the new mobile number
-     * @param pincode      the new pincode
-     * @param city         the new city
-     * @param state        the new state
-     * @param country      the new country
-     * @param locality     the new locality
-     * @param profileImage the new profile image
-     * @return a response entity containing the updated user
-     * @throws IOException if an error occurs while processing the profile image
-     */
-    @PutMapping("/{id}")
-    public ResponseEntity<ApiResponse<UserDTO>> updateUserById(
-            @PathVariable Long id,
-            @RequestParam(required = false) String firstName,
-            @RequestParam(required = false) String lastName,
-            @RequestParam(required = false) String email,
-            @RequestParam(required = false) String mobileNumber,
-            @RequestParam(required = false) Long pincode,
-            @RequestParam(required = false) String city,
-            @RequestParam(required = false) String state,
-            @RequestParam(required = false) String country,
-            @RequestParam(required = false) String locality,
-            @RequestParam(required = false) MultipartFile profileImage) throws IOException {
-        try {
-            UserDTO updatedUser = userService.updateUserById(
-                    id, firstName, lastName, email, mobileNumber, pincode, city, state, country, locality, profileImage);
-            logger.info("Updated user profile with ID: {}", id);
-            return ResponseEntity.ok(new ApiResponse<>("Updated user profile", updatedUser));
-        } catch (UserNotFoundException e) {
-            logger.error("Error updating user profile with ID {}: {}", id, e.getMessage());
-            return new ResponseEntity<>(new ApiResponse<>("User not found"), HttpStatus.NOT_FOUND);
-        } catch (Exception e) {
-            logger.error("Error updating user profile with ID {}: {}", id, e.getMessage());
-            return new ResponseEntity<>(new ApiResponse<>("Error updating user profile"), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -194,7 +178,7 @@ public class AdminController {
             logger.info("Searched users with keyword: {}", keyword);
             return ResponseEntity.ok(new ApiResponse<>("Searched users", users));
         } catch (Exception e) {
-            logger.error("Error searching users with keyword {}: {}", keyword, e.getMessage());
+            logger.error("Error searching users: {}", e.getMessage(), e);
             return new ResponseEntity<>(new ApiResponse<>("Error searching users"), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -214,15 +198,15 @@ public class AdminController {
             logger.info("Roles updated for user with ID: {}", id);
             return ResponseEntity.ok(new ApiResponse<>("Roles updated successfully"));
         } catch (UserNotFoundException e) {
-            logger.error("Error updating roles for user with ID {}: {}", id, e.getMessage());
+            logger.error("User not found: {}", e.getMessage());
             return new ResponseEntity<>(new ApiResponse<>("User not found"), HttpStatus.NOT_FOUND);
         } catch (Exception e) {
-            logger.error("Error updating roles for user with ID {}: {}", id, e.getMessage());
+            logger.error("Error updating roles: {}", e.getMessage(), e);
             return new ResponseEntity<>(new ApiResponse<>("Error updating roles"), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
-//    ############################################################# SPECIALIST #########################################################
+    //    ############################################################# SPECIALIST #########################################################
 
     /**
      * Create a new specialist.
@@ -403,9 +387,9 @@ public class AdminController {
     /**
      * Get all pets with pagination and sorting.
      *
-     * @param page the page number to retrieve (default is 0)
-     * @param size the number of items per page (default is 10)
-     * @param sortBy the field to sort by (default is "id")
+     * @param page    the page number to retrieve (default is 0)
+     * @param size    the number of items per page (default is 10)
+     * @param sortBy  the field to sort by (default is "id")
      * @param sortDir the sort direction (default is "asc")
      * @return ResponseEntity with ApiResponse containing a page of pets
      */
@@ -500,7 +484,7 @@ public class AdminController {
     /**
      * Update a forum by its ID.
      *
-     * @param forumId the forum ID
+     * @param forumId        the forum ID
      * @param updateForumDTO the forum update data
      * @return the updated forum details
      */
@@ -581,7 +565,7 @@ public class AdminController {
     /**
      * Update a comment by its ID.
      *
-     * @param commentId the comment ID
+     * @param commentId  the comment ID
      * @param commentDTO the updated comment data
      * @return ResponseEntity with ApiResponse containing the updated comment
      */
