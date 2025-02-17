@@ -100,8 +100,13 @@ public class AuthService implements UserDetailsService {
      * @param user the user to assign roles to
      */
     public void assignRolesToUser(User user) {
-        boolean isFirstUser = userRepository.count() == 0;
-        roleAssignmentUtil.assignRoles(user, Role.RoleName.USER, isFirstUser ? Role.RoleName.ADMIN : null);
+        boolean isFirstVerifiedUser = userRepository.countByIsVerified(true) == 0;
+        Set<Role.RoleName> roles = new HashSet<>();
+        roles.add(Role.RoleName.USER);
+        if (isFirstVerifiedUser) {
+            roles.add(Role.RoleName.ADMIN);
+        }
+        roleAssignmentUtil.assignRoles(user, roles);
     }
 
     /**

@@ -100,6 +100,7 @@
 //}
 package com.petconnect.backend.dto;
 
+import com.petconnect.backend.dto.user.UserDTO;
 import com.petconnect.backend.entity.Role;
 
 import java.util.Set;
@@ -112,8 +113,8 @@ public class SpecialistResponseDTO extends UserDTO {
     // Default constructor
     public SpecialistResponseDTO() {}
 
-    public SpecialistResponseDTO(Long userId, String firstName, String lastName, String email, AddressDTO address, String avatarUrl, String avatarPublicId, String mobileNumber, Set<Role.RoleName> roles, String speciality, String about) {
-        super(userId, firstName, lastName, email, address, avatarUrl, avatarPublicId, mobileNumber, roles.stream().collect(Collectors.toList()));
+    public SpecialistResponseDTO(Long userId, String firstName, String lastName, String email, AddressDTO address, String avatarUrl, String avatarPublicId, String mobileNumber, String speciality, String about) {
+        super(userId, firstName, lastName, email, address, avatarUrl, avatarPublicId, mobileNumber);
         this.speciality = speciality;
         this.about = about;
     }

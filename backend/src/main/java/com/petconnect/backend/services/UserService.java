@@ -1,14 +1,13 @@
 package com.petconnect.backend.services;
 
-import com.petconnect.backend.dto.UpdatePasswordRequest;
-import com.petconnect.backend.dto.UserDTO;
-import com.petconnect.backend.dto.UserUpdateDTO;
+import com.petconnect.backend.dto.user.UserDTO;
+import com.petconnect.backend.dto.user.UserUpdateDTO;
+import com.petconnect.backend.dto.user.UpdatePasswordRequestDTO;
 import com.petconnect.backend.entity.Address;
 import com.petconnect.backend.entity.Role;
 import com.petconnect.backend.entity.Specialist;
 import com.petconnect.backend.entity.User;
 import com.petconnect.backend.exceptions.ImageDeletionException;
-import com.petconnect.backend.exceptions.ImageUploadException;
 import com.petconnect.backend.exceptions.ResourceNotFoundException;
 import com.petconnect.backend.mappers.AddressMapper;
 import com.petconnect.backend.mappers.SpecialistMapper;
@@ -30,6 +29,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
+
 
 @Service
 public class UserService {
@@ -53,126 +53,252 @@ public class UserService {
         this.specialistRepository = specialistRepository;
     }
 
-    public Object getUserProfile(String email) {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+    public UserDTO getUserProfile(String email) {
+        logger.info("Fetching profile for user with email: {}", email);
 
-        if (user.getRoles().stream().anyMatch(role -> role.getRoleName() == Role.RoleName.SPECIALIST)) {
-            return specialistMapper.toSpecialistResponseDTO((Specialist) user);
+        try {
+            User user = userRepository.findByEmail(email)
+                    .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+            if (user.getRoles().stream().anyMatch(role -> role.getRoleName() == Role.RoleName.SPECIALIST)) {
+                return specialistMapper.toSpecialistResponseDTO((Specialist) user);
+            }
+
+            return userMapper.toDTO(user);
+        } catch (ResourceNotFoundException e) {
+            logger.error("User not found with email: {}", email, e);
+            throw e;
+        } catch (Exception e) {
+            logger.error("An error occurred while fetching profile for user with email: {}", email, e);
+            throw new RuntimeException("An error occurred while fetching user profile", e);
         }
-
-        return userMapper.toDTO(user);
     }
 
+    public UserDTO updateUserProfile(String username, UserUpdateDTO userUpdateDTO, MultipartFile profileImage) throws IOException {
+        logger.info("Updating profile for user with email: {}", username);
 
-    public UserDTO updateUserProfile(String username, UserUpdateDTO userUpdateDTO, MultipartFile profileImage) {
-        User currentUser = userRepository.findByEmail(username)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with email " + username));
+        try {
+            User currentUser = userRepository.findByEmail(username)
+                    .orElseThrow(() -> new ResourceNotFoundException("User not found with email " + username));
 
-        updateUserFields(currentUser, userUpdateDTO);
-        updateAddress(currentUser, userUpdateDTO);
+            updateUserFields(currentUser, userUpdateDTO);
+            updateAddress(currentUser, userUpdateDTO);
+            if (profileImage != null) {
+                if (profileImage.isEmpty()) {
+                    // Remove profile image
+                    deleteAvatar(currentUser);
+                    currentUser.setAvatarUrl(null);
+                    currentUser.setAvatarPublicId(null);
+                    logger.info("Profile image removed for user with email: {}", username);
+                } else {
+                    // Update profile image
+                    handleProfileImageUpload(profileImage, currentUser);
+                }
+            } else {
+                logger.info("No profile image provided for user with email: {}", username);
+            }
 
-        handleProfileImage(currentUser, profileImage);
-
-        userRepository.save(currentUser);
-        return userMapper.toDTO(currentUser);
+            userRepository.save(currentUser);
+            UserDTO updatedUserDTO = userMapper.toDTO(currentUser);
+            logger.info("Profile updated and saved for user with email: {}", username);
+            return updatedUserDTO;
+        } catch (ResourceNotFoundException e) {
+            logger.error("User not found with email: {}", username, e);
+            throw e;
+        } catch (IOException e) {
+            logger.error("Error uploading profile image for user with email: {}", username, e);
+            throw e;
+        } catch (Exception e) {
+            logger.error("An error occurred while updating profile for user with email: {}", username, e);
+            throw new RuntimeException("An error occurred while updating user profile", e);
+        }
     }
 
     public void deleteUserProfile(UserDetails userDetails) {
         String email = userDetails.getUsername();
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + email));
+        logger.info("Received request to delete profile for user with email: {}", email);
 
-        deleteAvatar(user); // Helper method to delete avatar
+        try {
+            User user = userRepository.findByEmail(email)
+                    .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + email));
 
-        if (user instanceof Specialist) {
-            specialistRepository.delete((Specialist) user); // Directly delete Specialist
+            deleteAvatar(user);
+
+            if (user instanceof Specialist) {
+                specialistRepository.delete((Specialist) user);
+            } else {
+                userRepository.delete(user);
+            }
+            logger.info("User profile deleted successfully for user with email: {}", email);
+        } catch (ResourceNotFoundException e) {
+            logger.error("User not found with email: {}", email, e);
+            throw e;
+        } catch (Exception e) {
+            logger.error("An error occurred while deleting profile for user with email: {}", email, e);
+            throw new RuntimeException("An error occurred while deleting user profile", e);
         }
-        userRepository.delete(user);
-        logger.info("User (or Specialist) deleted with email: {}", email);
     }
 
-    public void updatePassword(String email, UpdatePasswordRequest updatePasswordRequest, UserDetails userDetails) {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with email " + email));
+    public void updatePassword(String email, UpdatePasswordRequestDTO updatePasswordRequestDTO, UserDetails userDetails) {
+        logger.info("Received request to update password for user with email: {}", email);
 
-        if (!passwordEncoder.matches(updatePasswordRequest.getCurrentPassword(), user.getPassword())) {
-            throw new IllegalArgumentException("Current password is incorrect.");
+        try {
+            User user = userRepository.findByEmail(email)
+                    .orElseThrow(() -> new ResourceNotFoundException("User not found with email " + email));
+
+            if (!passwordEncoder.matches(updatePasswordRequestDTO.getCurrentPassword(), user.getPassword())) {
+                throw new IllegalArgumentException("Current password is incorrect.");
+            }
+
+            if (passwordEncoder.matches(updatePasswordRequestDTO.getNewPassword(), user.getPassword())) {
+                throw new IllegalArgumentException("New password cannot be the same as the old password.");
+            }
+
+            user.setPassword(passwordEncoder.encode(updatePasswordRequestDTO.getNewPassword()));
+            userRepository.save(user);
+            logger.info("Password updated successfully for user with email: {}", email);
+        } catch (ResourceNotFoundException e) {
+            logger.error("User not found with email: {}", email, e);
+            throw e;
+        } catch (IllegalArgumentException e) {
+            logger.error("Invalid password update request for user with email: {}", email, e);
+            throw e;
+        } catch (Exception e) {
+            logger.error("An error occurred while updating password for user with email: {}", email, e);
+            throw new RuntimeException("An error occurred while updating password", e);
         }
-
-        if (passwordEncoder.matches(updatePasswordRequest.getNewPassword(), user.getPassword())) {
-            throw new IllegalArgumentException("New password cannot be the same as the old password.");
-        }
-
-        user.setPassword(passwordEncoder.encode(updatePasswordRequest.getNewPassword()));
-        userRepository.save(user); // Save password change
     }
-
 
     public void updateResetToken(User user) {
-        userRepository.save(user);
+        try {
+            userRepository.save(user);
+            logger.info("Reset token updated for user with ID: {}", user.getUserId());
+        } catch (Exception e) {
+            logger.error("An error occurred while updating reset token for user with ID: {}", user.getUserId(), e);
+            throw new RuntimeException("An error occurred while updating reset token", e);
+        }
     }
 
-    //    ADMIN SERVICES
     public Page<UserDTO> getAllUsers(Pageable pageable) {
-        return userRepository.findAll(pageable).map(userMapper::toDTO); // More concise
+        try {
+            return userRepository.findAll(pageable).map(userMapper::toDTO);
+        } catch (Exception e) {
+            logger.error("An error occurred while fetching all users", e);
+            throw new RuntimeException("An error occurred while fetching all users", e);
+        }
     }
 
     public UserDTO getUserById(Long userId) {
-        return userRepository.findById(userId)
-                .map(userMapper::toDTO) // Use map for more concise code
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + userId));
+        try {
+            return userRepository.findById(userId)
+                    .map(userMapper::toDTO)
+                    .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + userId));
+        } catch (ResourceNotFoundException e) {
+            logger.error("User not found with ID: {}", userId, e);
+            throw e;
+        } catch (Exception e) {
+            logger.error("An error occurred while fetching user by ID: {}", userId, e);
+            throw new RuntimeException("An error occurred while fetching user by ID", e);
+        }
     }
 
-    public UserDTO updateUserById(Long userId, UserUpdateDTO userUpdateDTO, String avatarUrl, String avatarPublicId) {
-        User currentUser = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + userId));
+    public UserDTO updateUserById(Long id, UserUpdateDTO userUpdateDTO, MultipartFile profileImage) throws IOException {
+        logger.info("Updating profile for user with ID: {}", id);
 
-        updateUserFields(currentUser, userUpdateDTO); // Reuse helper method
-        updateAddress(currentUser, userUpdateDTO);        // Reuse helper method
+        try {
+            User user = userRepository.findById(id)
+                    .orElseThrow(() -> new ResourceNotFoundException("User not found with ID " + id));
 
-        if (avatarUrl != null && avatarPublicId != null) {
-            currentUser.setAvatarUrl(avatarUrl);
-            currentUser.setAvatarPublicId(avatarPublicId);
+            updateUserFields(user, userUpdateDTO);
+            updateAddress(user, userUpdateDTO);
+
+            if (profileImage != null) {
+                if (profileImage.isEmpty()) {
+                    // Remove profile image
+                    deleteAvatar(user);
+                    user.setAvatarUrl(null);
+                    user.setAvatarPublicId(null);
+                    logger.info("Profile image removed for user with email: {}", user.getEmail());
+                } else {
+                    // Update profile image
+                    handleProfileImageUpload(profileImage, user);
+                }
+            } else {
+                logger.info("No profile image provided for user with email: {}", user.getEmail());
+            }
+
+            userRepository.save(user);
+            UserDTO updatedUserDTO = userMapper.toDTO(user);
+            logger.info("Profile updated and saved for user with ID: {}", id);
+            return updatedUserDTO;
+        } catch (ResourceNotFoundException e) {
+            logger.error("User not found with ID: {}", id, e);
+            throw e;
+        } catch (Exception e) {
+            logger.error("An error occurred while updating profile for user with ID: {}", id, e);
+            throw new RuntimeException("An error occurred while updating user profile", e);
         }
-
-        return userMapper.toDTO(currentUser); // Return DTO
     }
 
     public void deleteUserById(Long userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + userId));
+        logger.info("Received request to delete user with ID: {}", userId);
 
-        deleteAvatar(user); // Reuse helper method
+        try {
+            User user = userRepository.findById(userId)
+                    .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + userId));
 
-        if (user instanceof Specialist) {
-            specialistRepository.delete((Specialist) user); // Directly delete Specialist
+            deleteAvatar(user);
+
+            if (user instanceof Specialist) {
+                specialistRepository.delete((Specialist) user);
+            } else {
+                userRepository.delete(user);
+            }
+            logger.info("User (or Specialist) deleted with ID: {}", userId);
+        } catch (ResourceNotFoundException e) {
+            logger.error("User not found with ID: {}", userId, e);
+            throw e;
+        } catch (Exception e) {
+            logger.error("An error occurred while deleting user with ID: {}", userId, e);
+            throw new RuntimeException("An error occurred while deleting user", e);
         }
-
-        userRepository.delete(user);
-        logger.info("User (or Specialist) deleted with ID: {}", userId);
     }
 
     public void updateUserRoles(Long userId, Set<Role.RoleName> roleNames) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + userId));
+        logger.info("Updating roles for user with ID: {}", userId);
 
-        roleAssignmentUtil.assignRoles(user, roleNames);
-        userRepository.save(user);
-        logger.info("Role names assigned for user with ID: {}", userId);
+        try {
+            User user = userRepository.findById(userId)
+                    .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + userId));
+
+            roleAssignmentUtil.assignRoles(user, roleNames);
+            userRepository.save(user);
+            logger.info("Roles updated successfully for user with ID: {}", userId);
+        } catch (ResourceNotFoundException e) {
+            logger.error("User not found with ID: {}", userId, e);
+            throw e;
+        } catch (Exception e) {
+            logger.error("An error occurred while updating roles for user with ID: {}", userId, e);
+            throw new RuntimeException("An error occurred while updating user roles", e);
+        }
     }
 
     public Page<UserDTO> searchUsers(String keyword, Pageable pageable) {
-        return userRepository.searchByKeyword(keyword, pageable).map(userMapper::toDTO); // More concise
-    }
+        logger.info("Searching users with keyword: {}", keyword);
 
+        try {
+            return userRepository.searchByKeyword(keyword, pageable).map(userMapper::toDTO);
+        } catch (Exception e) {
+            logger.error("An error occurred while searching users with keyword: {}", keyword, e);
+            throw new RuntimeException("An error occurred while searching users", e);
+        }
+    }
 
     // --- Helper Methods ---
 
     private void updateUserFields(User user, UserUpdateDTO userUpdateDTO) {
         if (userUpdateDTO.getFirstName() != null) user.setFirstName(userUpdateDTO.getFirstName());
         if (userUpdateDTO.getLastName() != null) user.setLastName(userUpdateDTO.getLastName());
-        if (userUpdateDTO.getEmail() != null) user.setEmail(userUpdateDTO.getEmail());
         if (userUpdateDTO.getMobileNumber() != null) user.setMobileNumber(userUpdateDTO.getMobileNumber());
     }
 
@@ -191,25 +317,24 @@ public class UserService {
         }
     }
 
-    private void handleProfileImage(User user, MultipartFile profileImage) {
-        try {
-            if (profileImage != null && !profileImage.isEmpty()) {
-                logger.info("Uploading/Updating profile image for user: {}", user.getUserId());
-                Map<String, Object> uploadResult;
-
-                if (user.getAvatarPublicId() != null && !user.getAvatarPublicId().isEmpty()) {
-                    uploadResult = uploadService.updateImage(user.getAvatarPublicId(), profileImage, UploadService.ProfileType.USER);
-                } else {
-                    uploadResult = uploadService.uploadImage(profileImage, UploadService.ProfileType.USER);
-                }
-
-                user.setAvatarUrl((String) uploadResult.get("url"));
-                user.setAvatarPublicId((String) uploadResult.get("public_id"));
+    private void handleProfileImageUpload(MultipartFile profileImage, User user) throws IOException {
+        if (profileImage != null && !profileImage.isEmpty()) {
+            if (user.getAvatarPublicId() != null && !user.getAvatarPublicId().isEmpty()) {
+                // Delete the old profile image before uploading the new one
+                uploadService.deleteImage(user.getAvatarPublicId());
             }
-        } catch (IOException e) {
-            logger.error("Error uploading/updating profile image: {}", e.getMessage(), e);
-            throw new ImageUploadException("Error uploading profile image", e); // Re-throw custom exception
+            Map<String, String> imageInfo = uploadProfileImage(profileImage);
+            user.setAvatarUrl(imageInfo.get("avatarUrl"));
+            user.setAvatarPublicId(imageInfo.get("avatarPublicId"));
         }
+    }
+
+    private Map<String, String> uploadProfileImage(MultipartFile profileImage) throws IOException {
+        Map<String, Object> uploadResult = uploadService.uploadImage(profileImage, UploadService.ProfileType.USER);
+        return Map.of(
+                "avatarUrl", (String) uploadResult.get("url"),
+                "avatarPublicId", (String) uploadResult.get("public_id")
+        );
     }
 
     private void deleteAvatar(User user) {
@@ -218,7 +343,7 @@ public class UserService {
                 uploadService.deleteImage(user.getAvatarPublicId());
             } catch (IOException e) {
                 logger.error("Error deleting avatar with ID: {}", user.getAvatarPublicId(), e);
-                throw new ImageDeletionException("Error deleting avatar image", e); // Re-throw custom exception
+                throw new ImageDeletionException("Error deleting avatar image", e);
             }
         }
     }
