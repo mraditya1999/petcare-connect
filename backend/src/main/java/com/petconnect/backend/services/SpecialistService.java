@@ -38,24 +38,20 @@ public class SpecialistService {
     private final RoleAssignmentUtil roleAssignmentUtil;
     private final AddressRepository addressRepository;
     private final PasswordEncoder passwordEncoder;
-    private final TempUserStore tempUserStore;
     private final SpecialistMapper specialistMapper;
     private final UploadService uploadService;
-    private final VerificationService verificationService;
 
     @Autowired
     public SpecialistService(SpecialistRepository specialistRepository, UserRepository userRepository, RoleAssignmentUtil roleAssignmentUtil,
-                             AddressRepository addressRepository, @Lazy PasswordEncoder passwordEncoder, TempUserStore tempUserStore,
-                             SpecialistMapper specialistMapper, UploadService uploadService, @Lazy VerificationService verificationService) {
+                             AddressRepository addressRepository, @Lazy PasswordEncoder passwordEncoder,
+                             SpecialistMapper specialistMapper, UploadService uploadService) {
         this.specialistRepository = specialistRepository;
         this.userRepository = userRepository;
         this.roleAssignmentUtil = roleAssignmentUtil;
         this.addressRepository = addressRepository;
         this.passwordEncoder = passwordEncoder;
-        this.tempUserStore = tempUserStore;
         this.specialistMapper = specialistMapper;
         this.uploadService = uploadService;
-        this.verificationService = verificationService;
     }
 
     public Page<SpecialistDTO> getAllSpecialists(Pageable pageable) {

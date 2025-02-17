@@ -33,7 +33,7 @@ public class DataInitializer implements CommandLineRunner {
         createRoleIfNotFound(Role.RoleName.USER);
         createRoleIfNotFound(Role.RoleName.ADMIN);
         createRoleIfNotFound(Role.RoleName.SPECIALIST);
-        initializeDefaultUsers();
+//        initializeDefaultUsers();
     }
 
     private void createRoleIfNotFound(Role.RoleName roleName) {

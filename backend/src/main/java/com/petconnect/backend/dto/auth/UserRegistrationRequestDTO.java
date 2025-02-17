@@ -1,9 +1,9 @@
-package com.petconnect.backend.dto;
+package com.petconnect.backend.dto.auth;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 
-public class UserRegistrationRequest {
+public class UserRegistrationRequestDTO {
 
     @NotBlank(message = "First name is mandatory")
     private String firstName;
@@ -18,9 +18,9 @@ public class UserRegistrationRequest {
     @NotBlank(message = "Password is mandatory")
     private String password;
 
-    public UserRegistrationRequest() {}
+    public UserRegistrationRequestDTO() {}
 
-    public UserRegistrationRequest(String firstName, String lastName, String email, String password) {
+    public UserRegistrationRequestDTO(String firstName, String lastName, String email, String password) {
         this.firstName = firstName;
         this.lastName = lastName;
         this.email = email;

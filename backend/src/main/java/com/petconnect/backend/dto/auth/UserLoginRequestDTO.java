@@ -1,9 +1,9 @@
-package com.petconnect.backend.dto;
+package com.petconnect.backend.dto.auth;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 
-public class UserLoginRequest {
+public class UserLoginRequestDTO {
 
     @NotBlank(message = "Email is mandatory")
     @Email(message = "Email should be valid")
@@ -12,9 +12,9 @@ public class UserLoginRequest {
     @NotBlank(message = "Password is mandatory")
     private String password;
 
-    public UserLoginRequest() {}
+    public UserLoginRequestDTO() {}
 
-    public UserLoginRequest(String email, String password) {
+    public UserLoginRequestDTO(String email, String password) {
         this.email = email;
         this.password = password;
     }

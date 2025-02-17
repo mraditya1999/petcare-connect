@@ -39,7 +39,7 @@ public class AuthService implements UserDetailsService {
     private final TempUserStore tempUserStore;
 
     @Autowired
-    public AuthService(UserRepository userRepository, RoleAssignmentUtil roleAssignmentUtil, RoleRepository roleRepository, @Lazy PasswordEncoder passwordEncoder,
+    public AuthService(UserRepository userRepository, RoleAssignmentUtil roleAssignmentUtil,  @Lazy PasswordEncoder passwordEncoder,
                        @Lazy VerificationService verificationService, JwtUtil jwtUtil, TempUserStore tempUserStore) {
         this.userRepository = userRepository;
         this.roleAssignmentUtil = roleAssignmentUtil;
@@ -49,6 +49,13 @@ public class AuthService implements UserDetailsService {
         this.tempUserStore = tempUserStore;
     }
 
+    /**
+     * Loads the user by username (email) for authentication.
+     *
+     * @param email the user's email
+     * @return the UserDetails object
+     * @throws UsernameNotFoundException if the user is not found
+     */
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         User user = userRepository.findByEmail(email)
@@ -61,6 +68,12 @@ public class AuthService implements UserDetailsService {
         return new org.springframework.security.core.userdetails.User(user.getEmail(), user.getPassword(), authorities);
     }
 
+    /**
+     * Registers a new user.
+     *
+     * @param user the user to register
+     * @throws UserAlreadyExistsException if the user already exists
+     */
     @Transactional
     public void registerUser(User user) {
         if (userRepository.existsByEmail(user.getEmail())) {
@@ -81,11 +94,24 @@ public class AuthService implements UserDetailsService {
         logger.info("User registered with email: {}", user.getEmail());
     }
 
+    /**
+     * Assigns roles to a user.
+     *
+     * @param user the user to assign roles to
+     */
     public void assignRolesToUser(User user) {
         boolean isFirstUser = userRepository.count() == 0;
         roleAssignmentUtil.assignRoles(user, Role.RoleName.USER, isFirstUser ? Role.RoleName.ADMIN : null);
     }
 
+    /**
+     * Authenticates a user.
+     *
+     * @param email    the user's email
+     * @param password the user's password
+     * @return an Optional containing the authenticated user, if found
+     * @throws AuthenticationException if authentication fails
+     */
     public Optional<User> authenticateUser(String email, String password) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new AuthenticationException("Invalid email or password."));
@@ -99,6 +125,12 @@ public class AuthService implements UserDetailsService {
         }
     }
 
+    /**
+     * Generates a JWT token for an authenticated user.
+     *
+     * @param user the authenticated user
+     * @return the generated JWT token
+     */
     public String generateJwtToken(User user) {
         UserDetails userDetails = new UserDetailsServiceImpl(user);
         Map<String, Object> claims = new HashMap<>();
@@ -110,10 +142,23 @@ public class AuthService implements UserDetailsService {
         return token;
     }
 
+    /**
+     * Verifies a user using a verification token.
+     *
+     * @param verificationToken the verification token
+     * @return true if the user is verified, false otherwise
+     */
     public boolean verifyUser(String verificationToken) {
         return verificationService.verifyUser(verificationToken);
     }
 
+    /**
+     * Resets a user's password using a reset token.
+     *
+     * @param resetToken  the reset token
+     * @param newPassword the new password
+     * @return true if the password is reset, false otherwise
+     */
     public boolean resetPassword(String resetToken, String newPassword) {
         return verificationService.resetPassword(resetToken, newPassword);
     }

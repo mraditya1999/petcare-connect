@@ -61,7 +61,7 @@ public class User {
     @Column
     private String verificationToken;
 
-    @Column
+    @Column(name = "reset_token")
     private String resetToken;
 
     @ManyToMany(fetch = FetchType.EAGER)

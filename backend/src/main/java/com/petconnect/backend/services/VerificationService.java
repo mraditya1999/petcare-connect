@@ -32,6 +32,12 @@ public class VerificationService {
         this.tempUserStore = tempUserStore;
     }
 
+    /**
+     * Verifies a user using the provided verification token.
+     *
+     * @param verificationToken the verification token
+     * @return true if the user is successfully verified, false otherwise
+     */
     @Transactional
     public boolean verifyUser(String verificationToken) {
         User tempUser = tempUserStore.getTemporaryUser(verificationToken);
@@ -50,37 +56,44 @@ public class VerificationService {
         }
     }
 
-//    @Transactional
-//    public boolean resetPassword(String resetToken, String newPassword) {
-//        User user = userRepository.findByResetToken(resetToken)
-//                .orElseThrow(() -> new ResourceNotFoundException("Invalid reset token."));
-//
-//        user.setPassword(passwordEncoder.encode(newPassword));
-//        user.setResetToken(null);
-//        userRepository.save(user);
-//        logger.info("Password reset for user with token: {}", resetToken);
-//        return true;
-//    }
-
+    /**
+     * Resets the user's password using the provided reset token and new password.
+     *
+     * @param resetToken  the reset token
+     * @param newPassword the new password
+     * @return true if the password is successfully reset, false otherwise
+     */
     @Transactional
     public boolean resetPassword(String resetToken, String newPassword) {
-        User user = userRepository.findByResetToken(resetToken)
-                .orElseThrow(() -> new ResourceNotFoundException("Invalid reset token."));
+        logger.info("Reset token received: {}", resetToken);
 
-        // Assuming the old password is stored as a hash, compare the hashes
+        User user = userRepository.findByResetToken(resetToken).orElse(null);
+
+        if (user == null) {
+            logger.warn("Invalid reset token: {}", resetToken);
+            throw new ResourceNotFoundException("Invalid reset token.");
+        }
+
+        logger.info("User found for reset token: {}", user.getEmail());
+
         if (passwordEncoder.matches(newPassword, user.getPassword())) {
-            logger.warn("New password cannot be the same as the old password: {}", resetToken);
+            logger.warn("New password cannot be the same as the old password.");
             return false;
         }
 
         user.setPassword(passwordEncoder.encode(newPassword));
-        user.setResetToken(null);
+        user.setResetToken(null); // Nullify only after successful reset
         userRepository.save(user);
-        logger.info("Password reset for user with token: {}", resetToken);
+
+        logger.info("Password reset successful for user: {}", user.getEmail());
         return true;
     }
 
-
+    /**
+     * Sends a verification email to the user.
+     *
+     * @param user the user to send the email to
+     */
     public void sendVerificationEmail(User user) {
         user.setVerificationToken(UUID.randomUUID().toString());
         tempUserStore.saveTemporaryUser(user.getVerificationToken(), user);
