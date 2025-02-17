@@ -15,11 +15,12 @@ public class CommentDTO {
     private String email;
     private String parentId;
     private Set<Long> likedByUsers = new HashSet<>();
+    private Set<CommentDTO> replies = new HashSet<>();
 
     public CommentDTO() {
     }
 
-    public CommentDTO(String commentId, String forumId, Long userId, String text, Date createdAt, String firstName, String lastName, String email, String parentId, Set<Long> likedByUsers) {
+    public CommentDTO(String commentId, String forumId, Long userId, String text, Date createdAt, String firstName, String lastName, String email, String parentId, Set<Long> likedByUsers, Set<CommentDTO> replies) {
         this.commentId = commentId;
         this.forumId = forumId;
         this.userId = userId;
@@ -30,9 +31,9 @@ public class CommentDTO {
         this.email = email;
         this.parentId = parentId;
         this.likedByUsers = likedByUsers;
+        this.replies = replies;
     }
 
-    // Getters and Setters
     public String getCommentId() {
         return commentId;
     }
@@ -111,5 +112,13 @@ public class CommentDTO {
 
     public void setLikedByUsers(Set<Long> likedByUsers) {
         this.likedByUsers = likedByUsers;
+    }
+
+    public Set<CommentDTO> getReplies() {
+        return replies;
+    }
+
+    public void setReplies(Set<CommentDTO> replies) {
+        this.replies = replies;
     }
 }

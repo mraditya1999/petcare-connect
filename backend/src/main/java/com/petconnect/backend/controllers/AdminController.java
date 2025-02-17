@@ -4,7 +4,9 @@ import com.petconnect.backend.dto.*;
 import com.petconnect.backend.entity.Comment;
 import com.petconnect.backend.entity.Like;
 import com.petconnect.backend.entity.Role;
+import com.petconnect.backend.exceptions.PetNotFoundException;
 import com.petconnect.backend.exceptions.ResourceNotFoundException;
+import com.petconnect.backend.exceptions.UserNotFoundException;
 import com.petconnect.backend.mappers.CommentMapper;
 import com.petconnect.backend.mappers.LikeMapper;
 import com.petconnect.backend.services.*;
@@ -24,7 +26,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -56,8 +57,18 @@ public class AdminController {
         this.commentService = commentService;
     }
 
-    // Endpoint to get all users with pagination and sorting
-    @GetMapping("/users")
+//    ############################################################# USER #########################################################
+
+    /**
+     * Get all users with pagination and sorting.
+     *
+     * @param page    the page number to retrieve (default is 0)
+     * @param size    the number of items per page (default is 10)
+     * @param sortBy  the field to sort by (default is "userId")
+     * @param sortDir the sort direction (default is "asc")
+     * @return a response entity containing a page of users
+     */
+    @GetMapping
     public ResponseEntity<ApiResponse<Page<UserDTO>>> getAllUsers(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -74,34 +85,66 @@ public class AdminController {
         }
     }
 
-    // Endpoint to get a user by ID
-    @GetMapping("/users/{id}")
+    /**
+     * Get a user by their ID.
+     *
+     * @param id the user ID
+     * @return a response entity containing the user
+     */
+    @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<UserDTO>> getUserById(@PathVariable Long id) {
         try {
             UserDTO user = userService.getUserById(id);
             logger.info("Fetched user with ID: {}", id);
             return ResponseEntity.ok(new ApiResponse<>("Fetched user", user));
-        } catch (Exception e) {
+        } catch (UserNotFoundException e) {
             logger.error("Error fetching user with ID {}: {}", id, e.getMessage());
             return new ResponseEntity<>(new ApiResponse<>("User not found"), HttpStatus.NOT_FOUND);
+        } catch (Exception e) {
+            logger.error("Error fetching user with ID {}: {}", id, e.getMessage());
+            return new ResponseEntity<>(new ApiResponse<>("Error fetching user"), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
-    // Endpoint to delete a user by ID
-    @DeleteMapping("/users/{id}")
+    /**
+     * Delete a user by their ID.
+     *
+     * @param id the user ID
+     * @return a response entity with a deletion status
+     */
+    @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<String>> deleteUserById(@PathVariable Long id) {
         try {
             userService.deleteUserById(id);
             logger.info("Deleted user with ID: {}", id);
             return ResponseEntity.ok(new ApiResponse<>("User profile deleted successfully"));
+        } catch (UserNotFoundException e) {
+            logger.error("Error deleting user with ID {}: {}", id, e.getMessage());
+            return new ResponseEntity<>(new ApiResponse<>("User not found"), HttpStatus.NOT_FOUND);
         } catch (Exception e) {
             logger.error("Error deleting user with ID {}: {}", id, e.getMessage());
             return new ResponseEntity<>(new ApiResponse<>("Error deleting user"), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
-    // Endpoint to update a user profile
-    @PutMapping("/users/{id}")
+    /**
+     * Update a user by their ID.
+     *
+     * @param id           the user ID
+     * @param firstName    the new first name
+     * @param lastName     the new last name
+     * @param email        the new email
+     * @param mobileNumber the new mobile number
+     * @param pincode      the new pincode
+     * @param city         the new city
+     * @param state        the new state
+     * @param country      the new country
+     * @param locality     the new locality
+     * @param profileImage the new profile image
+     * @return a response entity containing the updated user
+     * @throws IOException if an error occurs while processing the profile image
+     */
+    @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<UserDTO>> updateUserById(
             @PathVariable Long id,
             @RequestParam(required = false) String firstName,
@@ -119,14 +162,26 @@ public class AdminController {
                     id, firstName, lastName, email, mobileNumber, pincode, city, state, country, locality, profileImage);
             logger.info("Updated user profile with ID: {}", id);
             return ResponseEntity.ok(new ApiResponse<>("Updated user profile", updatedUser));
+        } catch (UserNotFoundException e) {
+            logger.error("Error updating user profile with ID {}: {}", id, e.getMessage());
+            return new ResponseEntity<>(new ApiResponse<>("User not found"), HttpStatus.NOT_FOUND);
         } catch (Exception e) {
             logger.error("Error updating user profile with ID {}: {}", id, e.getMessage());
             return new ResponseEntity<>(new ApiResponse<>("Error updating user profile"), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
-    // Endpoint to search for users by keyword with pagination and sorting
-    @GetMapping("/users/search")
+    /**
+     * Search users by a keyword with pagination and sorting.
+     *
+     * @param keyword the search keyword
+     * @param page    the page number to retrieve (default is 0)
+     * @param size    the number of items per page (default is 10)
+     * @param sortBy  the field to sort by (default is "userId")
+     * @param sortDir the sort direction (default is "asc")
+     * @return a response entity containing a page of users
+     */
+    @GetMapping("/search")
     public ResponseEntity<ApiResponse<Page<UserDTO>>> searchUsers(
             @RequestParam String keyword,
             @RequestParam(defaultValue = "0") int page,
@@ -144,22 +199,52 @@ public class AdminController {
         }
     }
 
-    @PostMapping("/users/{id}/roles")
+    /**
+     * Update user roles by their ID.
+     *
+     * @param id        the user ID
+     * @param roleNames the new roles
+     * @return a response entity with an update status
+     */
+    @PostMapping("/{id}/roles")
     public ResponseEntity<ApiResponse<String>> updateUserRoles(
             @PathVariable Long id, @RequestBody Set<Role.RoleName> roleNames) {
         try {
             userService.updateUserRoles(id, roleNames);
             logger.info("Roles updated for user with ID: {}", id);
             return ResponseEntity.ok(new ApiResponse<>("Roles updated successfully"));
+        } catch (UserNotFoundException e) {
+            logger.error("Error updating roles for user with ID {}: {}", id, e.getMessage());
+            return new ResponseEntity<>(new ApiResponse<>("User not found"), HttpStatus.NOT_FOUND);
         } catch (Exception e) {
             logger.error("Error updating roles for user with ID {}: {}", id, e.getMessage());
             return new ResponseEntity<>(new ApiResponse<>("Error updating roles"), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
-//    ######################################################################################################################
+//    ############################################################# SPECIALIST #########################################################
 
-    @PostMapping(value = "specialists",consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    /**
+     * Create a new specialist.
+     * Consumes multipart/form-data for profile image.
+     *
+     * @param firstName    Specialist's first name
+     * @param lastName     Specialist's last name
+     * @param email        Specialist's email
+     * @param password     Specialist's password
+     * @param mobileNumber Specialist's mobile number
+     * @param speciality   Specialist's speciality
+     * @param about        Information about the specialist
+     * @param profileImage Profile image file
+     * @param pincode      Address pincode
+     * @param city         Address city
+     * @param state        Address state
+     * @param locality     Address locality
+     * @param country      Address country
+     * @return ResponseEntity with ApiResponse containing the created specialist
+     * @throws IOException if there's an error processing the profile image
+     */
+    @PostMapping(value = "specialists", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<SpecialistDTO>> createSpecialist(
             @RequestParam("firstName") String firstName,
             @RequestParam("lastName") String lastName,
@@ -175,6 +260,7 @@ public class AdminController {
             @RequestParam("locality") String locality,
             @RequestParam("country") String country) throws IOException {
 
+        // Create and populate the request DTO
         SpecialistCreateRequestDTO requestDTO = new SpecialistCreateRequestDTO();
         requestDTO.setFirstName(firstName);
         requestDTO.setLastName(lastName);
@@ -192,11 +278,34 @@ public class AdminController {
         addressDTO.setCountry(country);
         requestDTO.setAddressDTO(addressDTO);
 
+        // Create the specialist
         SpecialistDTO createdSpecialist = specialistService.createSpecialistByAdmin(requestDTO, profileImage);
+        logger.info("Created specialist profile for: {}", email);
 
         return ResponseEntity.ok(new ApiResponse<>("Specialist created successfully. Verification email sent.", createdSpecialist));
     }
 
+    /**
+     * Update an existing specialist by admin.
+     * Consumes multipart/form-data for profile image.
+     *
+     * @param id           Specialist ID
+     * @param firstName    Specialist's first name
+     * @param lastName     Specialist's last name
+     * @param email        Specialist's email
+     * @param mobileNumber Specialist's mobile number
+     * @param speciality   Specialist's speciality
+     * @param about        Information about the specialist
+     * @param pincode      Address pincode
+     * @param city         Address city
+     * @param state        Address state
+     * @param locality     Address locality
+     * @param country      Address country
+     * @param password     Specialist's password
+     * @param profileImage Profile image file
+     * @return ResponseEntity with ApiResponse containing the updated specialist
+     * @throws IOException if there's an error processing the profile image
+     */
     @PutMapping(value = "/specialists/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponse<SpecialistDTO>> updateSpecialistByAdmin(
             @PathVariable Long id,
@@ -214,6 +323,7 @@ public class AdminController {
             @RequestParam(value = "password", required = false) String password,
             @RequestPart(value = "profileImage", required = false) MultipartFile profileImage) throws IOException {
 
+        // Create and populate the update request DTO
         SpecialistUpdateRequestDTO specialistUpdateRequestDTO = new SpecialistUpdateRequestDTO();
         specialistUpdateRequestDTO.setFirstName(firstName);
         specialistUpdateRequestDTO.setLastName(lastName);
@@ -241,6 +351,17 @@ public class AdminController {
         }
     }
 
+    /**
+     * Search for specialists with a keyword.
+     * Supports pagination and sorting.
+     *
+     * @param keyword the search keyword
+     * @param page    the page number to retrieve (default is 0)
+     * @param size    the number of items per page (default is 10)
+     * @param sortBy  the field to sort by (default is "specialistId")
+     * @param sortDir the sort direction (default is "asc")
+     * @return ResponseEntity with ApiResponse containing a page of specialists
+     */
     @GetMapping("/specialists/search")
     public ResponseEntity<ApiResponse<Page<SpecialistDTO>>> searchSpecialists(
             @RequestParam String keyword,
@@ -259,6 +380,12 @@ public class AdminController {
         }
     }
 
+    /**
+     * Delete a specialist by their ID.
+     *
+     * @param id the specialist ID
+     * @return ResponseEntity with ApiResponse containing the deletion status
+     */
     @DeleteMapping("/specialists/{id}")
     public ResponseEntity<ApiResponse<String>> deleteSpecialistByAdmin(@PathVariable Long id) {
         try {
@@ -271,32 +398,105 @@ public class AdminController {
         }
     }
 
-//    ######################################################################################################################
+//    ############################################################# PET #########################################################
 
+    /**
+     * Get all pets with pagination and sorting.
+     *
+     * @param page the page number to retrieve (default is 0)
+     * @param size the number of items per page (default is 10)
+     * @param sortBy the field to sort by (default is "id")
+     * @param sortDir the sort direction (default is "asc")
+     * @return ResponseEntity with ApiResponse containing a page of pets
+     */
     @GetMapping("/pets")
-    public Page<PetDTO> getAllPets(
+    public ResponseEntity<ApiResponse<Page<PetDTO>>> getAllPets(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
-        return petService.getAllPets(page, size);
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "id") String sortBy,
+            @RequestParam(defaultValue = "asc") String sortDir) {
+        try {
+            Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.fromString(sortDir), sortBy));
+            Page<PetDTO> pets = petService.getAllPets(pageable);
+            logger.info("Fetched all pets with pagination and sorting");
+            return ResponseEntity.ok(new ApiResponse<>("Fetched all pets", pets));
+        } catch (Exception e) {
+            logger.error("Error fetching pets: {}", e.getMessage());
+            return new ResponseEntity<>(new ApiResponse<>("Error fetching pets"), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
+
+    /**
+     * Get a pet by its ID.
+     *
+     * @param id the pet ID
+     * @return ResponseEntity with ApiResponse containing the pet
+     */
     @GetMapping("/pets/{id}")
-    public PetDTO getPetById(@PathVariable Long id) {
-        return petService.getPetById(id);
+    public ResponseEntity<ApiResponse<PetDTO>> getPetById(@PathVariable Long id) {
+        try {
+            PetDTO pet = petService.getPetById(id);
+            logger.info("Fetched pet with ID: {}", id);
+            return ResponseEntity.ok(new ApiResponse<>("Fetched pet", pet));
+        } catch (PetNotFoundException e) {
+            logger.error("Error fetching pet with ID {}: {}", id, e.getMessage());
+            return new ResponseEntity<>(new ApiResponse<>("Pet not found"), HttpStatus.NOT_FOUND);
+        } catch (Exception e) {
+            logger.error("Error fetching pet with ID {}: {}", id, e.getMessage());
+            return new ResponseEntity<>(new ApiResponse<>("Error fetching pet"), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
-    @PutMapping("/pets/{id}")
-    public PetDTO updatePetById(@PathVariable Long id, @Valid @RequestPart PetDTO petDTO,
-                            @RequestPart(required = false) MultipartFile avatarFile) throws IOException {
-        return petService.updatePetById(id, petDTO, avatarFile);
+    /**
+     * Update a pet by its ID.
+     *
+     * @param id         the pet ID
+     * @param petDTO     the pet details to update
+     * @param avatarFile the avatar file to update (optional)
+     * @return ResponseEntity with ApiResponse containing the updated pet
+     * @throws IOException if there's an error processing the avatar file
+     */
+    @PutMapping(value = "/pets/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ApiResponse<PetDTO>> updatePetById(@PathVariable Long id,
+                                                             @Valid @RequestPart PetDTO petDTO,
+                                                             @RequestPart(required = false) MultipartFile avatarFile) throws IOException {
+        try {
+            PetDTO updatedPet = petService.updatePetById(id, petDTO, avatarFile);
+            logger.info("Updated pet with ID: {}", id);
+            return ResponseEntity.ok(new ApiResponse<>("Updated pet", updatedPet));
+        } catch (PetNotFoundException e) {
+            logger.error("Error updating pet with ID {}: {}", id, e.getMessage());
+            return new ResponseEntity<>(new ApiResponse<>("Pet not found"), HttpStatus.NOT_FOUND);
+        } catch (Exception e) {
+            logger.error("Error updating pet with ID {}: {}", id, e.getMessage());
+            return new ResponseEntity<>(new ApiResponse<>("Error updating pet"), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
+    /**
+     * Delete a pet by its ID.
+     *
+     * @param id the pet ID
+     * @return ResponseEntity with ApiResponse containing the deletion status
+     */
     @DeleteMapping("/pets/{id}")
-    public void deletePetById(@PathVariable Long id) {
-        petService.deletePetById(id);
+    public ResponseEntity<ApiResponse<String>> deletePetById(@PathVariable Long id) {
+        try {
+            petService.deletePetById(id);
+            logger.info("Deleted pet with ID: {}", id);
+            return ResponseEntity.ok(new ApiResponse<>("Pet deleted successfully"));
+        } catch (PetNotFoundException e) {
+            logger.error("Error deleting pet with ID {}: {}", id, e.getMessage());
+            return new ResponseEntity<>(new ApiResponse<>("Pet not found"), HttpStatus.NOT_FOUND);
+        } catch (Exception e) {
+            logger.error("Error deleting pet with ID {}: {}", id, e.getMessage());
+            return new ResponseEntity<>(new ApiResponse<>("Error deleting pet"), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
-//    ########################################################################################################
+    //    ############################################################# FORUM #########################################################
+
     /**
      * Update a forum by its ID.
      *
@@ -334,72 +534,48 @@ public class AdminController {
         }
     }
 
-
-    //    ######################################################################################################################
-
-    @GetMapping("/likes")
-    public ResponseEntity<ApiResponse<List<LikeDTO>>> getAllLikes() {
-        logger.debug("Fetching all likes");
-        List<LikeDTO> likes = likeService.getAllLikes().stream()
-                .map(likeMapper::toDTO)
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(new ApiResponse<>("Likes fetched successfully", likes));
-    }
-
-    @GetMapping("/likes/{likeId}")
-    public ResponseEntity<ApiResponse<LikeDTO>> getLikeById(@PathVariable String likeId) {
-        logger.debug("Fetching like with ID: {}", likeId);
-        Optional<Like> like = likeService.getLikeById(likeId);
-        return like.map(value -> ResponseEntity.ok(new ApiResponse<>("Like fetched successfully", likeMapper.toDTO(value))))
-                .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(new ApiResponse<>("Like not found", null)));
-    }
-
-    /**
-     * Fetch likes for a comment by its ID.
-     *
-     * @param commentId the comment ID
-     * @return a response containing a list of likes for the specified comment
-     */
-    @GetMapping("/comment/{commentId}/likes")
-    public ResponseEntity<ApiResponse<List<LikeDTO>>> getLikesByCommentId(@PathVariable String commentId) {
-        List<LikeDTO> likes = likeService.getAllLikesByCommentId(commentId).stream()
-                .map(likeMapper::toDTO)
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(new ApiResponse<>("Likes fetched successfully", likes));
-    }
-    //    ######################################################################################################################
+    //    ############################################################# COMMENT #########################################################
 
     /**
      * Fetch all comments with pagination.
      *
      * @param page the page number (default is 0)
      * @param size the page size (default is 5)
-     * @return a paginated list of comments
+     * @return ResponseEntity with ApiResponse containing a paginated list of comments
      */
     @GetMapping("/comments")
     public ResponseEntity<ApiResponse<Page<CommentDTO>>> getAllComments(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "5") int size) {
-        logger.debug("Fetching all comments with pagination");
-        Page<CommentDTO> comments = commentService.getAllComments(PageRequest.of(page, size))
-                .map(commentMapper::toDTO);
-        return ResponseEntity.ok(new ApiResponse<>("Comments fetched successfully", comments));
+        try {
+            logger.debug("Fetching all comments with pagination");
+            Page<CommentDTO> comments = commentService.getAllComments(PageRequest.of(page, size))
+                    .map(commentMapper::toDTO);
+            return ResponseEntity.ok(new ApiResponse<>("Comments fetched successfully", comments));
+        } catch (Exception e) {
+            logger.error("Error fetching comments: {}", e.getMessage());
+            return new ResponseEntity<>(new ApiResponse<>("Error fetching comments"), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     /**
      * Fetch a comment by its ID.
      *
      * @param commentId the comment ID
-     * @return the comment with the specified ID
+     * @return ResponseEntity with ApiResponse containing the comment with the specified ID
      */
-    @GetMapping("/{commentId}")
+    @GetMapping("/comments/{commentId}")
     public ResponseEntity<ApiResponse<CommentDTO>> getCommentById(@PathVariable String commentId) {
-        logger.debug("Fetching comment with ID: {}", commentId);
-        Optional<Comment> comment = commentService.getCommentById(commentId);
-        return comment.map(value -> ResponseEntity.ok(new ApiResponse<>("Comment fetched successfully", commentMapper.toDTO(value))))
-                .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(new ApiResponse<>("Comment not found", null)));
+        try {
+            logger.debug("Fetching comment with ID: {}", commentId);
+            Optional<Comment> comment = commentService.getCommentById(commentId);
+            return comment.map(value -> ResponseEntity.ok(new ApiResponse<>("Comment fetched successfully", commentMapper.toDTO(value))))
+                    .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND)
+                            .body(new ApiResponse<>("Comment not found", null)));
+        } catch (Exception e) {
+            logger.error("Error fetching comment with ID {}: {}", commentId, e.getMessage());
+            return new ResponseEntity<>(new ApiResponse<>("Error fetching comment"), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     /**
@@ -407,18 +583,19 @@ public class AdminController {
      *
      * @param commentId the comment ID
      * @param commentDTO the updated comment data
-     * @return the updated comment
+     * @return ResponseEntity with ApiResponse containing the updated comment
      */
-    @PutMapping("/{commentId}")
+    @PutMapping("/comments/{commentId}")
     public ResponseEntity<ApiResponse<CommentDTO>> updateCommentById(@PathVariable String commentId, @Valid @RequestBody CommentDTO commentDTO) {
-        logger.debug("Updating comment with ID: {}", commentId);
-        Optional<CommentDTO> updatedComment = commentService.updateCommentByIdAdmin(commentId, commentDTO);
-        if (updatedComment.isPresent()) {
-            ApiResponse<CommentDTO> apiResponse = new ApiResponse<>("Comment updated successfully", updatedComment.get());
-            return ResponseEntity.ok(apiResponse);
-        } else {
-            ApiResponse<CommentDTO> apiResponse = new ApiResponse<>("Comment not found", null);
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(apiResponse);
+        try {
+            logger.debug("Updating comment with ID: {}", commentId);
+            Optional<CommentDTO> updatedComment = commentService.updateCommentByIdAdmin(commentId, commentDTO);
+            return updatedComment.map(value -> ResponseEntity.ok(new ApiResponse<>("Comment updated successfully", value)))
+                    .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND)
+                            .body(new ApiResponse<>("Comment not found", null)));
+        } catch (Exception e) {
+            logger.error("Error updating comment with ID {}: {}", commentId, e.getMessage());
+            return new ResponseEntity<>(new ApiResponse<>("Error updating comment"), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -426,36 +603,83 @@ public class AdminController {
      * Delete a comment by its ID.
      *
      * @param commentId the comment ID
-     * @return a response indicating the result of the deletion
+     * @return ResponseEntity with ApiResponse indicating the result of the deletion
      */
-    @DeleteMapping("/{commentId}")
+    @DeleteMapping("/comments/{commentId}")
     public ResponseEntity<ApiResponse<Void>> deleteCommentByIdAdmin(@PathVariable String commentId) {
-        logger.debug("Deleting comment with ID: {}", commentId);
-        boolean deleted = commentService.deleteCommentById(commentId);
-        if (deleted) {
-            ApiResponse<Void> apiResponse = new ApiResponse<>("Comment deleted successfully", null);
-            return ResponseEntity.ok(apiResponse);
-        } else {
-            ApiResponse<Void> apiResponse = new ApiResponse<>("Comment not found", null);
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(apiResponse);
+        try {
+            logger.debug("Deleting comment with ID: {}", commentId);
+            boolean deleted = commentService.deleteCommentById(commentId);
+            if (deleted) {
+                return ResponseEntity.ok(new ApiResponse<>("Comment deleted successfully", null));
+            } else {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiResponse<>("Comment not found", null));
+            }
+        } catch (Exception e) {
+            logger.error("Error deleting comment with ID {}: {}", commentId, e.getMessage());
+            return new ResponseEntity<>(new ApiResponse<>("Error deleting comment"), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    //    ############################################################# Like #########################################################
+
+    /**
+     * Fetch all likes.
+     *
+     * @return ResponseEntity with ApiResponse containing a list of likes
+     */
+    @GetMapping("/likes")
+    public ResponseEntity<ApiResponse<List<LikeDTO>>> getAllLikes() {
+        try {
+            logger.debug("Fetching all likes");
+            List<LikeDTO> likes = likeService.getAllLikes().stream()
+                    .map(likeMapper::toDTO)
+                    .collect(Collectors.toList());
+            return ResponseEntity.ok(new ApiResponse<>("Likes fetched successfully", likes));
+        } catch (Exception e) {
+            logger.error("Error fetching all likes: {}", e.getMessage());
+            return new ResponseEntity<>(new ApiResponse<>("Error fetching likes"), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
     /**
-     * Delete any comment by its ID.
+     * Fetch a like by its ID.
+     *
+     * @param likeId the like ID
+     * @return ResponseEntity with ApiResponse containing the like
+     */
+    @GetMapping("/likes/{likeId}")
+    public ResponseEntity<ApiResponse<LikeDTO>> getLikeById(@PathVariable String likeId) {
+        try {
+            logger.debug("Fetching like with ID: {}", likeId);
+            Optional<Like> like = likeService.getLikeById(likeId);
+            return like.map(value -> ResponseEntity.ok(new ApiResponse<>("Like fetched successfully", likeMapper.toDTO(value))))
+                    .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND)
+                            .body(new ApiResponse<>("Like not found", null)));
+        } catch (Exception e) {
+            logger.error("Error fetching like with ID {}: {}", likeId, e.getMessage());
+            return new ResponseEntity<>(new ApiResponse<>("Error fetching like"), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * Fetch likes for a comment by its ID.
      *
      * @param commentId the comment ID
-     * @return a response indicating the result of the deletion
+     * @return ResponseEntity with ApiResponse containing a list of likes for the specified comment
      */
-//    @DeleteMapping("/comments/{commentId}")
-//    public ResponseEntity<ApiResponse<Void>> deleteAnyComment(@PathVariable String commentId) {
-//        try {
-//            commentService.deleteAnyComment(commentId);
-//            ApiResponse<Void> apiResponse = new ApiResponse<>("Comment deleted successfully", null);
-//            return ResponseEntity.ok(apiResponse);
-//        } catch (ResourceNotFoundException e) {
-//            ApiResponse<Void> response = new ApiResponse<>(e.getMessage(), null);
-//            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
-//        }
-//    }
+    @GetMapping("/comment/{commentId}/likes")
+    public ResponseEntity<ApiResponse<List<LikeDTO>>> getLikesByCommentId(@PathVariable String commentId) {
+        try {
+            logger.debug("Fetching likes for comment with ID: {}", commentId);
+            List<LikeDTO> likes = likeService.getAllLikesByCommentId(commentId).stream()
+                    .map(likeMapper::toDTO)
+                    .collect(Collectors.toList());
+            return ResponseEntity.ok(new ApiResponse<>("Likes fetched successfully", likes));
+        } catch (Exception e) {
+            logger.error("Error fetching likes for comment with ID {}: {}", commentId, e.getMessage());
+            return new ResponseEntity<>(new ApiResponse<>("Error fetching likes"), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
 }

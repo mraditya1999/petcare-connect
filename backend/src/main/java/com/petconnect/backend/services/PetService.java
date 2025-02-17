@@ -198,13 +198,12 @@ public class PetService {
     }
 
 
+    //    ADMIN SERVICES
+    public Page<PetDTO> getAllPets(Pageable pageable) {
+        Page<Pet> petPage = petRepository.findAll(pageable);
+        return petPage.map(petMapper::toDTO);
+    }
 
-//    ADMIN SERVICES
-public Page<PetDTO> getAllPets(int page, int size) {
-    Pageable pageable = PageRequest.of(page, size);
-    Page<Pet> petPage = petRepository.findAll(pageable);
-    return petPage.map(petMapper::toDTO);
-}
 
     public PetDTO getPetById(Long id) {
         Pet pet = petRepository.findById(id)
