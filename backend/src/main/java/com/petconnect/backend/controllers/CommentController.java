@@ -2,7 +2,6 @@ package com.petconnect.backend.controllers;
 
 import com.petconnect.backend.dto.ApiResponse;
 import com.petconnect.backend.dto.CommentDTO;
-import com.petconnect.backend.entity.Comment;
 import com.petconnect.backend.services.CommentService;
 import com.petconnect.backend.mappers.CommentMapper;
 import jakarta.validation.Valid;
@@ -15,10 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/comments")
@@ -26,21 +22,19 @@ public class CommentController {
     private static final Logger logger = LoggerFactory.getLogger(CommentController.class);
 
     private final CommentService commentService;
-    private final CommentMapper commentMapper;
 
     @Autowired
-    public CommentController(CommentService commentService, CommentMapper commentMapper) {
+    public CommentController(CommentService commentService) {
         this.commentService = commentService;
-        this.commentMapper = commentMapper;
     }
 
     /**
-     * Fetch all comments for a forum with pagination.
+     * Get all comments by forum ID with pagination.
      *
      * @param forumId the forum ID
-     * @param page the page number (default is 0)
-     * @param size the page size (default is 5)
-     * @return a paginated list of comments for the specified forum
+     * @param page the page number to retrieve (default is 0)
+     * @param size the number of items per page (default is 5)
+     * @return ResponseEntity with ApiResponse containing a page of comments
      */
     @GetMapping("/forums/{forumId}")
     public ResponseEntity<ApiResponse<Page<CommentDTO>>> getAllCommentsByForumId(
@@ -48,11 +42,15 @@ public class CommentController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "5") int size) {
         logger.debug("Fetching comments for forum ID: {}", forumId);
-        Page<CommentDTO> comments = commentService.getAllCommentsByForumId(forumId, page, size)
-                .map(commentMapper::toDTO);
+        Page<CommentDTO> comments = commentService.getAllCommentsByForumId(forumId, page, size);
         return ResponseEntity.ok(new ApiResponse<>("Comments fetched successfully", comments));
     }
 
+    @GetMapping("/{commentId}")
+    public ResponseEntity<CommentDTO> getCommentByIdWithSubcomments(@PathVariable String commentId) {
+        CommentDTO comment = commentService.getCommentByIdWithSubcomments(commentId);
+        return new ResponseEntity<>(comment, HttpStatus.OK);
+    }
 
     /**
      * Create a comment on a forum post.
@@ -63,9 +61,12 @@ public class CommentController {
      * @return the created comment
      */
     @PostMapping("/forums/{forumId}")
-    public ResponseEntity<ApiResponse<CommentDTO>> createComment( @AuthenticationPrincipal UserDetails userDetails,@PathVariable String forumId, @Valid @RequestBody CommentDTO commentDTO) {
+    public ResponseEntity<ApiResponse<CommentDTO>> createComment(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @PathVariable String forumId,
+            @Valid @RequestBody CommentDTO commentDTO) {
         String username = userDetails.getUsername();
-        CommentDTO comment = commentService.createComment(username,forumId, commentDTO);
+        CommentDTO comment = commentService.createComment(username, forumId, commentDTO);
         ApiResponse<CommentDTO> apiResponse = new ApiResponse<>("Comment added successfully", comment);
         return ResponseEntity.ok(apiResponse);
     }
@@ -137,79 +138,6 @@ public class CommentController {
         ApiResponse<CommentDTO> apiResponse = new ApiResponse<>("Reply added successfully", reply);
         return ResponseEntity.ok(apiResponse);
     }
-
-//    /**
-//     * Delete a comment by its ID.
-//     *
-//     * @param commentId the comment ID
-//     * @return a response indicating the result of the deletion
-//     */
-//    @DeleteMapping("/{commentId}")
-//    public ResponseEntity<ApiResponse<Void>> deleteCommentById(@PathVariable String commentId) {
-//        logger.debug("Deleting comment with ID: {}", commentId);
-//        commentService.deleteCommentById(commentId);
-//        return ResponseEntity.ok(new ApiResponse<>("Comment deleted successfully", null));
-//    }
-
-
-    /**
-     * Toggle like on a comment.
-     *
-     * @param commentId the comment ID
-     * @param userDetails the authenticated user's details
-     * @return the updated comment
-     */
-//    @PostMapping("/comments/{commentId}/like-toggle")
-//    public ResponseEntity<ApiResponse<CommentDTO>> toggleLikeOnComment(@PathVariable String commentId, @AuthenticationPrincipal UserDetails userDetails) {
-//        if (userDetails == null) {
-//            ApiResponse<CommentDTO> apiResponse = new ApiResponse<>("User is not authenticated", null);
-//            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(apiResponse);
-//        }
-//
-//        CommentDTO updatedComment = commentService.toggleLikeOnComment(commentId, userDetails.getUsername());
-//        ApiResponse<CommentDTO> apiResponse = new ApiResponse<>("Comment like toggled successfully", updatedComment);
-//        return ResponseEntity.ok(apiResponse);
-//    }
-
-    //
-
-
-//    @GetMapping
-//    public ResponseEntity<ApiResponse<List<CommentDTO>>> getAllComments() {
-//        logger.debug("Fetching all comments");
-//        List<CommentDTO> comments = commentService.getAllComments().stream()
-//                .map(commentMapper::toDTO)
-//                .collect(Collectors.toList());
-//        return ResponseEntity.ok(new ApiResponse<>("Comments fetched successfully", comments));
-//    }
-//
-//    @GetMapping("/{commentId}")
-//    public ResponseEntity<ApiResponse<CommentDTO>> getCommentById(@PathVariable String commentId) {
-//        logger.debug("Fetching comment with ID: {}", commentId);
-//        Optional<Comment> comment = commentService.getCommentById(commentId);
-//        return comment.map(value -> ResponseEntity.ok(new ApiResponse<>("Comment fetched successfully", commentMapper.toDTO(value))))
-//                .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND)
-//                        .body(new ApiResponse<>("Comment not found", null)));
-//    }
-//
-//    @DeleteMapping("/{commentId}")
-//    public ResponseEntity<ApiResponse<Void>> deleteCommentById(@PathVariable String commentId) {
-//        logger.debug("Deleting comment with ID: {}", commentId);
-//        commentService.deleteCommentById(commentId);
-//        return ResponseEntity.ok(new ApiResponse<>("Comment deleted successfully", null));
-//    }
-//
-//    @PostMapping("/{commentId}/like")
-//    public void likeComment(@PathVariable String commentId) {
-//        commentService.likeComment(commentId);
-//    }
-//
-//    @PostMapping("/{commentId}/unlike")
-//    public void unlikeComment(@PathVariable String commentId) {
-//        commentService.unlikeComment(commentId);
-//    }
-
-
 }
 
 

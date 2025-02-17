@@ -173,7 +173,7 @@ public class ForumService {
 
     @Transactional
     public void deleteCommentAndSubComments(Comment comment) {
-        List<Comment> subComments = commentRepository.findByParentId(comment.getCommentId());
+        List<Comment> subComments = commentRepository.findByParentComment(comment);
         for (Comment subComment : subComments) {
             deleteCommentAndSubComments(subComment);
         }
