@@ -1,14 +1,23 @@
 package com.petconnect.backend.mappers;
 
-import com.petconnect.backend.dto.RoleDTO;
 import com.petconnect.backend.entity.Role;
 import org.mapstruct.Mapper;
+import org.mapstruct.Named;
+import org.mapstruct.factory.Mappers;
 
-@Mapper(componentModel = "spring")
+@Mapper
 public interface RoleMapper {
+    RoleMapper INSTANCE = Mappers.getMapper(RoleMapper.class);
 
-    RoleDTO toDTO(Role role);
+    @Named("toRoleName")
+    default Role.RoleName toRoleName(Role role) {
+        return role.getRoleName();
+    }
 
-    Role toEntity(RoleDTO roleDTO);
+    @Named("toRole")
+    default Role toRole(Role.RoleName roleName) {
+        Role role = new Role();
+        role.setRoleName(roleName);
+        return role;
+    }
 }
-

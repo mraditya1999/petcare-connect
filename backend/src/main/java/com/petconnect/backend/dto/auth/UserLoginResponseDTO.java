@@ -1,17 +1,17 @@
-package com.petconnect.backend.dto;
+package com.petconnect.backend.dto.auth;
 
 import java.util.List;
 
-public class UserLoginResponse {
+public class UserLoginResponseDTO {
 
     private Long userId;
     private String email;
     private List<String> roles;
     private String token;
 
-    public UserLoginResponse() {}
+    public UserLoginResponseDTO() {}
 
-    public UserLoginResponse(String email, List<String> roles, String token, Long userId) {
+    public UserLoginResponseDTO(String email, List<String> roles, String token, Long userId) {
         this.email = email;
         this.roles = roles;
         this.token = token;

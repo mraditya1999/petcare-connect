@@ -32,6 +32,12 @@ public class VerificationService {
         this.tempUserStore = tempUserStore;
     }
 
+    /**
+     * Verifies a user using the provided verification token.
+     *
+     * @param verificationToken the verification token
+     * @return true if the user is successfully verified, false otherwise
+     */
     @Transactional
     public boolean verifyUser(String verificationToken) {
         User tempUser = tempUserStore.getTemporaryUser(verificationToken);
@@ -50,18 +56,13 @@ public class VerificationService {
         }
     }
 
-//    @Transactional
-//    public boolean resetPassword(String resetToken, String newPassword) {
-//        User user = userRepository.findByResetToken(resetToken)
-//                .orElseThrow(() -> new ResourceNotFoundException("Invalid reset token."));
-//
-//        user.setPassword(passwordEncoder.encode(newPassword));
-//        user.setResetToken(null);
-//        userRepository.save(user);
-//        logger.info("Password reset for user with token: {}", resetToken);
-//        return true;
-//    }
-
+    /**
+     * Resets the user's password using the provided reset token and new password.
+     *
+     * @param resetToken  the reset token
+     * @param newPassword the new password
+     * @return true if the password is successfully reset, false otherwise
+     */
     @Transactional
     public boolean resetPassword(String resetToken, String newPassword) {
         logger.info("Reset token received: {}", resetToken);
@@ -88,6 +89,11 @@ public class VerificationService {
         return true;
     }
 
+    /**
+     * Sends a verification email to the user.
+     *
+     * @param user the user to send the email to
+     */
     public void sendVerificationEmail(User user) {
         user.setVerificationToken(UUID.randomUUID().toString());
         tempUserStore.saveTemporaryUser(user.getVerificationToken(), user);

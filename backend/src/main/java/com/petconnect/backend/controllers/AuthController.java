@@ -1,13 +1,15 @@
 package com.petconnect.backend.controllers;
 
 import com.petconnect.backend.dto.*;
+import com.petconnect.backend.dto.auth.*;
 import com.petconnect.backend.entity.Role;
 import com.petconnect.backend.entity.User;
+import com.petconnect.backend.exceptions.AuthenticationException;
 import com.petconnect.backend.exceptions.ResourceNotFoundException;
 import com.petconnect.backend.exceptions.UserAlreadyExistsException;
 import com.petconnect.backend.repositories.UserRepository;
-import com.petconnect.backend.services.EmailService;
 import com.petconnect.backend.services.AuthService;
+import com.petconnect.backend.services.EmailService;
 import com.petconnect.backend.services.UserService;
 import com.petconnect.backend.mappers.UserMapper;
 import org.slf4j.Logger;
@@ -22,7 +24,6 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -35,8 +36,9 @@ public class AuthController {
     private final UserService userService;
     private final EmailService emailService;
     private final UserMapper userMapper;
-    private static final Logger logger = LoggerFactory.getLogger(AuthController.class);
     private final UserRepository userRepository;
+
+    private static final Logger logger = LoggerFactory.getLogger(AuthController.class);
 
     @Autowired
     public AuthController(AuthService authService, UserService userService, EmailService emailService, UserMapper userMapper, UserRepository userRepository) {
@@ -47,96 +49,179 @@ public class AuthController {
         this.userRepository = userRepository;
     }
 
+    /**
+     * Registers a new user.
+     *
+     * @param userRequest the user registration request
+     * @return the response entity containing the registration status
+     */
     @PostMapping("/register")
-    public ResponseEntity<ApiResponse<String>> registerUser(@Valid @RequestBody UserRegistrationRequest userRequest) {
+    public ResponseEntity<ApiResponse<UserRegistrationResponseDTO>> registerUser(@Valid @RequestBody UserRegistrationRequestDTO userRequest) {
         try {
             User user = userMapper.toEntity(userRequest);
             authService.registerUser(user);
-            ApiResponse<String> response = new ApiResponse<>("User registered successfully. Please check your email for the verification link.");
-            return ResponseEntity.status(HttpStatus.CREATED).body(response);
+            UserRegistrationResponseDTO response = new UserRegistrationResponseDTO("User registered successfully. Please check your email for the verification link.");
+            return ResponseEntity.status(HttpStatus.CREATED).body(new ApiResponse<>("User registered successfully.",response));
         } catch (UserAlreadyExistsException e) {
-            ApiResponse<String> response = new ApiResponse<>(e.getMessage());
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+            logger.error("User registration failed: ", e);
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(new ApiResponse<>(e.getMessage()));
+        } catch (Exception e) {
+            logger.error("Internal server error during registration: ", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponse<>("An error occurred: " + e.getMessage()));
         }
     }
 
+    /**
+     * Logs in a user.
+     *
+     * @param loginRequest the user login request
+     * @return the response entity containing the login status and user details
+     */
     @PostMapping("/login")
-    public ResponseEntity<ApiResponse<UserLoginResponse>> loginUser(@Valid @RequestBody UserLoginRequest loginRequest) {
-        Optional<User> authenticatedUser = authService.authenticateUser(loginRequest.getEmail(), loginRequest.getPassword());
-        return authenticatedUser.map(user -> {
-            String token = authService.generateJwtToken(user);
-            List<String> roles = user.getRoles().stream().map(Role::getAuthority).collect(Collectors.toList());
-            UserLoginResponse userLoginResponse = new UserLoginResponse(user.getEmail(), roles, token, user.getUserId());
-            ApiResponse<UserLoginResponse> response = new ApiResponse<>("User logged in successfully", userLoginResponse);
-            return ResponseEntity.ok(response);
-        }).orElseGet(() -> {
-            ApiResponse<UserLoginResponse> response = new ApiResponse<>("Invalid email or password");
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
-        });
+    public ResponseEntity<ApiResponse<UserLoginResponseDTO>> loginUser(@Valid @RequestBody UserLoginRequestDTO loginRequest) {
+        logger.info("Login attempt for email: {}", loginRequest.getEmail());
+        try {
+            Optional<User> authenticatedUser = authService.authenticateUser(loginRequest.getEmail(), loginRequest.getPassword());
+            return authenticatedUser.map(user -> {
+                String token = authService.generateJwtToken(user);
+                List<String> roles = user.getRoles().stream().map(Role::getAuthority).collect(Collectors.toList());
+                UserLoginResponseDTO userLoginResponseDTO = new UserLoginResponseDTO(user.getEmail(), roles, token, user.getUserId());
+                ApiResponse<UserLoginResponseDTO> response = new ApiResponse<>("User logged in successfully", userLoginResponseDTO);
+                logger.info("User logged in successfully: {}", user.getEmail());
+                return ResponseEntity.ok(response);
+            }).orElseGet(() -> {
+                ApiResponse<UserLoginResponseDTO> response = new ApiResponse<>("Invalid email or password");
+                logger.warn("Failed login attempt for email: {}", loginRequest.getEmail());
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+            });
+        } catch (AuthenticationException e) {
+            logger.warn("Authentication failed for email: {}: {}", loginRequest.getEmail(), e.getMessage());
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponse<>("Invalid email or password", null));
+        } catch (Exception e) {
+            logger.error("Internal server error during login: ", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponse<>("An error occurred: " + e.getMessage(), null));
+        }
     }
 
+
+    /**
+     * Logs out a user.
+     *
+     * @param response the HTTP response
+     * @return the response entity containing the logout status
+     */
     @DeleteMapping("/logout")
-    public ResponseEntity<ApiResponse<String>> logoutUser(HttpServletResponse response) {
-        Cookie cookie = new Cookie("token", null);
-        cookie.setHttpOnly(true);
-        cookie.setSecure(true);
-        cookie.setPath("/");
-        cookie.setMaxAge(0); // Set expiry to immediate
-        response.addCookie(cookie);
-        logger.info("User logged out successfully");
-        ApiResponse<String> apiResponse = new ApiResponse<>("User logged out successfully");
-        return ResponseEntity.ok(apiResponse);
+    public ResponseEntity<ApiResponse<LogoutResponseDTO>> logoutUser(HttpServletResponse response) {
+        try {
+            Cookie cookie = new Cookie("token", null);
+            cookie.setHttpOnly(true);
+            cookie.setSecure(true);
+            cookie.setPath("/");
+            cookie.setMaxAge(0); // Set expiry to immediate
+            response.addCookie(cookie);
+            logger.info("User logged out successfully");
+            LogoutResponseDTO logoutResponse = new LogoutResponseDTO("User logged out successfully");
+            return ResponseEntity.ok(new ApiResponse<>("User logged out successfully", logoutResponse));
+        } catch (Exception e) {
+            logger.error("Internal server error during logout: ", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponse<>("An error occurred: " + e.getMessage(), null));
+        }
     }
 
+    /**
+     * Verifies a user's email.
+     *
+     * @param request the request containing the verification token
+     * @return the response entity containing the verification status
+     */
     @PostMapping("/verify-email")
-    public ResponseEntity<ApiResponse<String>> verifyUser(@Valid @RequestBody Map<String, String> request) {
-        String token = request.get("verificationToken");
-        boolean isVerified = authService.verifyUser(token);
-        if (isVerified) {
-            logger.info("User verified successfully with token: {}", token);
-            ApiResponse<String> apiResponse = new ApiResponse<>("User verified and registered successfully.");
-            return ResponseEntity.ok(apiResponse);
-        } else {
-            logger.warn("Invalid or expired verification token: {}", token);
-            throw new ResourceNotFoundException("Invalid or expired verification token.");
+    public ResponseEntity<ApiResponse<VerifyEmailResponseDTO>> verifyUser(@Valid @RequestBody VerifyEmailRequestDTO request) {
+        try {
+            String token = request.getVerificationToken();
+            boolean isVerified = authService.verifyUser(token);
+            if (isVerified) {
+                logger.info("User verified successfully with token: {}", token);
+                VerifyEmailResponseDTO verifyEmailResponse = new VerifyEmailResponseDTO("User verified and registered successfully.", true);
+                return ResponseEntity.ok(new ApiResponse<>("User verified successfully.", verifyEmailResponse));
+            } else {
+                logger.warn("Invalid or expired verification token: {}", token);
+                throw new ResourceNotFoundException("Invalid or expired verification token.");
+            }
+        } catch (ResourceNotFoundException e) {
+            logger.error("Email verification failed: ", e);
+            VerifyEmailResponseDTO verifyEmailResponse = new VerifyEmailResponseDTO(e.getMessage(), false);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiResponse<>(e.getMessage(), verifyEmailResponse));
+        } catch (Exception e) {
+            logger.error("Internal server error during email verification: ", e);
+            VerifyEmailResponseDTO verifyEmailResponse = new VerifyEmailResponseDTO("An error occurred: " + e.getMessage(), false);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponse<>("An error occurred: " + e.getMessage(), verifyEmailResponse));
         }
     }
 
+    /**
+     * Initiates a password reset process.
+     *
+     * @param request the request containing the user's email
+     * @return the response entity containing the password reset status
+     */
     @PostMapping("/forget-password")
-    public ResponseEntity<ApiResponse<String>> forgetPassword(@Valid @RequestBody Map<String, String> request) {
-        String email = request.get("email");
-        Optional<User> userOptional = userRepository.findByEmail(email);
-        if (userOptional.isPresent()) {
-            User user = userOptional.get();
-            String resetToken = UUID.randomUUID().toString();
-            user.setResetToken(resetToken);
-            userService.updateResetToken(user);
-            emailService.sendResetEmail(user);
-            logger.info("Password reset email sent successfully to: {}", email);
-            ApiResponse<String> apiResponse = new ApiResponse<>("Password reset email sent successfully");
-            return ResponseEntity.ok(apiResponse);
-        } else {
-            logger.warn("Email address not found: {}", email);
-            throw new ResourceNotFoundException("Email address not found");
+    public ResponseEntity<ApiResponse<ForgetPasswordResponseDTO>> forgetPassword(@Valid @RequestBody ForgetPasswordRequestDTO request) {
+        try {
+            String email = request.getEmail();
+            Optional<User> userOptional = userRepository.findByEmail(email);
+            if (userOptional.isPresent()) {
+                User user = userOptional.get();
+                String resetToken = UUID.randomUUID().toString();
+                user.setResetToken(resetToken);
+                userService.updateResetToken(user);
+                emailService.sendResetEmail(user);
+                logger.info("Password reset email sent successfully to: {}", email);
+                ForgetPasswordResponseDTO forgetPasswordResponse = new ForgetPasswordResponseDTO("Password reset email sent successfully");
+                return ResponseEntity.ok(new ApiResponse<>("Password reset email sent successfully", forgetPasswordResponse));
+            } else {
+                logger.warn("Email address not found: {}", email);
+                throw new ResourceNotFoundException("Email address not found");
+            }
+        } catch (ResourceNotFoundException e) {
+            logger.error("Password reset request failed: ", e);
+            ForgetPasswordResponseDTO forgetPasswordResponse = new ForgetPasswordResponseDTO(e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiResponse<>(e.getMessage(), forgetPasswordResponse));
+        } catch (Exception e) {
+            logger.error("Internal server error during password reset request: ", e);
+            ForgetPasswordResponseDTO forgetPasswordResponse = new ForgetPasswordResponseDTO("An error occurred: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponse<>("An error occurred: " + e.getMessage(), forgetPasswordResponse));
         }
     }
 
+    /**
+     * Resets a user's password.
+     *
+     * @param request the request containing the reset token and new password
+     * @return the response entity containing the password reset status
+     */
     @PostMapping("/reset-password")
-    public ResponseEntity<ApiResponse<String>> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
-        String token = request.getToken();
-        String newPassword = request.getNewPassword();
+    public ResponseEntity<ApiResponse<ResetPasswordResponseDTO>> resetPassword(@Valid @RequestBody ResetPasswordRequestDTO request) {
+        try {
+            String token = request.getToken();
+            String newPassword = request.getNewPassword();
 
-        logger.info("Received reset request for token: {}", token);
+            logger.info("Received reset request for token: {}", token);
 
-        boolean isReset = authService.resetPassword(token, newPassword);
+            boolean isReset = authService.resetPassword(token, newPassword);
 
-        if (isReset) {
-            logger.info("Password reset successfully with token: {}", token);
-            return ResponseEntity.ok(new ApiResponse<>("Password reset successfully"));
-        } else {
-            logger.warn("Password reset failed: New password cannot be the same as the old password.");
-            return ResponseEntity.badRequest().body(new ApiResponse<>("New password cannot be the same as the old password."));  // ✅ Correct error message
+            if (isReset) {
+                logger.info("Password reset successfully with token: {}", token);
+                ResetPasswordResponseDTO resetPasswordResponse = new ResetPasswordResponseDTO("Password reset successfully");
+                return ResponseEntity.ok(new ApiResponse<>("Password reset successfully", resetPasswordResponse));
+            } else {
+                logger.warn("Password reset failed: New password cannot be the same as the old password.");
+                ResetPasswordResponseDTO resetPasswordResponse = new ResetPasswordResponseDTO("New password cannot be the same as the old password.");
+                return ResponseEntity.badRequest().body(new ApiResponse<>("New password cannot be the same as the old password.", resetPasswordResponse));
+            }
+        } catch (Exception e) {
+            logger.error("Internal server error during password reset: ", e);
+            ResetPasswordResponseDTO resetPasswordResponse = new ResetPasswordResponseDTO("An error occurred: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponse<>("An error occurred: " + e.getMessage(), resetPasswordResponse));
         }
     }
-
 }

@@ -1,20 +1,22 @@
 package com.petconnect.backend.dto;
 
+import com.petconnect.backend.entity.Role;
+
 public class RoleDTO {
-    private String roleName;
+    private Role.RoleName roleName;
 
     public RoleDTO() {
     }
 
-    public RoleDTO( String roleName) {
+    public RoleDTO(Role.RoleName roleName) {
         this.roleName = roleName;
     }
 
-    public String getRoleName() {
+    public Role.RoleName getRoleName() {
         return roleName;
     }
 
-    public void setRoleName(String roleName) {
+    public void setRoleName(Role.RoleName roleName) {
         this.roleName = roleName;
     }
 }

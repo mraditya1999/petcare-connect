@@ -58,11 +58,12 @@ public class UserService {
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         if (user.getRoles().stream().anyMatch(role -> role.getRoleName() == Role.RoleName.SPECIALIST)) {
-            return specialistMapper.toSpecialistResponseDTO((Specialist) user); // More efficient check
+            return specialistMapper.toSpecialistResponseDTO((Specialist) user);
         }
 
         return userMapper.toDTO(user);
     }
+
 
     public UserDTO updateUserProfile(String username, UserUpdateDTO userUpdateDTO, MultipartFile profileImage) {
         User currentUser = userRepository.findByEmail(username)

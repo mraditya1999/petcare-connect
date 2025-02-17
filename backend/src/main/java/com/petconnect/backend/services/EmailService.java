@@ -59,7 +59,7 @@ public class EmailService {
 
     public void sendResetEmail(User user) {
         String[] urls = frontendUrls.split(",");
-        String resetLink = chooseURL(urls) + "/user/reset-password?token=" + user.getResetToken();
+        String resetLink = chooseURL(urls) + "/user/reset-password?token=" + user.getResetToken() + "&email=" + user.getEmail();
         Context context = new Context();
         context.setVariable("user", user);
         context.setVariable("resetLink", resetLink);
