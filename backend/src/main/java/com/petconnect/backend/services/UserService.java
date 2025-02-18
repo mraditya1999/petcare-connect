@@ -20,13 +20,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -292,6 +295,12 @@ public class UserService {
             logger.error("An error occurred while searching users with keyword: {}", keyword, e);
             throw new RuntimeException("An error occurred while searching users", e);
         }
+    }
+
+    public Page<UserDTO> getAllUsersByRole(String roleName, int page, int size, String sortBy, String sortDir) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.fromString(sortDir), sortBy));
+        Page<User> usersPage = userRepository.findAllByRole(roleName, pageable);
+        return usersPage.map(userMapper::toDTO); // Assuming you have a UserMapper to convert User to UserDTO
     }
 
     // --- Helper Methods ---

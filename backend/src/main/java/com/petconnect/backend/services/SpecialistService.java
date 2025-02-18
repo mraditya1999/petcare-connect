@@ -40,11 +40,13 @@ public class SpecialistService {
     private final PasswordEncoder passwordEncoder;
     private final SpecialistMapper specialistMapper;
     private final UploadService uploadService;
+    private final VerificationService verificationService;
+    private final TempUserStore tempUserStore;
 
     @Autowired
     public SpecialistService(SpecialistRepository specialistRepository, UserRepository userRepository, RoleAssignmentUtil roleAssignmentUtil,
                              AddressRepository addressRepository, @Lazy PasswordEncoder passwordEncoder,
-                             SpecialistMapper specialistMapper, UploadService uploadService) {
+                             SpecialistMapper specialistMapper, UploadService uploadService, VerificationService verificationService, TempUserStore tempUserStore) {
         this.specialistRepository = specialistRepository;
         this.userRepository = userRepository;
         this.roleAssignmentUtil = roleAssignmentUtil;
@@ -52,6 +54,8 @@ public class SpecialistService {
         this.passwordEncoder = passwordEncoder;
         this.specialistMapper = specialistMapper;
         this.uploadService = uploadService;
+        this.verificationService = verificationService;
+        this.tempUserStore = tempUserStore;
     }
 
     public Page<SpecialistDTO> getAllSpecialists(Pageable pageable) {
@@ -71,8 +75,7 @@ public class SpecialistService {
         return updateSpecialist(specialist, specialistUpdateRequestDTO, profileImage);
     }
 
-
-//    ADMIN SERVICES
+    //    ADMIN SERVICES
     @Transactional
     public SpecialistDTO createSpecialistByAdmin(SpecialistCreateRequestDTO specialistCreateRequestDTO, MultipartFile profileImage) throws IOException {
         if (userRepository.existsByEmail(specialistCreateRequestDTO.getEmail())) {
@@ -83,21 +86,24 @@ public class SpecialistService {
         Specialist specialist = specialistMapper.toSpecialistEntity(specialistCreateRequestDTO);
         specialist.setPassword(passwordEncoder.encode(specialistCreateRequestDTO.getPassword()));
         specialist.setVerificationToken(UUID.randomUUID().toString());
-        specialist.setVerified(true);  // Set verified to true for admin-created specialists
+        specialist.setVerified(false);  // Set verified to false for admin-created specialists
 
-        // Assign roles
-        assignRolesToSpecialist(specialist);
+        // Since specialist is created by admin, manually assign USER and SPECIALIST roles
+        Set<Role.RoleName> roles = new HashSet<>();
+        roles.add(Role.RoleName.USER);
+        roles.add(Role.RoleName.SPECIALIST);
+        roleAssignmentUtil.assignRoles(specialist, roles);
 
         // Handle profile image upload if it exists
         handleProfileImageUpload(profileImage, specialist);
 
-        // Save the specialist
-        specialistRepository.save(specialist);
+        // Temporarily save the specialist
+        tempUserStore.saveTemporaryUser(specialist.getVerificationToken(), specialist);
+        verificationService.sendVerificationEmail(specialist);
         logger.info("Specialist created by admin with email: {}", specialist.getEmail());
 
         return specialistMapper.toDTO(specialist);
     }
-
 
     @Transactional
     public SpecialistDTO updateSpecialistByAdmin(Long id, SpecialistUpdateRequestDTO specialistUpdateRequestDTO, MultipartFile profileImage) throws IOException {
@@ -165,9 +171,14 @@ public class SpecialistService {
     }
 
     @Transactional
-    public void deleteSpecialistByAdmin(Long id) {
+    public void deleteSpecialistByAdmin(Long id) throws IOException {
         Specialist specialist = specialistRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Specialist not found with id " + id));
+
+        if (specialist.getAvatarPublicId() != null) {
+            uploadService.deleteImage(specialist.getAvatarPublicId());
+        }
+
         specialistRepository.delete(specialist);
         logger.info("Deleted specialist with ID: {}", id);
     }
@@ -175,10 +186,6 @@ public class SpecialistService {
     public Page<SpecialistDTO> searchSpecialists(String keyword, Pageable pageable) {
         Page<Specialist> specialists = specialistRepository.findByFirstNameContainingOrSpecialityContaining(keyword, keyword, pageable);
         return specialists.map(specialistMapper::toDTO);
-    }
-
-    public void assignRolesToSpecialist(Specialist specialist) {
-        roleAssignmentUtil.assignRoles(specialist, Role.RoleName.SPECIALIST, null);
     }
 
     private void handleProfileImageUpload(MultipartFile profileImage, Specialist specialist) throws IOException {

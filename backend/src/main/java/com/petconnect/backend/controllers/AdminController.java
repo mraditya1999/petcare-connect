@@ -1,6 +1,7 @@
 package com.petconnect.backend.controllers;
 
 import com.petconnect.backend.dto.*;
+import com.petconnect.backend.dto.specialist.SpecialistRegistrationResponseDTO;
 import com.petconnect.backend.dto.user.UserDTO;
 import com.petconnect.backend.dto.user.UserUpdateDTO;
 import com.petconnect.backend.entity.Comment;
@@ -13,6 +14,7 @@ import com.petconnect.backend.mappers.CommentMapper;
 import com.petconnect.backend.mappers.LikeMapper;
 import com.petconnect.backend.services.*;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -226,6 +228,40 @@ public class AdminController {
         }
     }
 
+    /**
+     * Get all users by role with pagination.
+     *
+     * @param roleName the role name (case-insensitive)
+     * @param page the page number (starting from 0)
+     * @param size the number of records per page
+     * @return a response entity containing a page of users
+     */
+    @GetMapping("/users/role/{roleName}")
+    public ResponseEntity<ApiResponse<Page<UserDTO>>> getAllUsersByRole(
+            @PathVariable String roleName,
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "10") @Min(1) int size,
+            @RequestParam(defaultValue = "userId") String sortBy,
+            @RequestParam(defaultValue = "asc") String sortDir) {
+
+        try {
+            // Additional logging for debugging
+            logger.info("Fetching users with role: {} (page: {}, size: {}, sortBy: {}, sortDir: {})", roleName, page, size, sortBy, sortDir);
+            Page<UserDTO> usersPage = userService.getAllUsersByRole(roleName, page, size, sortBy, sortDir);
+            return ResponseEntity.ok(new ApiResponse<>("Fetched users successfully", usersPage));
+
+        } catch (IllegalArgumentException e) {
+            // Handle invalid page/size values
+            logger.error("Invalid pagination parameters: page={}, size={}", page, size, e);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ApiResponse<>("Invalid pagination parameters", null));
+        } catch (Exception e) {
+            logger.error("Error fetching users with role: {}", roleName, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse<>("Error fetching users", null));
+        }
+    }
+
     //    ############################################################# SPECIALIST #########################################################
 
     /**
@@ -249,7 +285,7 @@ public class AdminController {
      * @throws IOException if there's an error processing the profile image
      */
     @PostMapping(value = "specialists", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<ApiResponse<SpecialistDTO>> createSpecialist(
+    public  ResponseEntity<ApiResponse<SpecialistRegistrationResponseDTO>> createSpecialist(
             @RequestParam("firstName") String firstName,
             @RequestParam("lastName") String lastName,
             @RequestParam("email") String email,
@@ -283,10 +319,12 @@ public class AdminController {
         requestDTO.setAddressDTO(addressDTO);
 
         // Create the specialist
-        SpecialistDTO createdSpecialist = specialistService.createSpecialistByAdmin(requestDTO, profileImage);
-        logger.info("Created specialist profile for: {}", email);
+        specialistService.createSpecialistByAdmin(requestDTO, profileImage);
 
-        return ResponseEntity.ok(new ApiResponse<>("Specialist created successfully. Verification email sent.", createdSpecialist));
+        String responseMessage = "Created specialist profile for: " + email;
+        logger.info(responseMessage);
+        SpecialistRegistrationResponseDTO response = new SpecialistRegistrationResponseDTO(responseMessage);
+        return ResponseEntity.status(HttpStatus.CREATED).body(new ApiResponse<>("Specialist created successfully.",response));
     }
 
     /**
