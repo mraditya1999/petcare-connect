@@ -53,7 +53,19 @@ public class VerificationService {
             tempUser.setVerified(true);
             tempUser.setVerificationToken(null);
 
-            assignRolesToUser(tempUser);
+            // Fetch existing roles
+            Set<Role> currentRoles = tempUser.getRoles();
+
+            // Determine and assign roles based on user type
+            if (currentRoles.stream().anyMatch(role -> role.getRoleName() == Role.RoleName.SPECIALIST)) {
+                // If the user is a specialist, retain their roles
+                roleAssignmentUtil.assignRoles(tempUser, Set.of(Role.RoleName.USER, Role.RoleName.SPECIALIST));
+            } else {
+                // Assign roles to regular user
+                boolean isFirstVerifiedUser = userRepository.countByIsVerified(true) == 0;
+                Set<Role.RoleName> roles = roleAssignmentUtil.determineRolesForUser(isFirstVerifiedUser);
+                roleAssignmentUtil.assignRoles(tempUser, roles);
+            }
 
             userRepository.save(tempUser);
             logger.info("User verified and saved with token: {}", verificationToken);
@@ -62,16 +74,6 @@ public class VerificationService {
             logger.warn("Verification token invalid or expired: {}", verificationToken);
             throw new ResourceNotFoundException("Invalid or expired verification token.");
         }
-    }
-
-    public void assignRolesToUser(User user) {
-        boolean isFirstVerifiedUser = userRepository.countByIsVerified(true) == 0;
-        Set<Role.RoleName> roles = new HashSet<>();
-        roles.add(Role.RoleName.USER);
-        if (isFirstVerifiedUser) {
-            roles.add(Role.RoleName.ADMIN);
-        }
-        roleAssignmentUtil.assignRoles(user, roles);
     }
 
     /**

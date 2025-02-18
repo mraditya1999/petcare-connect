@@ -85,28 +85,15 @@ public class AuthService implements UserDetailsService {
         user.setVerificationToken(UUID.randomUUID().toString());
         user.setVerified(false);
 
-        // Assign roles
-        assignRolesToUser(user);
+        // Assign roles to User
+        boolean isFirstVerifiedUser = userRepository.countByIsVerified(true) == 0;
+        Set<Role.RoleName> roles = roleAssignmentUtil.determineRolesForUser(isFirstVerifiedUser);
+        roleAssignmentUtil.assignRoles(user, roles);
 
         // Save the user temporarily
         tempUserStore.saveTemporaryUser(user.getVerificationToken(), user);
         verificationService.sendVerificationEmail(user);
         logger.info("User registered with email: {}", user.getEmail());
-    }
-
-    /**
-     * Assigns roles to a user.
-     *
-     * @param user the user to assign roles to
-     */
-    public void assignRolesToUser(User user) {
-        boolean isFirstVerifiedUser = userRepository.countByIsVerified(true) == 0;
-        Set<Role.RoleName> roles = new HashSet<>();
-        roles.add(Role.RoleName.USER);
-        if (isFirstVerifiedUser) {
-            roles.add(Role.RoleName.ADMIN);
-        }
-        roleAssignmentUtil.assignRoles(user, roles);
     }
 
     /**
