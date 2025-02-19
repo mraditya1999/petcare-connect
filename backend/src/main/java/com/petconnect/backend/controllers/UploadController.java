@@ -1,6 +1,6 @@
 package com.petconnect.backend.controllers;
 
-import com.petconnect.backend.dto.ApiResponse;
+import com.petconnect.backend.dto.ApiResponseDTO;
 import com.petconnect.backend.services.UploadService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -28,27 +28,27 @@ public class UploadController {
     }
 
     @PostMapping("/{profileType}")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> uploadImage(
+    public ResponseEntity<ApiResponseDTO<Map<String, Object>>> uploadImage(
             @PathVariable("profileType") UploadService.ProfileType profileType,
             @RequestParam("profile-image") MultipartFile profileImage) {
         logger.info("Uploading image for profile type: {}", profileType);
         try {
             Map<String, Object> uploadResult = uploadService.uploadImage(profileImage, profileType);
-            ApiResponse<Map<String, Object>> apiResponse = new ApiResponse<>("Image uploaded successfully", uploadResult);
-            return ResponseEntity.status(HttpStatus.CREATED).body(apiResponse);
+            ApiResponseDTO<Map<String, Object>> apiResponseDTO = new ApiResponseDTO<>("Image uploaded successfully", uploadResult);
+            return ResponseEntity.status(HttpStatus.CREATED).body(apiResponseDTO);
         } catch (IllegalArgumentException e) {
             logger.error("Error uploading image: {}", e.getMessage());
-            ApiResponse<Map<String, Object>> response = new ApiResponse<>(e.getMessage(), null);
+            ApiResponseDTO<Map<String, Object>> response = new ApiResponseDTO<>(e.getMessage(), null);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         } catch (IOException e) {
             logger.error("Error uploading image: {}", e.getMessage());
-            ApiResponse<Map<String, Object>> response = new ApiResponse<>("An error occurred: " + e.getMessage(), null);
+            ApiResponseDTO<Map<String, Object>> response = new ApiResponseDTO<>("An error occurred: " + e.getMessage(), null);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
 
     @PutMapping("/{profileType}")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> updateImage(
+    public ResponseEntity<ApiResponseDTO<Map<String, Object>>> updateImage(
             @PathVariable("profileType") UploadService.ProfileType profileType,
             @RequestParam("public_id") String publicId,
             @RequestParam("profile-image") MultipartFile profileImage) {
@@ -56,45 +56,45 @@ public class UploadController {
         try {
             String decodedPublicId = URLDecoder.decode(publicId, StandardCharsets.UTF_8.name());
             Map<String, Object> updateResult = uploadService.updateImage(decodedPublicId, profileImage, profileType);
-            ApiResponse<Map<String, Object>> apiResponse = new ApiResponse<>("Image updated successfully", updateResult);
-            return ResponseEntity.status(HttpStatus.OK).body(apiResponse);
+            ApiResponseDTO<Map<String, Object>> apiResponseDTO = new ApiResponseDTO<>("Image updated successfully", updateResult);
+            return ResponseEntity.status(HttpStatus.OK).body(apiResponseDTO);
         } catch (IllegalArgumentException e) {
             logger.error("Error updating image: {}", e.getMessage());
-            ApiResponse<Map<String, Object>> response = new ApiResponse<>(e.getMessage(), null);
+            ApiResponseDTO<Map<String, Object>> response = new ApiResponseDTO<>(e.getMessage(), null);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         } catch (IOException e) {
             logger.error("Error updating image: {}", e.getMessage());
-            ApiResponse<Map<String, Object>> response = new ApiResponse<>("An error occurred: " + e.getMessage(), null);
+            ApiResponseDTO<Map<String, Object>> response = new ApiResponseDTO<>("An error occurred: " + e.getMessage(), null);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
 
     @DeleteMapping
-    public ResponseEntity<ApiResponse<Map<String, Object>>> deleteImage(@RequestParam("public_id") String publicId) {
+    public ResponseEntity<ApiResponseDTO<Map<String, Object>>> deleteImage(@RequestParam("public_id") String publicId) {
         logger.info("Deleting image with publicId: {}", publicId);
         try {
             String decodedPublicId = URLDecoder.decode(publicId, StandardCharsets.UTF_8.name());
             Map<String, Object> deleteResult = uploadService.deleteImage(decodedPublicId);
-            ApiResponse<Map<String, Object>> apiResponse = new ApiResponse<>("Image deleted successfully", deleteResult);
-            return ResponseEntity.status(HttpStatus.OK).body(apiResponse);
+            ApiResponseDTO<Map<String, Object>> apiResponseDTO = new ApiResponseDTO<>("Image deleted successfully", deleteResult);
+            return ResponseEntity.status(HttpStatus.OK).body(apiResponseDTO);
         } catch (IOException e) {
             logger.error("Error deleting image: {}", e.getMessage());
-            ApiResponse<Map<String, Object>> response = new ApiResponse<>("An error occurred: " + e.getMessage(), null);
+            ApiResponseDTO<Map<String, Object>> response = new ApiResponseDTO<>("An error occurred: " + e.getMessage(), null);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponse<Map<String, Object>>> getImage(@RequestParam("public_id") String publicId) {
+    public ResponseEntity<ApiResponseDTO<Map<String, Object>>> getImage(@RequestParam("public_id") String publicId) {
         logger.info("Fetching image with publicId: {}", publicId);
         try {
             String decodedPublicId = URLDecoder.decode(publicId, StandardCharsets.UTF_8.name());
             Map<String, Object> getResult = uploadService.getImage(decodedPublicId);
-            ApiResponse<Map<String, Object>> apiResponse = new ApiResponse<>("Image fetched successfully", getResult);
-            return ResponseEntity.status(HttpStatus.OK).body(apiResponse);
+            ApiResponseDTO<Map<String, Object>> apiResponseDTO = new ApiResponseDTO<>("Image fetched successfully", getResult);
+            return ResponseEntity.status(HttpStatus.OK).body(apiResponseDTO);
         } catch (Exception e) {
             logger.error("Error fetching image: {}", e.getMessage());
-            ApiResponse<Map<String, Object>> response = new ApiResponse<>("An error occurred: " + e.getMessage(), null);
+            ApiResponseDTO<Map<String, Object>> response = new ApiResponseDTO<>("An error occurred: " + e.getMessage(), null);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }

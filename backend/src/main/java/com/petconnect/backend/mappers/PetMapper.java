@@ -1,6 +1,7 @@
 package com.petconnect.backend.mappers;
 
-import com.petconnect.backend.dto.PetDTO;
+import com.petconnect.backend.dto.pet.PetRequestDTO;
+import com.petconnect.backend.dto.pet.PetResponseDTO;
 import com.petconnect.backend.entity.Pet;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -12,12 +13,12 @@ public interface PetMapper {
     @Mappings({
             @Mapping(source = "gender", target = "gender", qualifiedByName = "enumToString")
     })
-    PetDTO toDTO(Pet pet);
+    PetResponseDTO toDTO(Pet pet);
 
     @Mappings({
             @Mapping(source = "gender", target = "gender", qualifiedByName = "stringToEnum")
     })
-    Pet toEntity(PetDTO petDTO);
+    Pet toEntity(PetRequestDTO petRequestDTO);
 
     @Named("enumToString")
     default String enumToString(Pet.Gender gender) {

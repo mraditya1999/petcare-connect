@@ -1,6 +1,6 @@
 package com.petconnect.backend.dto;
 
-import lombok.Builder;
+import com.petconnect.backend.dto.user.AddressDTO;
 
 //@Builder
 public class SpecialistDTO {

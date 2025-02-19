@@ -1,6 +1,6 @@
 package com.petconnect.backend.exceptions;
 
-import com.petconnect.backend.dto.ApiResponse;
+import com.petconnect.backend.dto.ApiResponseDTO;
 import com.petconnect.backend.dto.ErrorResponseDTO;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -33,8 +34,8 @@ public class GlobalExceptionHandler {
      * @param status  the HTTP status
      * @return the ResponseEntity containing the ApiResponse
      */
-    private <T> ResponseEntity<ApiResponse<T>> createErrorResponse(String message, T details, HttpStatus status) {
-        return new ResponseEntity<>(new ApiResponse<>(message, details), status);
+    private <T> ResponseEntity<ApiResponseDTO<T>> createErrorResponse(String message, T details, HttpStatus status) {
+        return new ResponseEntity<>(new ApiResponseDTO<>(message, details), status);
     }
 
     /**
@@ -44,7 +45,7 @@ public class GlobalExceptionHandler {
      * @return the ResponseEntity containing the ApiResponse
      */
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ApiResponse<Object>> handleMethodArgumentNotValid(MethodArgumentNotValidException ex) {
+    public ResponseEntity<ApiResponseDTO<Object>> handleMethodArgumentNotValid(MethodArgumentNotValidException ex) {
         Map<String, String> errors = new HashMap<>();
         ex.getBindingResult().getAllErrors().forEach((error) -> {
             String fieldName = ((FieldError) error).getField();
@@ -63,9 +64,9 @@ public class GlobalExceptionHandler {
      * @return the ResponseEntity containing the ApiResponse
      */
     @ExceptionHandler(UserAlreadyExistsException.class)
-    public ResponseEntity<ApiResponse<String>> handleUserAlreadyExistsException(UserAlreadyExistsException e) {
+    public ResponseEntity<ApiResponseDTO<String>> handleUserAlreadyExistsException(UserAlreadyExistsException e) {
         logger.error("User already exists: ", e);
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(new ApiResponse<>(e.getMessage()));
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(new ApiResponseDTO<>(e.getMessage()));
     }
 
     /**
@@ -76,7 +77,7 @@ public class GlobalExceptionHandler {
      * @return the ResponseEntity containing the ApiResponse
      */
     @ExceptionHandler(ResourceNotFoundException.class)
-    public ResponseEntity<ApiResponse<Object>> handleResourceNotFoundException(ResourceNotFoundException ex, WebRequest request) {
+    public ResponseEntity<ApiResponseDTO<Object>> handleResourceNotFoundException(ResourceNotFoundException ex, WebRequest request) {
         logger.error("ResourceNotFoundException: {}", ex.getMessage(), ex);
         return createErrorResponse(ex.getMessage(), null, HttpStatus.NOT_FOUND);
     }
@@ -89,7 +90,7 @@ public class GlobalExceptionHandler {
      * @return the ResponseEntity containing the ApiResponse
      */
     @ExceptionHandler(AuthenticationException.class)
-    public ResponseEntity<ApiResponse<Object>> handleAuthenticationException(AuthenticationException ex, WebRequest request) {
+    public ResponseEntity<ApiResponseDTO<Object>> handleAuthenticationException(AuthenticationException ex, WebRequest request) {
         logger.error("AuthenticationException: {}", ex.getMessage(), ex);
         return createErrorResponse(ex.getMessage(), null, HttpStatus.UNAUTHORIZED);
     }
@@ -102,7 +103,7 @@ public class GlobalExceptionHandler {
      * @return the ResponseEntity containing the ApiResponse
      */
     @ExceptionHandler(ConstraintViolationException.class)
-    public ResponseEntity<ApiResponse<Object>> handleConstraintViolationException(ConstraintViolationException ex, WebRequest request) {
+    public ResponseEntity<ApiResponseDTO<Object>> handleConstraintViolationException(ConstraintViolationException ex, WebRequest request) {
         Set<ConstraintViolation<?>> violations = ex.getConstraintViolations();
         String errorMessage = violations.stream().map(ConstraintViolation::getMessage).collect(Collectors.joining(", "));
         logger.error("ConstraintViolationException: {}", errorMessage, ex);
@@ -117,7 +118,7 @@ public class GlobalExceptionHandler {
      * @return the ResponseEntity containing the ApiResponse
      */
     @ExceptionHandler(AccessDeniedException.class)
-    public ResponseEntity<ApiResponse<Object>> handleAccessDeniedException(AccessDeniedException ex, WebRequest request) {
+    public ResponseEntity<ApiResponseDTO<Object>> handleAccessDeniedException(AccessDeniedException ex, WebRequest request) {
         logger.error("AccessDeniedException: {}", ex.getMessage(), ex);
         return createErrorResponse("Access Denied", null, HttpStatus.FORBIDDEN);
     }
@@ -129,7 +130,7 @@ public class GlobalExceptionHandler {
      * @return the ResponseEntity containing the ApiResponse
      */
     @ExceptionHandler(UserNotFoundException.class)
-    public ResponseEntity<ApiResponse<Object>> handleUserNotFoundException(UserNotFoundException e) {
+    public ResponseEntity<ApiResponseDTO<Object>> handleUserNotFoundException(UserNotFoundException e) {
         logger.error("User not found: {}", e.getMessage(), e);
         return createErrorResponse("User not found", null, HttpStatus.NOT_FOUND);
     }
@@ -141,7 +142,7 @@ public class GlobalExceptionHandler {
      * @return the ResponseEntity containing the ApiResponse
      */
     @ExceptionHandler(ImageUploadException.class)
-    public ResponseEntity<ApiResponse<Object>> handleImageUploadException(ImageUploadException ex) {
+    public ResponseEntity<ApiResponseDTO<Object>> handleImageUploadException(ImageUploadException ex) {
         logger.error("ImageUploadException: {}", ex.getMessage(), ex);
         return createErrorResponse(ex.getMessage(), null, HttpStatus.INTERNAL_SERVER_ERROR);
     }
@@ -153,7 +154,7 @@ public class GlobalExceptionHandler {
      * @return the ResponseEntity containing the ApiResponse
      */
     @ExceptionHandler(PetNotFoundException.class)
-    public ResponseEntity<ApiResponse<Object>> handlePetNotFoundException(PetNotFoundException ex) {
+    public ResponseEntity<ApiResponseDTO<Object>> handlePetNotFoundException(PetNotFoundException ex) {
         logger.error("PetNotFoundException: {}", ex.getMessage(), ex);
         return createErrorResponse("Pet not found", null, HttpStatus.NOT_FOUND);
     }
@@ -165,7 +166,7 @@ public class GlobalExceptionHandler {
      * @return the ResponseEntity containing the ApiResponse
      */
     @ExceptionHandler(RoleNotFoundException.class)
-    public ResponseEntity<ApiResponse<Object>> handleRoleNotFoundException(RoleNotFoundException ex) {
+    public ResponseEntity<ApiResponseDTO<Object>> handleRoleNotFoundException(RoleNotFoundException ex) {
         logger.error("RoleNotFoundException: {}", ex.getMessage(), ex);
         return createErrorResponse("Role not found", null, HttpStatus.NOT_FOUND);
     }
@@ -177,7 +178,7 @@ public class GlobalExceptionHandler {
      * @return the ResponseEntity containing the ApiResponse
      */
     @ExceptionHandler(SpecialistNotFoundException.class)
-    public ResponseEntity<ApiResponse<Object>> handleSpecialistNotFoundException(SpecialistNotFoundException ex) {
+    public ResponseEntity<ApiResponseDTO<Object>> handleSpecialistNotFoundException(SpecialistNotFoundException ex) {
         logger.error("SpecialistNotFoundException: {}", ex.getMessage(), ex);
         return createErrorResponse("Specialist not found", null, HttpStatus.NOT_FOUND);
     }
@@ -189,7 +190,7 @@ public class GlobalExceptionHandler {
      * @return the ResponseEntity containing the ApiResponse
      */
     @ExceptionHandler(ImageDeletionException.class)
-    public ResponseEntity<ApiResponse<Object>> handleImageDeletionException(ImageDeletionException ex) {
+    public ResponseEntity<ApiResponseDTO<Object>> handleImageDeletionException(ImageDeletionException ex) {
         logger.error("ImageDeletionException: {}", ex.getMessage(), ex);
         return createErrorResponse(ex.getMessage(), null, HttpStatus.INTERNAL_SERVER_ERROR);
     }
@@ -201,7 +202,7 @@ public class GlobalExceptionHandler {
      * @return the ResponseEntity containing the ApiResponse
      */
     @ExceptionHandler(InvalidAddressException.class)
-    public ResponseEntity<ApiResponse<Object>> handleInvalidAddressException(InvalidAddressException ex) {
+    public ResponseEntity<ApiResponseDTO<Object>> handleInvalidAddressException(InvalidAddressException ex) {
         logger.error("InvalidAddressException: {}", ex.getMessage(), ex);
         return createErrorResponse(ex.getMessage(), null, HttpStatus.BAD_REQUEST);
     }
@@ -214,8 +215,70 @@ public class GlobalExceptionHandler {
      * @return the ResponseEntity containing the ApiResponse
      */
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ApiResponse<Object>> handleGlobalException(Exception ex, WebRequest request) {
+    public ResponseEntity<ApiResponseDTO<Object>> handleGlobalException(Exception ex, WebRequest request) {
         logger.error("Exception: {}", ex.getMessage(), ex);
         return createErrorResponse("An error occurred: " + ex.getMessage(), null, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    /**
+     * Handles DuplicatePetNameException.
+     *
+     * @param ex the exception
+     * @param request the web request
+     * @return the ResponseEntity containing the exception message
+     */
+    @ExceptionHandler(DuplicatePetNameException.class)
+    public ResponseEntity<String> handleDuplicatePetNameException(DuplicatePetNameException ex, WebRequest request) {
+        return new ResponseEntity<>(ex.getMessage(), HttpStatus.BAD_REQUEST);
+    }
+
+     /**
+      * Handles FileValidationException and returns a user-friendly error response.
+      *
+      * @param ex the FileValidationException instance
+      * @return a ResponseEntity containing the error message and HTTP status code
+      */
+     @ExceptionHandler(FileValidationException.class)
+     public ResponseEntity<ApiResponseDTO<String>> handleFileValidationException(FileValidationException ex) {
+         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponseDTO<>(ex.getMessage(), null));
+     }
+
+     /**
+      * Handles UnauthorizedAccessException and returns a user-friendly error response.
+      *
+      * @param ex the UnauthorizedAccessException instance
+      * @return a ResponseEntity containing the error message and HTTP status code
+      */
+     @ExceptionHandler(UnauthorizedAccessException.class)
+     public ResponseEntity<ApiResponseDTO<String>> handleUnauthorizedAccessException(UnauthorizedAccessException ex) {
+         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new ApiResponseDTO<>(ex.getMessage(), null));
+     }
+
+    /**
+     * Handles HttpMessageNotReadableException thrown when the request body is not readable or cannot be deserialized.
+     *
+     * @param ex the HttpMessageNotReadableException exception
+     * @return ResponseEntity containing an ApiResponseDTO with an error message and HTTP status code BAD_REQUEST (400)
+     */
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ApiResponseDTO<Map<String, String>>> handleHttpMessageNotReadableException(HttpMessageNotReadableException ex) {
+        Map<String, String> errorData = new HashMap<>();
+        errorData.put("message", "Invalid input: " + ex.getMostSpecificCause().getMessage());
+        ApiResponseDTO<Map<String, String>> response = new ApiResponseDTO<>("Invalid input", errorData);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+
+    /**
+     * Handles InvalidRoleNameException thrown when an invalid role name is provided.
+     *
+     * @param ex the InvalidRoleNameException exception
+     * @return ResponseEntity containing an ApiResponseDTO with an error message and HTTP status code BAD_REQUEST (400)
+     */
+    @ExceptionHandler(InvalidRoleNameException.class)
+    public ResponseEntity<ApiResponseDTO<Map<String, String>>> handleInvalidRoleNameException(InvalidRoleNameException ex) {
+        Map<String, String> errorData = new HashMap<>();
+        errorData.put("message", ex.getMessage());
+        ApiResponseDTO<Map<String, String>> response = new ApiResponseDTO<>("Invalid input", errorData);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
 }

@@ -1,6 +1,6 @@
 package com.petconnect.backend.mappers;
 
-import com.petconnect.backend.dto.AddressDTO;
+import com.petconnect.backend.dto.user.AddressDTO;
 import com.petconnect.backend.entity.Address;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;

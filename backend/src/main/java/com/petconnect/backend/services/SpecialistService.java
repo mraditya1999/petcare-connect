@@ -1,6 +1,7 @@
 package com.petconnect.backend.services;
 
 import com.petconnect.backend.dto.*;
+import com.petconnect.backend.dto.user.AddressDTO;
 import com.petconnect.backend.entity.Specialist;
 import com.petconnect.backend.entity.Role;
 import com.petconnect.backend.entity.Address;

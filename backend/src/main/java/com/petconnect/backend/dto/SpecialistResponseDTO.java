@@ -100,11 +100,8 @@
 //}
 package com.petconnect.backend.dto;
 
+import com.petconnect.backend.dto.user.AddressDTO;
 import com.petconnect.backend.dto.user.UserDTO;
-import com.petconnect.backend.entity.Role;
-
-import java.util.Set;
-import java.util.stream.Collectors;
 
 public class SpecialistResponseDTO extends UserDTO {
     private String speciality;

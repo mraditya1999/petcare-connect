@@ -1,5 +1,6 @@
 package com.petconnect.backend.dto;
 
+import com.petconnect.backend.dto.user.AddressDTO;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Size;
 

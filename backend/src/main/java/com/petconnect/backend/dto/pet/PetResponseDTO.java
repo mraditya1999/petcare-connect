@@ -1,53 +1,44 @@
-package com.petconnect.backend.dto;
+package com.petconnect.backend.dto.pet;
 
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 
-public class PetDTO {
+public class PetResponseDTO {
 
     private Long petId;
 
-    @NotNull
-    @Size(min = 1, max = 255)
+    @NotNull(message = "Pet name cannot be null")
+    @Size(min = 1, max = 255, message = "Pet name must be between 1 and 255 characters")
     private String petName;
 
-    @NotNull
-    @Positive
+    @NotNull(message = "Age cannot be null")
+    @Positive(message = "Age must be a positive number")
     private Integer age;
 
-    @NotNull
-    @Positive
+    @NotNull(message = "Weight cannot be null")
+    @Positive(message = "Weight must be a positive number")
     private Double weight;
 
     private String avatarUrl;
-    private String avatarPublicId;  // Add this field
+    private String avatarPublicId;
 
-    @NotNull
-    @Size(min = 1, max = 10)
+    @NotNull(message = "Gender cannot be null")
+    @Size(min = 1, max = 10, message = "Gender must be between 1 and 10 characters")
     private String gender;
 
-    @NotNull
-    @Size(min = 1, max = 255)
+    @NotNull(message = "Breed cannot be null")
+    @Size(min = 1, max = 255, message = "Breed must be between 1 and 255 characters")
     private String breed;
 
-    @NotNull
-    @Size(min = 1, max = 255)
+    @NotNull(message = "Species cannot be null")
+    @Size(min = 1, max = 255, message = "Species must be between 1 and 255 characters")
     private String species;
 
-    public PetDTO() {
+    public PetResponseDTO() {
     }
 
-    public PetDTO(String petName, String breed, Integer age, Double weight, String gender, String species) {
-        this.petName = petName;
-        this.breed = breed;
-        this.age = age;
-        this.weight = weight;
-        this.gender = gender;
-        this.species = species;
-    }
-
-    public PetDTO(Long petId, String petName, Integer age, Double weight, String avatarUrl, String avatarPublicId, String gender, String breed, String species) {
+      public PetResponseDTO(Long petId, String petName, Integer age, Double weight, String avatarUrl, String avatarPublicId, String gender, String breed, String species) {
         this.petId = petId;
         this.petName = petName;
         this.age = age;

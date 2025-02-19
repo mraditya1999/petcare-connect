@@ -1,4 +1,4 @@
-package com.petconnect.backend.dto;
+package com.petconnect.backend.dto.user;
 
 import lombok.*;
 
