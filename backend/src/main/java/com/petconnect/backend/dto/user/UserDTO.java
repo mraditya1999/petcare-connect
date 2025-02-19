@@ -1,6 +1,5 @@
 package com.petconnect.backend.dto.user;
 
-import com.petconnect.backend.dto.AddressDTO;
 import lombok.Builder;
 
 @Builder

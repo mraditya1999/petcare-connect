@@ -17,9 +17,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/forums")
@@ -65,10 +63,10 @@ public class ForumController {
      * @return the forum details
      */
     @GetMapping("/{forumId}")
-    public ResponseEntity<ApiResponse<ForumDTO>> getForumById(@PathVariable String forumId) {
+    public ResponseEntity<ApiResponseDTO<ForumDTO>> getForumById(@PathVariable String forumId) {
         ForumDTO forumDTO = forumService.getForumById(forumId);
-        ApiResponse<ForumDTO> apiResponse = new ApiResponse<>("Forum fetched successfully", forumDTO);
-        return ResponseEntity.ok(apiResponse);
+        ApiResponseDTO<ForumDTO> apiResponseDTO = new ApiResponseDTO<>("Forum fetched successfully", forumDTO);
+        return ResponseEntity.ok(apiResponseDTO);
     }
 
     /**
@@ -101,10 +99,10 @@ public class ForumController {
      * @return a response containing a list of matching forums
      */
     @GetMapping("/search-by-tags")
-    public ResponseEntity<ApiResponse<List<ForumDTO>>> searchForumsByTags(@RequestParam List<String> tags) {
+    public ResponseEntity<ApiResponseDTO<List<ForumDTO>>> searchForumsByTags(@RequestParam List<String> tags) {
         List<ForumDTO> forums = forumService.searchForumsByTags(tags);
-        ApiResponse<List<ForumDTO>> apiResponse = new ApiResponse<>("Forums fetched successfully", forums);
-        return ResponseEntity.ok(apiResponse);
+        ApiResponseDTO<List<ForumDTO>> apiResponseDTO = new ApiResponseDTO<>("Forums fetched successfully", forums);
+        return ResponseEntity.ok(apiResponseDTO);
     }
 
     /**
@@ -128,11 +126,11 @@ public class ForumController {
      * @return the created forum details
      */
     @PostMapping
-    public ResponseEntity<ApiResponse<ForumDTO>> createForum(@AuthenticationPrincipal UserDetails userDetails, @Valid @RequestBody ForumCreateDTO forumCreateDTO) {
+    public ResponseEntity<ApiResponseDTO<ForumDTO>> createForum(@AuthenticationPrincipal UserDetails userDetails, @Valid @RequestBody ForumCreateDTO forumCreateDTO) {
         String username = userDetails.getUsername();
         ForumDTO createdForum = forumService.createForum(username, forumCreateDTO);
-        ApiResponse<ForumDTO> apiResponse = new ApiResponse<>("Forum created successfully", createdForum);
-        return ResponseEntity.status(HttpStatus.CREATED).body(apiResponse);
+        ApiResponseDTO<ForumDTO> apiResponseDTO = new ApiResponseDTO<>("Forum created successfully", createdForum);
+        return ResponseEntity.status(HttpStatus.CREATED).body(apiResponseDTO);
     }
 
     /**
@@ -144,23 +142,23 @@ public class ForumController {
      * @return the updated forum details
      */
     @PutMapping("/{forumId}")
-    public ResponseEntity<ApiResponse<ForumDTO>> updateForum(@AuthenticationPrincipal UserDetails userDetails,@PathVariable String forumId, @RequestBody UpdateForumDTO forumDTO) {
+    public ResponseEntity<ApiResponseDTO<ForumDTO>> updateForum(@AuthenticationPrincipal UserDetails userDetails, @PathVariable String forumId, @RequestBody UpdateForumDTO forumDTO) {
         try {
             String username = userDetails.getUsername();
             ForumDTO updatedForumDTO = forumService.updateForum(username,forumId , forumDTO);
-            ApiResponse<ForumDTO> apiResponse = new ApiResponse<>("Forum updated successfully", updatedForumDTO);
-            return ResponseEntity.ok(apiResponse);
+            ApiResponseDTO<ForumDTO> apiResponseDTO = new ApiResponseDTO<>("Forum updated successfully", updatedForumDTO);
+            return ResponseEntity.ok(apiResponseDTO);
         } catch (ResourceNotFoundException e) {
             logger.error("Error updating forum: {}", e.getMessage());
-            ApiResponse<ForumDTO> response = new ApiResponse<>(e.getMessage(), null);
+            ApiResponseDTO<ForumDTO> response = new ApiResponseDTO<>(e.getMessage(), null);
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
         } catch (IllegalArgumentException e) {
             logger.error("Error updating forum: {}", e.getMessage());
-            ApiResponse<ForumDTO> response = new ApiResponse<>(e.getMessage(), null);
+            ApiResponseDTO<ForumDTO> response = new ApiResponseDTO<>(e.getMessage(), null);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         } catch (Exception e) {
             logger.error("Unexpected error updating forum", e);
-            ApiResponse<ForumDTO> errorResponse = new ApiResponse<>("An error occurred: " + e.getMessage(), null);
+            ApiResponseDTO<ForumDTO> errorResponse = new ApiResponseDTO<>("An error occurred: " + e.getMessage(), null);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         }
     }
@@ -173,23 +171,23 @@ public class ForumController {
      * @return a response indicating the result of the deletion
      */
     @DeleteMapping("/{forumId}")
-    public ResponseEntity<ApiResponse<Void>> deleteForum(@AuthenticationPrincipal UserDetails userDetails,@PathVariable String forumId) {
+    public ResponseEntity<ApiResponseDTO<Void>> deleteForum(@AuthenticationPrincipal UserDetails userDetails, @PathVariable String forumId) {
         try {
             String username = userDetails.getUsername();
             forumService.deleteForum(username,forumId);
-            ApiResponse<Void> apiResponse = new ApiResponse<>("Forum deleted successfully", null);
-            return ResponseEntity.ok(apiResponse);
+            ApiResponseDTO<Void> apiResponseDTO = new ApiResponseDTO<>("Forum deleted successfully", null);
+            return ResponseEntity.ok(apiResponseDTO);
         } catch (ResourceNotFoundException e) {
             logger.error("Error deleting forum: {}", e.getMessage());
-            ApiResponse<Void> response = new ApiResponse<>(e.getMessage(), null);
+            ApiResponseDTO<Void> response = new ApiResponseDTO<>(e.getMessage(), null);
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
         } catch (IllegalArgumentException e) {
             logger.error("Error deleting forum: {}", e.getMessage());
-            ApiResponse<Void> response = new ApiResponse<>(e.getMessage(), null);
+            ApiResponseDTO<Void> response = new ApiResponseDTO<>(e.getMessage(), null);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         } catch (Exception e) {
             logger.error("Unexpected error deleting forum", e);
-            ApiResponse<Void> errorResponse = new ApiResponse<>("An error occurred: " + e.getMessage(), null);
+            ApiResponseDTO<Void> errorResponse = new ApiResponseDTO<>("An error occurred: " + e.getMessage(), null);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         }
     }
@@ -201,18 +199,18 @@ public class ForumController {
      * @return a list of forums created by the user
      */
     @GetMapping("/my-forums")
-    public ResponseEntity<ApiResponse<Page<ForumDTO>>> getMyForums(
+    public ResponseEntity<ApiResponseDTO<Page<ForumDTO>>> getMyForums(
             @AuthenticationPrincipal UserDetails userDetails,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         String username = userDetails.getUsername();
         if (username == null) {
-            ApiResponse<Page<ForumDTO>> apiResponse = new ApiResponse<>("User is not authenticated", null);
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(apiResponse);
+            ApiResponseDTO<Page<ForumDTO>> apiResponseDTO = new ApiResponseDTO<>("User is not authenticated", null);
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(apiResponseDTO);
         }
         Page<ForumDTO> forums = forumService.getMyForums(username, page, size);
-        ApiResponse<Page<ForumDTO>> apiResponse = new ApiResponse<>("My forums fetched successfully", forums);
-        return ResponseEntity.ok(apiResponse);
+        ApiResponseDTO<Page<ForumDTO>> apiResponseDTO = new ApiResponseDTO<>("My forums fetched successfully", forums);
+        return ResponseEntity.ok(apiResponseDTO);
     }
 
 

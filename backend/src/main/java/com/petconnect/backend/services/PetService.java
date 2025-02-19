@@ -1,9 +1,10 @@
 package com.petconnect.backend.services;
 
-import com.petconnect.backend.dto.PetDTO;
+import com.petconnect.backend.dto.pet.PetRequestDTO;
+import com.petconnect.backend.dto.pet.PetResponseDTO;
 import com.petconnect.backend.entity.Pet;
 import com.petconnect.backend.entity.User;
-import com.petconnect.backend.entity.Pet.Gender;
+import com.petconnect.backend.exceptions.DuplicatePetNameException;
 import com.petconnect.backend.exceptions.ImageDeletionException;
 import com.petconnect.backend.exceptions.ResourceNotFoundException;
 import com.petconnect.backend.mappers.PetMapper;
@@ -15,10 +16,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,57 +36,72 @@ public class PetService {
     private final PetRepository petRepository;
     private final UserRepository userRepository;
     private final PetMapper petMapper;
-    private final PetValidator validator;
     private final UploadService uploadService;
+    private final PetValidator petValidator;
 
     @Autowired
-    public PetService(PetRepository petRepository, UserRepository userRepository, PetMapper petMapper, PetValidator validator, UploadService uploadService) {
+    public PetService(PetRepository petRepository, UserRepository userRepository, PetMapper petMapper, UploadService uploadService, PetValidator petValidator) {
         this.petRepository = petRepository;
         this.userRepository = userRepository;
         this.petMapper = petMapper;
-        this.validator = validator;
         this.uploadService = uploadService;
+        this.petValidator = petValidator;
     }
 
+    /**
+     * Create a new pet for the authenticated user.
+     *
+     * @param petRequestDTO pet data for the request
+     * @param avatarFile optional avatar file for the pet
+     * @param username username of the authenticated user
+     * @return PetResponseDTO containing the created pet data
+     * @throws IOException if an I/O error occurs while processing the avatar file
+     */
     @Transactional
-    public PetDTO createPetForUser(@Valid PetDTO petDTO, MultipartFile avatarFile, @AuthenticationPrincipal String username) throws IOException {
-        try {
+    public PetResponseDTO createPetForUser(@Valid PetRequestDTO petRequestDTO, MultipartFile avatarFile, String username) throws IOException {
+        logger.info("Received request to create a pet for user: {}", username);
 
-            User petOwner = userRepository.findByEmail(username)
-                    .orElseThrow(() -> {
-                        logger.error("User not found with email: {}", username);
-                        return new ResourceNotFoundException("User not found");
-                    });
+        User petOwner = userRepository.findByEmail(username)
+                .orElseThrow(() -> {
+                    logger.error("User not found with email: {}", username);
+                    return new ResourceNotFoundException("User not found");
+                });
 
-            validator.validate(petDTO);
+        petValidator.validate(petRequestDTO);
 
-            // Upload avatar file if present
-            if (avatarFile != null && !avatarFile.isEmpty()) {
-                logger.info("Uploading new profile image for pet");
-                Map<String, Object> uploadResult = uploadService.uploadImage(avatarFile, UploadService.ProfileType.PET);
-                petDTO.setAvatarUrl((String) uploadResult.get("url"));
-                petDTO.setAvatarPublicId((String) uploadResult.get("public_id"));
-            }
-
-            Pet pet = petMapper.toEntity(petDTO);
-            pet.setPetOwner(petOwner);
-            pet.setGender(Gender.valueOf(petDTO.getGender().toUpperCase())); // Convert String to Gender enum
-
-            Pet savedPet = petRepository.save(pet);
-
-            logger.info("Pet created with ID: {}", savedPet.getPetId());
-            return petMapper.toDTO(savedPet);
-        } catch (Exception e) {
-            logger.error("Error creating pet for user", e);
-            throw e;
+        if (petRepository.existsByPetOwnerAndPetName(petOwner, petRequestDTO.getPetName())) {
+            logger.error("Duplicate pet name: {}", petRequestDTO.getPetName());
+            throw new DuplicatePetNameException("A pet with the same name already exists for this user");
         }
+
+        Pet pet = petMapper.toEntity(petRequestDTO);
+        pet.setPetOwner(petOwner);
+        pet.setGender(Pet.Gender.valueOf(petRequestDTO.getGender().toUpperCase())); // Convert String to Gender enum
+
+        Pet savedPet = petRepository.save(pet);
+        logger.info("Pet created with ID: {}", savedPet.getPetId());
+
+        if (avatarFile != null && !avatarFile.isEmpty()) {
+            logger.info("Uploading new profile image for pet");
+            Map<String, Object> uploadResult = uploadService.uploadImage(avatarFile, UploadService.ProfileType.PET);
+            savedPet.setAvatarUrl((String) uploadResult.get("url"));
+            savedPet.setAvatarPublicId((String) uploadResult.get("public_id"));
+            petRepository.save(savedPet); // Update the pet with avatar information
+            logger.info("Updated pet with avatar image ID: {}", savedPet.getPetId());
+        }
+
+        return petMapper.toDTO(savedPet);
     }
 
-    @Transactional
-    public List<PetDTO> getAllPetsForUser() {
-        UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        String username = userDetails.getUsername();
 
+    /**
+     * Get all pets for the authenticated user
+     *
+     * @param username username of the authenticated user
+     * @return List of PetResponseDTO containing the pet data
+     */
+    @Transactional
+    public List<PetResponseDTO> getAllPetsForUser(String username) {
         User user = userRepository.findByEmail(username)
                 .orElseThrow(() -> {
                     logger.error("User not found with email: {}", username);
@@ -99,10 +113,14 @@ public class PetService {
                 .collect(Collectors.toList());
     }
 
-    public PetDTO getPetOfUserById(Long id) {
-        UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        String username = userDetails.getUsername();
-
+    /**
+     * Get a specific pet by ID for the authenticated user
+     *
+     * @param id pet ID
+     * @param username username of the authenticated user
+     * @return PetResponseDTO containing the pet data
+     */
+    public PetResponseDTO getPetOfUserById(Long id, String username) {
         Pet pet = petRepository.findById(id)
                 .orElseThrow(() -> {
                     logger.error("Pet not found with ID: {}", id);
@@ -117,11 +135,18 @@ public class PetService {
         return petMapper.toDTO(pet);
     }
 
+    /**
+     * Update a pet by ID for the authenticated user
+     *
+     * @param id pet ID
+     * @param petRequestDTO updated pet data for the request
+     * @param avatarFile optional updated avatar file for the pet
+     * @param username username of the authenticated user
+     * @return PetResponseDTO containing the updated pet data
+     * @throws IOException if an I/O error occurs while processing the avatar file
+     */
     @Transactional
-    public PetDTO updatePetForUser(Long id, @Valid PetDTO petDTO, MultipartFile avatarFile) throws IOException {
-        UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        String username = userDetails.getUsername();
-
+    public PetResponseDTO updatePetForUser(Long id,@Valid PetRequestDTO petRequestDTO, MultipartFile avatarFile, String username) throws IOException {
         Pet existingPet = petRepository.findById(id)
                 .orElseThrow(() -> {
                     logger.error("Pet not found with ID: {}", id);
@@ -133,13 +158,17 @@ public class PetService {
             throw new RuntimeException("Unauthorized to update this pet");
         }
 
-        if (petDTO.getPetName() != null) existingPet.setPetName(petDTO.getPetName());
-        if (petDTO.getAge() != null) existingPet.setAge(petDTO.getAge());
-        if (petDTO.getWeight() != null) existingPet.setWeight(petDTO.getWeight());
-        if (petDTO.getGender() != null) existingPet.setGender(Gender.valueOf(petDTO.getGender().toUpperCase()));
-        if (petDTO.getBreed() != null) existingPet.setBreed(petDTO.getBreed());
-        if (petDTO.getSpecies() != null) existingPet.setSpecies(petDTO.getSpecies());
+        petValidator.validate(petRequestDTO);
 
+        // Update pet details
+        if (petRequestDTO.getPetName() != null) existingPet.setPetName(petRequestDTO.getPetName());
+        if (petRequestDTO.getAge() != 0) existingPet.setAge(petRequestDTO.getAge());
+        if (petRequestDTO.getWeight() != null) existingPet.setWeight(petRequestDTO.getWeight());
+        if (petRequestDTO.getGender() != null) existingPet.setGender(Pet.Gender.valueOf(petRequestDTO.getGender().toUpperCase()));
+        if (petRequestDTO.getBreed() != null) existingPet.setBreed(petRequestDTO.getBreed());
+        if (petRequestDTO.getSpecies() != null) existingPet.setSpecies(petRequestDTO.getSpecies());
+
+        // Upload avatar file if present
         if (avatarFile != null && !avatarFile.isEmpty()) {
             // Delete old image first
             if (existingPet.getAvatarPublicId() != null && !existingPet.getAvatarPublicId().isEmpty()) {
@@ -148,7 +177,6 @@ public class PetService {
                     uploadService.deleteImage(existingPet.getAvatarPublicId());
                 } catch (IOException e) {
                     logger.error("Error deleting old avatar with ID: {}", existingPet.getAvatarPublicId(), e);
-                    // Handle the error (e.g., log it or throw an exception)
                     throw new ImageDeletionException("Error deleting old avatar image", e);
                 }
             }
@@ -159,8 +187,8 @@ public class PetService {
             existingPet.setAvatarUrl((String) uploadResult.get("url"));
             existingPet.setAvatarPublicId((String) uploadResult.get("public_id"));
         } else {
-            if (petDTO.getAvatarUrl() != null) {
-                existingPet.setAvatarUrl(petDTO.getAvatarUrl());
+            if (petRequestDTO.getAvatarUrl() != null) {
+                existingPet.setAvatarUrl(petRequestDTO.getAvatarUrl());
             }
         }
 
@@ -168,6 +196,12 @@ public class PetService {
         return petMapper.toDTO(updatedPet);
     }
 
+    /**
+     * Delete a pet by ID for the authenticated user
+     *
+     * @param id pet ID
+     * @param userDetails user details of the authenticated user
+     */
     @Transactional
     public void deletePetForUser(Long id, UserDetails userDetails) {
         String username = userDetails.getUsername();
@@ -197,15 +231,25 @@ public class PetService {
         logger.info("Pet deleted with ID: {}", id);
     }
 
-
     //    ADMIN SERVICES
-    public Page<PetDTO> getAllPets(Pageable pageable) {
+    /**
+     * Get all pets with pagination and sorting
+     *
+     * @param pageable the pagination and sorting information
+     * @return Page of PetResponseDTO containing the pet data
+     */
+    public Page<PetResponseDTO> getAllPets(Pageable pageable) {
         Page<Pet> petPage = petRepository.findAll(pageable);
         return petPage.map(petMapper::toDTO);
     }
 
-
-    public PetDTO getPetById(Long id) {
+    /**
+     * Get a specific pet by ID
+     *
+     * @param id pet ID
+     * @return PetResponseDTO containing the pet data
+     */
+    public PetResponseDTO getPetById(Long id) {
         Pet pet = petRepository.findById(id)
                 .orElseThrow(() -> {
                     logger.error("Pet not found with ID: {}", id);
@@ -215,21 +259,31 @@ public class PetService {
         return petMapper.toDTO(pet);
     }
 
+    /**
+     * Update a pet by ID
+     *
+     * @param id pet ID
+     * @param petRequestDTO updated pet data for the request
+     * @param avatarFile optional updated avatar file for the pet
+     * @return PetResponseDTO containing the updated pet data
+     * @throws IOException if an I/O error occurs while processing the avatar file
+     */
     @Transactional
-    public PetDTO updatePetById(Long id, @Valid PetDTO petDTO, MultipartFile avatarFile) throws IOException {
+    public PetResponseDTO updatePetById(Long id, @Valid PetRequestDTO petRequestDTO, MultipartFile avatarFile) throws IOException {
         Pet existingPet = petRepository.findById(id)
                 .orElseThrow(() -> {
                     logger.error("Pet not found with ID: {}", id);
                     throw new ResourceNotFoundException("Pet not found");
                 });
 
-        if (petDTO.getPetName() != null) existingPet.setPetName(petDTO.getPetName());
-        if (petDTO.getAge() != null) existingPet.setAge(petDTO.getAge());
-        if (petDTO.getWeight() != null) existingPet.setWeight(petDTO.getWeight());
-        if (petDTO.getGender() != null) existingPet.setGender(Gender.valueOf(petDTO.getGender().toUpperCase()));
-        if (petDTO.getBreed() != null) existingPet.setBreed(petDTO.getBreed());
-        if (petDTO.getSpecies() != null) existingPet.setSpecies(petDTO.getSpecies());
+        if (petRequestDTO.getPetName() != null) existingPet.setPetName(petRequestDTO.getPetName());
+        if (petRequestDTO.getAge() != 0) existingPet.setAge(petRequestDTO.getAge());
+        if (petRequestDTO.getWeight() != null) existingPet.setWeight(petRequestDTO.getWeight());
+        if (petRequestDTO.getGender() != null) existingPet.setGender(Pet.Gender.valueOf(petRequestDTO.getGender().toUpperCase()));
+        if (petRequestDTO.getBreed() != null) existingPet.setBreed(petRequestDTO.getBreed());
+        if (petRequestDTO.getSpecies() != null) existingPet.setSpecies(petRequestDTO.getSpecies());
 
+        // Upload avatar file if present
         if (avatarFile != null && !avatarFile.isEmpty()) {
             // Delete old image first
             if (existingPet.getAvatarPublicId() != null && !existingPet.getAvatarPublicId().isEmpty()) {
@@ -248,15 +302,14 @@ public class PetService {
             existingPet.setAvatarUrl((String) uploadResult.get("url"));
             existingPet.setAvatarPublicId((String) uploadResult.get("public_id"));
         } else {
-            if (petDTO.getAvatarUrl() != null) {
-                existingPet.setAvatarUrl(petDTO.getAvatarUrl());
+            if (petRequestDTO.getAvatarUrl() != null) {
+                existingPet.setAvatarUrl(petRequestDTO.getAvatarUrl());
             }
         }
 
         Pet updatedPet = petRepository.save(existingPet);
         return petMapper.toDTO(updatedPet);
     }
-
 
     @Transactional
     public void deletePetById(Long id) {

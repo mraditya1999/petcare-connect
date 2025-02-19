@@ -1,17 +1,17 @@
 package com.petconnect.backend.dto;
 
-public class ApiResponse<T> {
+public class ApiResponseDTO<T> {
     private String message;
     private T data;
 
-    public ApiResponse() {
+    public ApiResponseDTO() {
     }
 
-    public ApiResponse(String message) {
+    public ApiResponseDTO(String message) {
         this.message = message;
     }
 
-    public ApiResponse(String message, T data) {
+    public ApiResponseDTO(String message, T data) {
         this.message = message;
         this.data = data;
     }

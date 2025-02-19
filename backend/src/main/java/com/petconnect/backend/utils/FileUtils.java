@@ -1,5 +1,6 @@
 package com.petconnect.backend.utils;
 
+import com.petconnect.backend.exceptions.FileValidationException;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -27,10 +28,10 @@ public class FileUtils {
 
     public void validateFile(MultipartFile file) {
         if (file.getSize() > MAX_FILE_SIZE) {
-            throw new IllegalArgumentException("File size exceeds the maximum limit of 5MB");
+            throw new FileValidationException("File size exceeds the maximum limit of 5MB");
         }
-        if (!ALLOWED_FORMATS.contains(file.getContentType())) {
-            throw new IllegalArgumentException("Invalid file format. Only JPEG, PNG, and GIF are allowed");
+        if (file.getContentType() == null || !ALLOWED_FORMATS.contains(file.getContentType().toLowerCase())) {
+            throw new FileValidationException("Invalid file format. Only JPEG, PNG, and GIF are allowed");
         }
     }
 
@@ -40,5 +41,12 @@ public class FileUtils {
         } catch (Exception e) {
             throw new RuntimeException("Encoding failed", e);
         }
+    }
+
+    public MultipartFile getSingleFile(List<MultipartFile> files) {
+        if (files != null && files.size() > 1) {
+            throw new FileValidationException("Only one image file is allowed.");
+        }
+        return files != null && !files.isEmpty() ? files.get(0) : null;
     }
 }

@@ -1,9 +1,9 @@
-package com.petconnect.backend.utils;
+package com.petconnect.backend.services;
 
 import com.petconnect.backend.entity.Pet;
 import com.petconnect.backend.entity.Specialist;
 import com.petconnect.backend.entity.User;
-import com.petconnect.backend.services.UploadService;
+import com.petconnect.backend.utils.FileUtils;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;

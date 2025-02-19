@@ -1,6 +1,7 @@
 package com.petconnect.backend.controllers;
 
 import com.petconnect.backend.dto.*;
+import com.petconnect.backend.dto.user.AddressDTO;
 import com.petconnect.backend.mappers.SpecialistMapper;
 import com.petconnect.backend.services.SpecialistService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,7 +39,7 @@ public class SpecialistController {
 
 
     @PutMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<ApiResponse<SpecialistResponseDTO>> updateCurrentSpecialist(
+    public ResponseEntity<ApiResponseDTO<SpecialistResponseDTO>> updateCurrentSpecialist(
             @AuthenticationPrincipal UserDetails userDetails,
             @RequestParam(value = "firstName", required = false) String firstName,
             @RequestParam(value = "lastName", required = false) String lastName,
@@ -73,11 +74,11 @@ public class SpecialistController {
 
         SpecialistDTO updatedSpecialist = specialistService.updateSpecialist(specialistUpdateRequestDTO, profileImage, userDetails);
         SpecialistResponseDTO specialistResponseDTO = specialistMapper.toSpecialistResponseDTO(updatedSpecialist);
-        return ResponseEntity.ok(new ApiResponse<>("Specialist updated successfully", specialistResponseDTO));
+        return ResponseEntity.ok(new ApiResponseDTO<>("Specialist updated successfully", specialistResponseDTO));
     }
 
     @GetMapping("/specialists")
-    public ResponseEntity<ApiResponse<Page<SpecialistDTO>>> getAllSpecialists(
+    public ResponseEntity<ApiResponseDTO<Page<SpecialistDTO>>> getAllSpecialists(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "specialistId") String sortBy,
@@ -86,22 +87,22 @@ public class SpecialistController {
             Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.fromString(sortDir), sortBy));
             Page<SpecialistDTO> specialists = specialistService.getAllSpecialists(pageable);
             logger.info("Fetched all specialists with pagination and sorting");
-            return ResponseEntity.ok(new ApiResponse<>("Fetched all specialists", specialists));
+            return ResponseEntity.ok(new ApiResponseDTO<>("Fetched all specialists", specialists));
         } catch (Exception e) {
             logger.error("Error fetching specialists: {}", e.getMessage());
-            return new ResponseEntity<>(new ApiResponse<>("Error fetching specialists"), HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(new ApiResponseDTO<>("Error fetching specialists"), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
     @GetMapping("/specialists/{id}")
-    public ResponseEntity<ApiResponse<SpecialistDTO>> getSpecialistById(@PathVariable Long id) {
+    public ResponseEntity<ApiResponseDTO<SpecialistDTO>> getSpecialistById(@PathVariable Long id) {
         try {
             SpecialistDTO specialist = specialistService.getSpecialistById(id);
             logger.info("Fetched specialist with ID: {}", id);
-            return ResponseEntity.ok(new ApiResponse<>("Fetched specialist", specialist));
+            return ResponseEntity.ok(new ApiResponseDTO<>("Fetched specialist", specialist));
         } catch (Exception e) {
             logger.error("Error fetching specialist with ID {}: {}", id, e.getMessage());
-            return new ResponseEntity<>(new ApiResponse<>("Specialist not found"), HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(new ApiResponseDTO<>("Specialist not found"), HttpStatus.NOT_FOUND);
         }
     }
 }
