@@ -50,6 +50,7 @@ public class ProfileImageService {
             pet.setAvatarPublicId(imageInfo.get("avatarPublicId"));
         }
     }
+
     public void updateProfileImage(MultipartFile profileImage, String existingPublicId, UploadService.ProfileType profileType) throws IOException {
         fileUtils.validateFile(profileImage);
         uploadService.updateImage(existingPublicId, profileImage, profileType);

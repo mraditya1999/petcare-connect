@@ -7,8 +7,6 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Objects;
 
@@ -35,18 +33,10 @@ public class FileUtils {
         }
     }
 
-    public static String encode(String value) {
-        try {
-            return URLEncoder.encode(value, StandardCharsets.UTF_8.toString());
-        } catch (Exception e) {
-            throw new RuntimeException("Encoding failed", e);
-        }
-    }
-
     public MultipartFile getSingleFile(List<MultipartFile> files) {
         if (files != null && files.size() > 1) {
             throw new FileValidationException("Only one image file is allowed.");
         }
-        return files != null && !files.isEmpty() ? files.get(0) : null;
+        return files != null && !files.isEmpty() ? files.getFirst() : null;
     }
 }

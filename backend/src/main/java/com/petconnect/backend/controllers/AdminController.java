@@ -271,6 +271,102 @@ public class AdminController {
         }
     }
 
+//    ############################################################# PET #########################################################
+
+    /**
+     * Get all pets with pagination and sorting.
+     *
+     * @param page    the page number to retrieve (default is 0)
+     * @param size    the number of items per page (default is 10)
+     * @param sortBy  the field to sort by (default is "petId")
+     * @param sortDir the sort direction (default is "asc")
+     * @return ResponseEntity with ApiResponseDTO containing a page of pets
+     */
+    @GetMapping("/pets")
+    public ResponseEntity<ApiResponseDTO<Page<PetResponseDTO>>> getAllPets(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "petId") String sortBy,
+            @RequestParam(defaultValue = "asc") String sortDir) {
+        try {
+            Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.fromString(sortDir), sortBy));
+            Page<PetResponseDTO> pets = petService.getAllPets(pageable);
+            logger.info("Fetched all pets with pagination and sorting");
+            return ResponseEntity.ok(new ApiResponseDTO<>("Fetched all pets", pets));
+        } catch (Exception e) {
+            logger.error("Error fetching pets: {}", e.getMessage());
+            return new ResponseEntity<>(new ApiResponseDTO<>("Error fetching pets"), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * Get a pet by its ID.
+     *
+     * @param id the pet ID
+     * @return ResponseEntity with ApiResponseDTO containing the pet
+     */
+    @GetMapping("/pets/{id}")
+    public ResponseEntity<ApiResponseDTO<PetResponseDTO>> getPetById(@PathVariable Long id) {
+        try {
+            PetResponseDTO pet = petService.getPetById(id);
+            logger.info("Fetched pet with ID: {}", id);
+            return ResponseEntity.ok(new ApiResponseDTO<>("Fetched pet", pet));
+        } catch (ResourceNotFoundException e) {
+            logger.error("Error fetching pet with ID {}: {}", id, e.getMessage());
+            return new ResponseEntity<>(new ApiResponseDTO<>("Pet not found"), HttpStatus.NOT_FOUND);
+        } catch (Exception e) {
+            logger.error("Error fetching pet with ID {}: {}", id, e.getMessage());
+            return new ResponseEntity<>(new ApiResponseDTO<>("Error fetching pet"), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * Update a pet by its ID.
+     *
+     * @param id         the pet ID
+     * @param petRequestDTO     the pet details to update
+     * @param avatarFile the avatar file to update (optional)
+     * @return ResponseEntity with ApiResponseDTO containing the updated pet
+     * @throws IOException if there's an error processing the avatar file
+     */
+    @PutMapping(value = "/pets/{id}", consumes = "multipart/form-data")
+    public ResponseEntity<ApiResponseDTO<PetResponseDTO>> updatePetById(@PathVariable Long id,
+                                                                        @Valid @ModelAttribute PetRequestDTO petRequestDTO,
+                                                                        @RequestPart(required = false) MultipartFile avatarFile) throws IOException {
+        try {
+            PetResponseDTO updatedPet = petService.updatePetById(id, petRequestDTO, avatarFile);
+            logger.info("Updated pet with ID: {}", id);
+            return ResponseEntity.ok(new ApiResponseDTO<>("Updated pet", updatedPet));
+        } catch (ResourceNotFoundException e) {
+            logger.error("Error updating pet with ID {}: {}", id, e.getMessage());
+            return new ResponseEntity<>(new ApiResponseDTO<>("Pet not found"), HttpStatus.NOT_FOUND);
+        } catch (Exception e) {
+            logger.error("Error updating pet with ID {}: {}", id, e.getMessage());
+            return new ResponseEntity<>(new ApiResponseDTO<>("Error updating pet"), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * Delete a pet by its ID.
+     *
+     * @param id the pet ID
+     * @return ResponseEntity with ApiResponse containing the deletion status
+     */
+    @DeleteMapping("/pets/{id}")
+    public ResponseEntity<ApiResponseDTO<String>> deletePetById(@PathVariable Long id) {
+        try {
+            petService.deletePetById(id);
+            logger.info("Deleted pet with ID: {}", id);
+            return ResponseEntity.ok(new ApiResponseDTO<>("Pet deleted successfully"));
+        } catch (PetNotFoundException e) {
+            logger.error("Error deleting pet with ID {}: {}", id, e.getMessage());
+            return new ResponseEntity<>(new ApiResponseDTO<>("Pet not found"), HttpStatus.NOT_FOUND);
+        } catch (Exception e) {
+            logger.error("Error deleting pet with ID {}: {}", id, e.getMessage());
+            return new ResponseEntity<>(new ApiResponseDTO<>("Error deleting pet"), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
     //    ############################################################# SPECIALIST #########################################################
 
     /**
@@ -449,101 +545,6 @@ public class AdminController {
         }
     }
 
-//    ############################################################# PET #########################################################
-
-    /**
-     * Get all pets with pagination and sorting.
-     *
-     * @param page    the page number to retrieve (default is 0)
-     * @param size    the number of items per page (default is 10)
-     * @param sortBy  the field to sort by (default is "petId")
-     * @param sortDir the sort direction (default is "asc")
-     * @return ResponseEntity with ApiResponseDTO containing a page of pets
-     */
-    @GetMapping
-    public ResponseEntity<ApiResponseDTO<Page<PetResponseDTO>>> getAllPets(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "petId") String sortBy,
-            @RequestParam(defaultValue = "asc") String sortDir) {
-        try {
-            Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.fromString(sortDir), sortBy));
-            Page<PetResponseDTO> pets = petService.getAllPets(pageable);
-            logger.info("Fetched all pets with pagination and sorting");
-            return ResponseEntity.ok(new ApiResponseDTO<>("Fetched all pets", pets));
-        } catch (Exception e) {
-            logger.error("Error fetching pets: {}", e.getMessage());
-            return new ResponseEntity<>(new ApiResponseDTO<>("Error fetching pets"), HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    /**
-     * Get a pet by its ID.
-     *
-     * @param id the pet ID
-     * @return ResponseEntity with ApiResponseDTO containing the pet
-     */
-    @GetMapping("/{id}")
-    public ResponseEntity<ApiResponseDTO<PetResponseDTO>> getPetById(@PathVariable Long id) {
-        try {
-            PetResponseDTO pet = petService.getPetById(id);
-            logger.info("Fetched pet with ID: {}", id);
-            return ResponseEntity.ok(new ApiResponseDTO<>("Fetched pet", pet));
-        } catch (ResourceNotFoundException e) {
-            logger.error("Error fetching pet with ID {}: {}", id, e.getMessage());
-            return new ResponseEntity<>(new ApiResponseDTO<>("Pet not found"), HttpStatus.NOT_FOUND);
-        } catch (Exception e) {
-            logger.error("Error fetching pet with ID {}: {}", id, e.getMessage());
-            return new ResponseEntity<>(new ApiResponseDTO<>("Error fetching pet"), HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    /**
-     * Update a pet by its ID.
-     *
-     * @param id         the pet ID
-     * @param petRequestDTO     the pet details to update
-     * @param avatarFile the avatar file to update (optional)
-     * @return ResponseEntity with ApiResponseDTO containing the updated pet
-     * @throws IOException if there's an error processing the avatar file
-     */
-    @PutMapping(value = "/{id}", consumes = "multipart/form-data")
-    public ResponseEntity<ApiResponseDTO<PetResponseDTO>> updatePetById(@PathVariable Long id,
-                                                                        @Valid @ModelAttribute PetRequestDTO petRequestDTO,
-                                                                        @RequestPart(required = false) MultipartFile avatarFile) throws IOException {
-        try {
-            PetResponseDTO updatedPet = petService.updatePetById(id, petRequestDTO, avatarFile);
-            logger.info("Updated pet with ID: {}", id);
-            return ResponseEntity.ok(new ApiResponseDTO<>("Updated pet", updatedPet));
-        } catch (ResourceNotFoundException e) {
-            logger.error("Error updating pet with ID {}: {}", id, e.getMessage());
-            return new ResponseEntity<>(new ApiResponseDTO<>("Pet not found"), HttpStatus.NOT_FOUND);
-        } catch (Exception e) {
-            logger.error("Error updating pet with ID {}: {}", id, e.getMessage());
-            return new ResponseEntity<>(new ApiResponseDTO<>("Error updating pet"), HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    /**
-     * Delete a pet by its ID.
-     *
-     * @param id the pet ID
-     * @return ResponseEntity with ApiResponse containing the deletion status
-     */
-    @DeleteMapping("/pets/{id}")
-    public ResponseEntity<ApiResponseDTO<String>> deletePetById(@PathVariable Long id) {
-        try {
-            petService.deletePetById(id);
-            logger.info("Deleted pet with ID: {}", id);
-            return ResponseEntity.ok(new ApiResponseDTO<>("Pet deleted successfully"));
-        } catch (PetNotFoundException e) {
-            logger.error("Error deleting pet with ID {}: {}", id, e.getMessage());
-            return new ResponseEntity<>(new ApiResponseDTO<>("Pet not found"), HttpStatus.NOT_FOUND);
-        } catch (Exception e) {
-            logger.error("Error deleting pet with ID {}: {}", id, e.getMessage());
-            return new ResponseEntity<>(new ApiResponseDTO<>("Error deleting pet"), HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
 
     //    ############################################################# FORUM #########################################################
 

@@ -231,8 +231,25 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(ex.getMessage(), HttpStatus.BAD_REQUEST);
     }
 
-    @ExceptionHandler(FileValidationException.class)
-    public ResponseEntity<ApiResponseDTO<String>> handleFileValidationException(FileValidationException ex) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponseDTO<>(ex.getMessage(), null));
-    }
+     /**
+      * Handles FileValidationException and returns a user-friendly error response.
+      *
+      * @param ex the FileValidationException instance
+      * @return a ResponseEntity containing the error message and HTTP status code
+      */
+     @ExceptionHandler(FileValidationException.class)
+     public ResponseEntity<ApiResponseDTO<String>> handleFileValidationException(FileValidationException ex) {
+         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponseDTO<>(ex.getMessage(), null));
+     }
+
+     /**
+      * Handles UnauthorizedAccessException and returns a user-friendly error response.
+      *
+      * @param ex the UnauthorizedAccessException instance
+      * @return a ResponseEntity containing the error message and HTTP status code
+      */
+     @ExceptionHandler(UnauthorizedAccessException.class)
+     public ResponseEntity<ApiResponseDTO<String>> handleUnauthorizedAccessException(UnauthorizedAccessException ex) {
+         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new ApiResponseDTO<>(ex.getMessage(), null));
+     }
 }

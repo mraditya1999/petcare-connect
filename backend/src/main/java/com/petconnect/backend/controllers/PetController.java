@@ -6,6 +6,7 @@ import com.petconnect.backend.dto.pet.PetResponseDTO;
 import com.petconnect.backend.exceptions.DuplicatePetNameException;
 import com.petconnect.backend.exceptions.FileValidationException;
 import com.petconnect.backend.exceptions.ResourceNotFoundException;
+import com.petconnect.backend.exceptions.UnauthorizedAccessException;
 import com.petconnect.backend.services.PetService;
 import com.petconnect.backend.utils.FileUtils;
 import jakarta.validation.Valid;
@@ -104,66 +105,97 @@ public class PetController {
     }
 
     /**
-     * Get a specific pet by ID for the authenticated user
+     * Fetches the pet of a user by pet ID.
      *
-     * @param id pet ID
-     * @param userDetails user details of the authenticated user
-     * @return ResponseEntity containing the pet data
+     * @param id the pet ID
+     * @param userDetails the authenticated user details
+     * @return the ResponseEntity containing the ApiResponseDTO with the pet information
      */
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponseDTO<PetResponseDTO>> getPetOfUserById(@PathVariable Long id, @AuthenticationPrincipal UserDetails userDetails) {
         try {
             PetResponseDTO pet = petService.getPetOfUserById(id, userDetails.getUsername());
             return ResponseEntity.ok(new ApiResponseDTO<>("Fetched pet", pet));
+        } catch (UnauthorizedAccessException e) {
+            logger.error("Unauthorized access to pet with ID: {} for user: {}", id, userDetails.getUsername(), e);
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new ApiResponseDTO<>(e.getMessage(), null));
+        } catch (ResourceNotFoundException e) {
+            logger.error("Pet not found with ID: {} for user: {}", id, userDetails.getUsername(), e);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiResponseDTO<>(e.getMessage(), null));
         } catch (Exception e) {
             logger.error("Error fetching pet with ID: {} for user: {}", id, userDetails.getUsername(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponseDTO<>("Error fetching pet", null));
         }
     }
 
+
     /**
-     * Update a pet by ID for the authenticated user
+     * Updates the pet of a user by pet ID.
      *
-     * @param id pet ID
-     * @param userDetails user details of the authenticated user
-     * @param petRequestDTO updated pet data for the request
-     * @param avatarFile optional updated avatar file for the pet
-     * @return ResponseEntity containing the updated pet data
-     * @throws IOException if an I/O error occurs while processing the avatar file
+     * @param id the pet ID
+     * @param userDetails the authenticated user details
+     * @param petRequestDTO the pet request data transfer object
+     * @param avatarFiles the list of uploaded avatar images
+     * @return the ResponseEntity containing the ApiResponseDTO with the updated pet information
      */
     @PutMapping(value = "/{id}", consumes = { "multipart/form-data" })
     public ResponseEntity<ApiResponseDTO<PetResponseDTO>> updatePetForUser(
             @PathVariable Long id,
             @AuthenticationPrincipal UserDetails userDetails,
             @Valid @ModelAttribute PetRequestDTO petRequestDTO,
-            @RequestParam(value = "avatarFile", required = false) MultipartFile avatarFile) throws IOException {
+            @RequestParam(value = "avatarFile", required = false) List<MultipartFile> avatarFiles){
+
+        logger.info("Received request to update pet for user: {}", userDetails.getUsername());
 
         try {
+            MultipartFile avatarFile = fileUtils.getSingleFile(avatarFiles);
+            if (avatarFile != null) {
+                fileUtils.validateFile(avatarFile);
+            }
+
             PetResponseDTO updatedPet = petService.updatePetForUser(id, petRequestDTO, avatarFile, userDetails.getUsername());
             logger.info("Pet updated for user: {}", userDetails.getUsername());
             return ResponseEntity.ok(new ApiResponseDTO<>("Pet updated successfully", updatedPet));
+        } catch (FileValidationException e) {
+            logger.error(e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponseDTO<>(e.getMessage(), null));
+        } catch (UnauthorizedAccessException e) {
+            logger.error("Unauthorized access to pet with ID: {} for user: {}", id, userDetails.getUsername(), e);
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new ApiResponseDTO<>(e.getMessage(), null));
+        } catch (ResourceNotFoundException e) {
+            logger.error("Pet not found with ID: {} for user: {}", id, userDetails.getUsername(), e);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiResponseDTO<>(e.getMessage(), null));
         } catch (Exception e) {
-            logger.error("Error updating pet with ID: {} for user: {}", id, userDetails.getUsername(), e);
+            logger.error("Unexpected error: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponseDTO<>("Error updating pet", null));
         }
     }
 
     /**
-     * Delete a pet by ID for the authenticated user
+     * Deletes the pet of a user by pet ID.
      *
-     * @param id pet ID
-     * @param userDetails user details of the authenticated user
-     * @return ResponseEntity containing the deletion status
+     * @param id the pet ID
+     * @param userDetails the authenticated user details
+     * @return the ResponseEntity containing the ApiResponseDTO with the deletion status
      */
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponseDTO<String>> deletePetForUser(@PathVariable Long id, @AuthenticationPrincipal UserDetails userDetails) {
+        logger.info("Received request to delete pet with ID: {} for user: {}", id, userDetails.getUsername());
+
         try {
             petService.deletePetForUser(id, userDetails);
             logger.info("Pet deleted with ID: {}", id);
             return ResponseEntity.ok(new ApiResponseDTO<>("Pet deleted successfully"));
+        } catch (UnauthorizedAccessException e) {
+            logger.error("Unauthorized access to pet with ID: {} for user: {}", id, userDetails.getUsername(), e);
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new ApiResponseDTO<>(e.getMessage(), null));
+        } catch (ResourceNotFoundException e) {
+            logger.error("Pet not found with ID: {} for user: {}", id, userDetails.getUsername(), e);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiResponseDTO<>(e.getMessage(), null));
         } catch (Exception e) {
             logger.error("Error deleting pet with ID: {} for user: {}", id, userDetails.getUsername(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponseDTO<>("Error deleting pet"));
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponseDTO<>("Error deleting pet", null));
         }
     }
+
 }

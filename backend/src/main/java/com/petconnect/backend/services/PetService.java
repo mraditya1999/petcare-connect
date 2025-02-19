@@ -7,6 +7,7 @@ import com.petconnect.backend.entity.User;
 import com.petconnect.backend.exceptions.DuplicatePetNameException;
 import com.petconnect.backend.exceptions.ImageDeletionException;
 import com.petconnect.backend.exceptions.ResourceNotFoundException;
+import com.petconnect.backend.exceptions.UnauthorizedAccessException;
 import com.petconnect.backend.mappers.PetMapper;
 import com.petconnect.backend.repositories.PetRepository;
 import com.petconnect.backend.repositories.UserRepository;
@@ -124,16 +125,17 @@ public class PetService {
         Pet pet = petRepository.findById(id)
                 .orElseThrow(() -> {
                     logger.error("Pet not found with ID: {}", id);
-                    throw new ResourceNotFoundException("Pet not found");
+                    return new ResourceNotFoundException("Pet not found");
                 });
 
         if (!pet.getPetOwner().getEmail().equals(username)) {
             logger.error("Unauthorized access to pet with ID: {}", id);
-            throw new RuntimeException("Unauthorized to access this pet");
+            throw new UnauthorizedAccessException("Unauthorized to access this pet");
         }
 
         return petMapper.toDTO(pet);
     }
+
 
     /**
      * Update a pet by ID for the authenticated user
@@ -146,16 +148,16 @@ public class PetService {
      * @throws IOException if an I/O error occurs while processing the avatar file
      */
     @Transactional
-    public PetResponseDTO updatePetForUser(Long id,@Valid PetRequestDTO petRequestDTO, MultipartFile avatarFile, String username) throws IOException {
+    public PetResponseDTO updatePetForUser(Long id, @Valid PetRequestDTO petRequestDTO, MultipartFile avatarFile, String username) throws IOException {
         Pet existingPet = petRepository.findById(id)
                 .orElseThrow(() -> {
                     logger.error("Pet not found with ID: {}", id);
-                    throw new ResourceNotFoundException("Pet not found");
+                    return new ResourceNotFoundException("Pet not found");
                 });
 
         if (!existingPet.getPetOwner().getEmail().equals(username)) {
             logger.error("Unauthorized to update pet with ID: {}", id);
-            throw new RuntimeException("Unauthorized to update this pet");
+            throw new UnauthorizedAccessException("Unauthorized to update this pet");
         }
 
         petValidator.validate(petRequestDTO);
@@ -196,6 +198,7 @@ public class PetService {
         return petMapper.toDTO(updatedPet);
     }
 
+
     /**
      * Delete a pet by ID for the authenticated user
      *
@@ -209,12 +212,12 @@ public class PetService {
         Pet existingPet = petRepository.findById(id)
                 .orElseThrow(() -> {
                     logger.error("Pet not found with ID: {}", id);
-                    throw new ResourceNotFoundException("Pet not found");
+                    return new ResourceNotFoundException("Pet not found");
                 });
 
         if (!existingPet.getPetOwner().getEmail().equals(username)) {
             logger.error("Unauthorized to delete pet with ID: {}", id);
-            throw new RuntimeException("Unauthorized to delete this pet");
+            throw new UnauthorizedAccessException("Unauthorized to delete this pet");
         }
 
         // Check and delete the pet's avatar if it exists
@@ -230,6 +233,7 @@ public class PetService {
         petRepository.deleteById(id);
         logger.info("Pet deleted with ID: {}", id);
     }
+
 
     //    ADMIN SERVICES
     /**
