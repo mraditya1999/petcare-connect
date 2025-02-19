@@ -18,7 +18,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -93,7 +92,6 @@ public class PetService {
 
         return petMapper.toDTO(savedPet);
     }
-
 
     /**
      * Get all pets for the authenticated user
@@ -198,7 +196,6 @@ public class PetService {
         return petMapper.toDTO(updatedPet);
     }
 
-
     /**
      * Delete a pet by ID for the authenticated user
      *
@@ -235,20 +232,24 @@ public class PetService {
     }
 
 
-    //    ADMIN SERVICES
     /**
-     * Get all pets with pagination and sorting
+     * Get all pets with pagination and sorting.
      *
      * @param pageable the pagination and sorting information
      * @return Page of PetResponseDTO containing the pet data
      */
     public Page<PetResponseDTO> getAllPets(Pageable pageable) {
-        Page<Pet> petPage = petRepository.findAll(pageable);
-        return petPage.map(petMapper::toDTO);
+        try {
+            Page<Pet> petPage = petRepository.findAll(pageable);
+            return petPage.map(petMapper::toDTO);
+        } catch (Exception e) {
+            logger.error("Error fetching pets with pagination and sorting: {}", e.getMessage());
+            throw new RuntimeException("Error fetching pets with pagination and sorting", e);
+        }
     }
 
     /**
-     * Get a specific pet by ID
+     * Get a specific pet by ID.
      *
      * @param id pet ID
      * @return PetResponseDTO containing the pet data
@@ -257,14 +258,14 @@ public class PetService {
         Pet pet = petRepository.findById(id)
                 .orElseThrow(() -> {
                     logger.error("Pet not found with ID: {}", id);
-                    throw new ResourceNotFoundException("Pet not found");
+                    return new ResourceNotFoundException("Pet not found");
                 });
 
         return petMapper.toDTO(pet);
     }
 
     /**
-     * Update a pet by ID
+     * Update a pet by ID.
      *
      * @param id pet ID
      * @param petRequestDTO updated pet data for the request
@@ -277,7 +278,7 @@ public class PetService {
         Pet existingPet = petRepository.findById(id)
                 .orElseThrow(() -> {
                     logger.error("Pet not found with ID: {}", id);
-                    throw new ResourceNotFoundException("Pet not found");
+                    return new ResourceNotFoundException("Pet not found");
                 });
 
         if (petRequestDTO.getPetName() != null) existingPet.setPetName(petRequestDTO.getPetName());
@@ -315,12 +316,17 @@ public class PetService {
         return petMapper.toDTO(updatedPet);
     }
 
+    /**
+     * Delete a pet by ID.
+     *
+     * @param id pet ID
+     */
     @Transactional
     public void deletePetById(Long id) {
         Pet existingPet = petRepository.findById(id)
                 .orElseThrow(() -> {
                     logger.error("Pet not found with ID: {}", id);
-                    throw new ResourceNotFoundException("Pet not found");
+                    return new ResourceNotFoundException("Pet not found");
                 });
 
         // Remove references from User table
@@ -341,6 +347,4 @@ public class PetService {
         petRepository.deleteById(id);
         logger.info("Pet deleted with ID: {}", id);
     }
-
-
 }

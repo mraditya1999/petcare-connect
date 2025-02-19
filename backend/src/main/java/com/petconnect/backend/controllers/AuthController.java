@@ -82,27 +82,24 @@ public class AuthController {
         logger.info("Login attempt for email: {}", loginRequest.getEmail());
         try {
             Optional<User> authenticatedUser = authService.authenticateUser(loginRequest.getEmail(), loginRequest.getPassword());
-            return authenticatedUser.map(user -> {
+            if (authenticatedUser.isPresent()) {
+                User user = authenticatedUser.get();
                 String token = authService.generateJwtToken(user);
                 List<String> roles = user.getRoles().stream().map(Role::getAuthority).collect(Collectors.toList());
                 UserLoginResponseDTO userLoginResponseDTO = new UserLoginResponseDTO(user.getEmail(), roles, token, user.getUserId());
-                ApiResponseDTO<UserLoginResponseDTO> response = new ApiResponseDTO<>("User logged in successfully", userLoginResponseDTO);
-                logger.info("User logged in successfully: {}", user.getEmail());
-                return ResponseEntity.ok(response);
-            }).orElseGet(() -> {
-                ApiResponseDTO<UserLoginResponseDTO> response = new ApiResponseDTO<>("Invalid email or password");
+                return ResponseEntity.ok(new ApiResponseDTO<>("User logged in successfully.", userLoginResponseDTO));
+            } else {
                 logger.warn("Failed login attempt for email: {}", loginRequest.getEmail());
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
-            });
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponseDTO<>("Invalid email or password"));
+            }
         } catch (AuthenticationException e) {
             logger.warn("Authentication failed for email: {}: {}", loginRequest.getEmail(), e.getMessage());
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponseDTO<>("Invalid email or password", null));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponseDTO<>("Invalid email or password"));
         } catch (Exception e) {
             logger.error("Internal server error during login: ", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponseDTO<>("An error occurred: " + e.getMessage(), null));
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponseDTO<>("An error occurred: " + e.getMessage()));
         }
     }
-
 
     /**
      * Logs out a user.

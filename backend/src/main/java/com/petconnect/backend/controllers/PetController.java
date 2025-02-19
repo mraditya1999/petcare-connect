@@ -42,9 +42,9 @@ public class PetController {
     /**
      * Creates a pet for the user.
      *
-     * @param userDetails the authenticated user's details
+     * @param userDetails   the authenticated user's details
      * @param petRequestDTO the data transfer object containing pet information
-     * @param avatarFiles the list of uploaded avatar images
+     * @param avatarFiles   the list of uploaded avatar images
      * @return the ResponseEntity containing the ApiResponseDTO with the created pet information
      * @throws IOException if an I/O error occurs
      */
@@ -84,8 +84,6 @@ public class PetController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponseDTO<>("Error creating pet", null));
         }
     }
-
-
 
     /**
      * Get all pets for the authenticated user
@@ -127,7 +125,6 @@ public class PetController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponseDTO<>("Error fetching pet", null));
         }
     }
-
 
     /**
      * Updates the pet of a user by pet ID.
@@ -197,5 +194,4 @@ public class PetController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponseDTO<>("Error deleting pet", null));
         }
     }
-
 }

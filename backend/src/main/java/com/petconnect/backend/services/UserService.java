@@ -3,15 +3,13 @@ package com.petconnect.backend.services;
 import com.petconnect.backend.dto.user.UserDTO;
 import com.petconnect.backend.dto.user.UserUpdateDTO;
 import com.petconnect.backend.dto.user.UpdatePasswordRequestDTO;
-import com.petconnect.backend.entity.Address;
-import com.petconnect.backend.entity.Role;
-import com.petconnect.backend.entity.Specialist;
-import com.petconnect.backend.entity.User;
+import com.petconnect.backend.entity.*;
 import com.petconnect.backend.exceptions.ImageDeletionException;
 import com.petconnect.backend.exceptions.ResourceNotFoundException;
 import com.petconnect.backend.mappers.AddressMapper;
 import com.petconnect.backend.mappers.SpecialistMapper;
 import com.petconnect.backend.repositories.AddressRepository;
+import com.petconnect.backend.repositories.PetRepository;
 import com.petconnect.backend.repositories.SpecialistRepository;
 import com.petconnect.backend.repositories.UserRepository;
 import com.petconnect.backend.mappers.UserMapper;
@@ -44,9 +42,10 @@ public class UserService {
     private final SpecialistMapper specialistMapper;
     private final SpecialistRepository specialistRepository;
     private static final Logger logger = LoggerFactory.getLogger(UserService.class);
+    private final PetRepository petRepository;
 
     @Autowired
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, RoleAssignmentUtil roleAssignmentUtil, UserMapper userMapper, UploadService uploadService, AddressRepository addressRepository, AddressMapper addressMapper, SpecialistMapper specialistMapper, SpecialistRepository specialistRepository) {
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, RoleAssignmentUtil roleAssignmentUtil, UserMapper userMapper, UploadService uploadService, AddressRepository addressRepository, AddressMapper addressMapper, SpecialistMapper specialistMapper, SpecialistRepository specialistRepository, PetRepository petRepository) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.roleAssignmentUtil = roleAssignmentUtil;
@@ -54,6 +53,7 @@ public class UserService {
         this.uploadService = uploadService;
         this.specialistMapper = specialistMapper;
         this.specialistRepository = specialistRepository;
+        this.petRepository = petRepository;
     }
 
     public UserDTO getUserProfile(String email) {
@@ -126,6 +126,7 @@ public class UserService {
                     .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + email));
 
             deleteAvatar(user);
+            deletePetAvatars(user);
 
             if (user instanceof Specialist) {
                 specialistRepository.delete((Specialist) user);
@@ -139,6 +140,25 @@ public class UserService {
         } catch (Exception e) {
             logger.error("An error occurred while deleting profile for user with email: {}", email, e);
             throw new RuntimeException("An error occurred while deleting user profile", e);
+        }
+    }
+
+    /**
+     * Deletes pet profiles associated with the user.
+     *
+     * @param user the user whose pet profiles are to be deleted
+     */
+    private void deletePetAvatars(User user) {
+        List<Pet> pets = petRepository.findAllByPetOwner(user);
+        for (Pet pet : pets) {
+            if (pet.getAvatarPublicId() != null && !pet.getAvatarPublicId().isEmpty()) {
+                try {
+                    uploadService.deleteImage(pet.getAvatarPublicId());
+                } catch (IOException e) {
+                    logger.error("Error deleting avatar for pet with ID: {}", pet.getPetId(), e);
+                    throw new ImageDeletionException("Error deleting avatar image", e);
+                }
+            }
         }
     }
 
@@ -251,6 +271,7 @@ public class UserService {
                     .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + userId));
 
             deleteAvatar(user);
+            deletePetAvatars(user);
 
             if (user instanceof Specialist) {
                 specialistRepository.delete((Specialist) user);

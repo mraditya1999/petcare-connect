@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -252,4 +253,32 @@ public class GlobalExceptionHandler {
      public ResponseEntity<ApiResponseDTO<String>> handleUnauthorizedAccessException(UnauthorizedAccessException ex) {
          return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new ApiResponseDTO<>(ex.getMessage(), null));
      }
+
+    /**
+     * Handles HttpMessageNotReadableException thrown when the request body is not readable or cannot be deserialized.
+     *
+     * @param ex the HttpMessageNotReadableException exception
+     * @return ResponseEntity containing an ApiResponseDTO with an error message and HTTP status code BAD_REQUEST (400)
+     */
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ApiResponseDTO<Map<String, String>>> handleHttpMessageNotReadableException(HttpMessageNotReadableException ex) {
+        Map<String, String> errorData = new HashMap<>();
+        errorData.put("message", "Invalid input: " + ex.getMostSpecificCause().getMessage());
+        ApiResponseDTO<Map<String, String>> response = new ApiResponseDTO<>("Invalid input", errorData);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+
+    /**
+     * Handles InvalidRoleNameException thrown when an invalid role name is provided.
+     *
+     * @param ex the InvalidRoleNameException exception
+     * @return ResponseEntity containing an ApiResponseDTO with an error message and HTTP status code BAD_REQUEST (400)
+     */
+    @ExceptionHandler(InvalidRoleNameException.class)
+    public ResponseEntity<ApiResponseDTO<Map<String, String>>> handleInvalidRoleNameException(InvalidRoleNameException ex) {
+        Map<String, String> errorData = new HashMap<>();
+        errorData.put("message", ex.getMessage());
+        ApiResponseDTO<Map<String, String>> response = new ApiResponseDTO<>("Invalid input", errorData);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
 }

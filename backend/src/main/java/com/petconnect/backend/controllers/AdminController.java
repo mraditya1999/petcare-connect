@@ -10,10 +10,7 @@ import com.petconnect.backend.dto.user.UserUpdateDTO;
 import com.petconnect.backend.entity.Comment;
 import com.petconnect.backend.entity.Like;
 import com.petconnect.backend.entity.Role;
-import com.petconnect.backend.exceptions.FileValidationException;
-import com.petconnect.backend.exceptions.PetNotFoundException;
-import com.petconnect.backend.exceptions.ResourceNotFoundException;
-import com.petconnect.backend.exceptions.UserNotFoundException;
+import com.petconnect.backend.exceptions.*;
 import com.petconnect.backend.mappers.CommentMapper;
 import com.petconnect.backend.mappers.LikeMapper;
 import com.petconnect.backend.services.*;
@@ -34,9 +31,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @RestController
@@ -115,13 +110,6 @@ public class AdminController {
             return new ResponseEntity<>(new ApiResponseDTO<>("Error fetching user"), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-
-    /**
-     * Get a user by their ID.
-     *
-     * @param id the user ID
-     * @return a response entity containing the user
-     */
 
     /**
      * Handles updating the user profile by ID.
@@ -222,20 +210,36 @@ public class AdminController {
      * @return a response entity with an update status
      */
     @PostMapping("/users/{id}/roles")
-    public ResponseEntity<ApiResponseDTO<String>> updateUserRoles(
-            @PathVariable Long id, @RequestBody Set<Role.RoleName> roleNames) {
+    public ResponseEntity<ApiResponseDTO<Map<String, String>>> updateUserRoles(
+            @PathVariable Long id, @RequestBody Set<String> roleNames) {
         try {
-            userService.updateUserRoles(id, roleNames);
+            Set<Role.RoleName> validRoleNames = roleNames.stream()
+                    .map(roleName -> {
+                        try {
+                            return Role.RoleName.valueOf(roleName.toUpperCase());
+                        } catch (IllegalArgumentException e) {
+                            throw new InvalidRoleNameException("Invalid role name: " + roleName);
+                        }
+                    })
+                    .collect(Collectors.toSet());
+
+            userService.updateUserRoles(id, validRoleNames);
             logger.info("Roles updated for user with ID: {}", id);
             return ResponseEntity.ok(new ApiResponseDTO<>("Roles updated successfully"));
         } catch (UserNotFoundException e) {
             logger.error("User not found: {}", e.getMessage());
             return new ResponseEntity<>(new ApiResponseDTO<>("User not found"), HttpStatus.NOT_FOUND);
+        } catch (InvalidRoleNameException e) {
+            logger.error("Invalid role name: {}", e.getMessage());
+            Map<String, String> errorData = new HashMap<>();
+            errorData.put("message", e.getMessage());
+            return new ResponseEntity<>(new ApiResponseDTO<>("Invalid input", errorData), HttpStatus.BAD_REQUEST);
         } catch (Exception e) {
             logger.error("Error updating roles: {}", e.getMessage(), e);
             return new ResponseEntity<>(new ApiResponseDTO<>("Error updating roles"), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
 
     /**
      * Get all users by role with pagination.
@@ -295,7 +299,7 @@ public class AdminController {
             return ResponseEntity.ok(new ApiResponseDTO<>("Fetched all pets", pets));
         } catch (Exception e) {
             logger.error("Error fetching pets: {}", e.getMessage());
-            return new ResponseEntity<>(new ApiResponseDTO<>("Error fetching pets"), HttpStatus.INTERNAL_SERVER_ERROR);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponseDTO<>("Error fetching pets", null));
         }
     }
 
@@ -313,10 +317,10 @@ public class AdminController {
             return ResponseEntity.ok(new ApiResponseDTO<>("Fetched pet", pet));
         } catch (ResourceNotFoundException e) {
             logger.error("Error fetching pet with ID {}: {}", id, e.getMessage());
-            return new ResponseEntity<>(new ApiResponseDTO<>("Pet not found"), HttpStatus.NOT_FOUND);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiResponseDTO<>("Pet not found", null));
         } catch (Exception e) {
             logger.error("Error fetching pet with ID {}: {}", id, e.getMessage());
-            return new ResponseEntity<>(new ApiResponseDTO<>("Error fetching pet"), HttpStatus.INTERNAL_SERVER_ERROR);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponseDTO<>("Error fetching pet", null));
         }
     }
 
@@ -339,10 +343,10 @@ public class AdminController {
             return ResponseEntity.ok(new ApiResponseDTO<>("Updated pet", updatedPet));
         } catch (ResourceNotFoundException e) {
             logger.error("Error updating pet with ID {}: {}", id, e.getMessage());
-            return new ResponseEntity<>(new ApiResponseDTO<>("Pet not found"), HttpStatus.NOT_FOUND);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiResponseDTO<>("Pet not found", null));
         } catch (Exception e) {
             logger.error("Error updating pet with ID {}: {}", id, e.getMessage());
-            return new ResponseEntity<>(new ApiResponseDTO<>("Error updating pet"), HttpStatus.INTERNAL_SERVER_ERROR);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponseDTO<>("Error updating pet", null));
         }
     }
 
@@ -360,10 +364,10 @@ public class AdminController {
             return ResponseEntity.ok(new ApiResponseDTO<>("Pet deleted successfully"));
         } catch (PetNotFoundException e) {
             logger.error("Error deleting pet with ID {}: {}", id, e.getMessage());
-            return new ResponseEntity<>(new ApiResponseDTO<>("Pet not found"), HttpStatus.NOT_FOUND);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiResponseDTO<>("Pet not found", null));
         } catch (Exception e) {
             logger.error("Error deleting pet with ID {}: {}", id, e.getMessage());
-            return new ResponseEntity<>(new ApiResponseDTO<>("Error deleting pet"), HttpStatus.INTERNAL_SERVER_ERROR);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponseDTO<>("Error deleting pet", null));
         }
     }
 
