@@ -4,6 +4,7 @@ import com.petconnect.backend.entity.Pet;
 import com.petconnect.backend.entity.Specialist;
 import com.petconnect.backend.entity.User;
 import com.petconnect.backend.utils.FileUtils;
+import com.petconnect.backend.validators.FileValidator;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
@@ -20,11 +21,13 @@ public class ProfileImageService {
     private final UploadService uploadService;
     private final FileUtils fileUtils;
     private static final org.slf4j.Logger logger = LoggerFactory.getLogger(ProfileImageService.class);
+    private final FileValidator fileValidator;
 
 
-    public ProfileImageService(UploadService uploadService, FileUtils fileUtils) {
+    public ProfileImageService(UploadService uploadService, FileUtils fileUtils, FileValidator fileValidator) {
         this.uploadService = uploadService;
         this.fileUtils = fileUtils;
+        this.fileValidator = fileValidator;
     }
 
     public void handleProfileImageUpload(MultipartFile profileImage, User user) throws IOException {
@@ -50,14 +53,13 @@ public class ProfileImageService {
             pet.setAvatarPublicId(imageInfo.get("avatarPublicId"));
         }
     }
-
     public void updateProfileImage(MultipartFile profileImage, String existingPublicId, UploadService.ProfileType profileType) throws IOException {
-        fileUtils.validateFile(profileImage);
+        fileValidator.validateFile(profileImage);
         uploadService.updateImage(existingPublicId, profileImage, profileType);
     }
 
     private Map<String, String> uploadProfileImage(MultipartFile profileImage, UploadService.ProfileType profileType) throws IOException {
-        fileUtils.validateFile(profileImage);
+        fileValidator.validateFile(profileImage);
         File uploadedFile = fileUtils.convertMultipartFileToFile(profileImage);
 
         Map<String, Object> uploadResult = null;

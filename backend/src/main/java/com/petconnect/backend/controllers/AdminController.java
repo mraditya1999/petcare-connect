@@ -15,6 +15,7 @@ import com.petconnect.backend.mappers.CommentMapper;
 import com.petconnect.backend.mappers.LikeMapper;
 import com.petconnect.backend.services.*;
 import com.petconnect.backend.utils.FileUtils;
+import com.petconnect.backend.validators.FileValidator;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import org.slf4j.Logger;
@@ -48,9 +49,10 @@ public class AdminController {
 
     private static final Logger logger = LoggerFactory.getLogger(AdminController.class);
     private final FileUtils fileUtils;
+    private final FileValidator fileValidator;
 
     @Autowired
-    public AdminController(UserService userService, PetService petService, SpecialistService specialistService, ForumService forumService, LikeService likeService, LikeMapper likeMapper, CommentMapper commentMapper, CommentService commentService, FileUtils fileUtils) {
+    public AdminController(UserService userService, PetService petService, SpecialistService specialistService, ForumService forumService, LikeService likeService, LikeMapper likeMapper, CommentMapper commentMapper, CommentService commentService, FileUtils fileUtils, FileValidator fileValidator) {
         this.userService = userService;
         this.petService = petService;
         this.specialistService = specialistService;
@@ -60,6 +62,7 @@ public class AdminController {
         this.commentMapper = commentMapper;
         this.commentService = commentService;
         this.fileUtils = fileUtils;
+        this.fileValidator = fileValidator;
     }
 
 //    ############################################################# USER #########################################################
@@ -129,9 +132,9 @@ public class AdminController {
         logger.info("Received request to update user profile for ID: {}", id);
 
         try {
-            MultipartFile profileImage = fileUtils.getSingleFile(profileImages);
+            MultipartFile profileImage = fileValidator.getSingleFile(profileImages);
             if (profileImage != null) {
-                fileUtils.validateFile(profileImage);
+                fileValidator.validateFile(profileImage);
             }
 
             UserDTO updatedUser = userService.updateUserById(id, userUpdateDTO, profileImage);

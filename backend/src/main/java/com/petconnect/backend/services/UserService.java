@@ -56,6 +56,13 @@ public class UserService {
         this.petRepository = petRepository;
     }
 
+    /**
+     * Fetches the profile for a user based on their email address.
+     *
+     * @param email the email address of the user
+     * @return UserDTO containing the user profile information
+     * @throws ResourceNotFoundException if the user is not found
+     */
     public UserDTO getUserProfile(String email) {
         logger.info("Fetching profile for user with email: {}", email);
 
@@ -77,6 +84,16 @@ public class UserService {
         }
     }
 
+    /**
+     * Updates the profile for a user based on their username.
+     *
+     * @param username the username (email) of the user
+     * @param userUpdateDTO the data transfer object containing updated user information
+     * @param profileImage the profile image to be updated (optional)
+     * @return UserDTO containing the updated user profile information
+     * @throws IOException if an error occurs while uploading the profile image
+     * @throws ResourceNotFoundException if the user is not found
+     */
     public UserDTO updateUserProfile(String username, UserUpdateDTO userUpdateDTO, MultipartFile profileImage) throws IOException {
         logger.info("Updating profile for user with email: {}", username);
 
@@ -117,6 +134,13 @@ public class UserService {
         }
     }
 
+    /**
+     * Deletes the profile for a user based on their email address.
+     *
+     * @param userDetails the user details of the authenticated user
+     * @throws ResourceNotFoundException if the user is not found
+     * @throws RuntimeException if an error occurs while deleting the user profile
+     */
     public void deleteUserProfile(UserDetails userDetails) {
         String email = userDetails.getUsername();
         logger.info("Received request to delete profile for user with email: {}", email);
@@ -143,6 +167,7 @@ public class UserService {
         }
     }
 
+
     /**
      * Deletes pet profiles associated with the user.
      *
@@ -162,6 +187,16 @@ public class UserService {
         }
     }
 
+    /**
+     * Updates the password for a user based on their email address.
+     *
+     * @param email the email address of the user
+     * @param updatePasswordRequestDTO the data transfer object containing the current and new password
+     * @param userDetails the user details of the authenticated user
+     * @throws ResourceNotFoundException if the user is not found
+     * @throws IllegalArgumentException if the current password is incorrect or the new password is the same as the old password
+     * @throws RuntimeException if an error occurs while updating the password
+     */
     public void updatePassword(String email, UpdatePasswordRequestDTO updatePasswordRequestDTO, UserDetails userDetails) {
         logger.info("Received request to update password for user with email: {}", email);
 
@@ -192,6 +227,12 @@ public class UserService {
         }
     }
 
+    /**
+     * Updates the reset token for a user.
+     *
+     * @param user the user whose reset token is to be updated
+     * @throws RuntimeException if an error occurs while updating the reset token
+     */
     public void updateResetToken(User user) {
         try {
             userRepository.save(user);
@@ -202,6 +243,13 @@ public class UserService {
         }
     }
 
+    /**
+     * Retrieves all users with pagination.
+     *
+     * @param pageable the pagination information
+     * @return a page of UserDTOs containing user information
+     * @throws RuntimeException if an error occurs while fetching all users
+     */
     public Page<UserDTO> getAllUsers(Pageable pageable) {
         try {
             return userRepository.findAll(pageable).map(userMapper::toDTO);
@@ -211,6 +259,14 @@ public class UserService {
         }
     }
 
+    /**
+     * Retrieves a user by their ID.
+     *
+     * @param userId the ID of the user
+     * @return UserDTO containing the user information
+     * @throws ResourceNotFoundException if the user is not found
+     * @throws RuntimeException if an error occurs while fetching the user by ID
+     */
     public UserDTO getUserById(Long userId) {
         try {
             return userRepository.findById(userId)
@@ -225,6 +281,17 @@ public class UserService {
         }
     }
 
+    /**
+     * Updates the profile for a user based on their ID.
+     *
+     * @param id the ID of the user
+     * @param userUpdateDTO the data transfer object containing updated user information
+     * @param profileImage the profile image to be updated (optional)
+     * @return UserDTO containing the updated user profile information
+     * @throws IOException if an error occurs while uploading the profile image
+     * @throws ResourceNotFoundException if the user is not found
+     * @throws RuntimeException if an error occurs while updating the user profile
+     */
     public UserDTO updateUserById(Long id, UserUpdateDTO userUpdateDTO, MultipartFile profileImage) throws IOException {
         logger.info("Updating profile for user with ID: {}", id);
 
@@ -263,6 +330,13 @@ public class UserService {
         }
     }
 
+    /**
+     * Deletes a user based on their ID.
+     *
+     * @param userId the ID of the user to be deleted
+     * @throws ResourceNotFoundException if the user is not found
+     * @throws RuntimeException if an error occurs while deleting the user
+     */
     public void deleteUserById(Long userId) {
         logger.info("Received request to delete user with ID: {}", userId);
 
@@ -288,6 +362,14 @@ public class UserService {
         }
     }
 
+    /**
+     * Updates the roles for a user based on their ID.
+     *
+     * @param userId the ID of the user
+     * @param roleNames the set of role names to be assigned to the user
+     * @throws ResourceNotFoundException if the user is not found
+     * @throws RuntimeException if an error occurs while updating the user roles
+     */
     public void updateUserRoles(Long userId, Set<Role.RoleName> roleNames) {
         logger.info("Updating roles for user with ID: {}", userId);
 
@@ -307,6 +389,14 @@ public class UserService {
         }
     }
 
+    /**
+     * Searches for users based on a keyword.
+     *
+     * @param keyword the search keyword
+     * @param pageable the pagination information
+     * @return a page of UserDTOs containing the search results
+     * @throws RuntimeException if an error occurs while searching users
+     */
     public Page<UserDTO> searchUsers(String keyword, Pageable pageable) {
         logger.info("Searching users with keyword: {}", keyword);
 
@@ -318,20 +408,43 @@ public class UserService {
         }
     }
 
+    /**
+     * Retrieves all users with a specific role and pagination.
+     *
+     * @param roleName the role name to filter users
+     * @param page the page number to retrieve
+     * @param size the number of items per page
+     * @param sortBy the field to sort by
+     * @param sortDir the sort direction (ascending or descending)
+     * @return a page of UserDTOs containing the filtered users
+     */
     public Page<UserDTO> getAllUsersByRole(String roleName, int page, int size, String sortBy, String sortDir) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.fromString(sortDir), sortBy));
         Page<User> usersPage = userRepository.findAllByRole(roleName, pageable);
-        return usersPage.map(userMapper::toDTO); // Assuming you have a UserMapper to convert User to UserDTO
+        return usersPage.map(userMapper::toDTO);
     }
+
 
     // --- Helper Methods ---
 
+    /**
+     * Updates the fields of a user based on the provided UserUpdateDTO.
+     *
+     * @param user the user whose fields are to be updated
+     * @param userUpdateDTO the data transfer object containing updated user information
+     */
     private void updateUserFields(User user, UserUpdateDTO userUpdateDTO) {
         if (userUpdateDTO.getFirstName() != null) user.setFirstName(userUpdateDTO.getFirstName());
         if (userUpdateDTO.getLastName() != null) user.setLastName(userUpdateDTO.getLastName());
         if (userUpdateDTO.getMobileNumber() != null) user.setMobileNumber(userUpdateDTO.getMobileNumber());
     }
 
+    /**
+     * Updates the address of a user based on the provided UserUpdateDTO.
+     *
+     * @param user the user whose address is to be updated
+     * @param userUpdateDTO the data transfer object containing updated address information
+     */
     private void updateAddress(User user, UserUpdateDTO userUpdateDTO) {
         Address address = user.getAddress() != null ? user.getAddress() : new Address();
 
@@ -347,6 +460,13 @@ public class UserService {
         }
     }
 
+    /**
+     * Handles the upload of a profile image for a user.
+     *
+     * @param profileImage the profile image to be uploaded
+     * @param user the user for whom the profile image is to be uploaded
+     * @throws IOException if an error occurs while uploading the profile image
+     */
     private void handleProfileImageUpload(MultipartFile profileImage, User user) throws IOException {
         if (profileImage != null && !profileImage.isEmpty()) {
             if (user.getAvatarPublicId() != null && !user.getAvatarPublicId().isEmpty()) {
@@ -359,6 +479,13 @@ public class UserService {
         }
     }
 
+    /**
+     * Uploads a profile image and returns a map containing the avatar URL and public ID.
+     *
+     * @param profileImage the profile image to be uploaded
+     * @return a map containing the avatar URL and public ID
+     * @throws IOException if an error occurs while uploading the profile image
+     */
     private Map<String, String> uploadProfileImage(MultipartFile profileImage) throws IOException {
         Map<String, Object> uploadResult = uploadService.uploadImage(profileImage, UploadService.ProfileType.USER);
         return Map.of(
@@ -367,6 +494,12 @@ public class UserService {
         );
     }
 
+    /**
+     * Deletes the avatar image of a user.
+     *
+     * @param user the user whose avatar image is to be deleted
+     * @throws ImageDeletionException if an error occurs while deleting the avatar image
+     */
     private void deleteAvatar(User user) {
         if (user.getAvatarPublicId() != null && !user.getAvatarPublicId().isEmpty()) {
             try {
@@ -377,4 +510,5 @@ public class UserService {
             }
         }
     }
+
 }

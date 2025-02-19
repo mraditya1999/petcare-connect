@@ -9,6 +9,7 @@ import com.petconnect.backend.exceptions.ResourceNotFoundException;
 import com.petconnect.backend.exceptions.UnauthorizedAccessException;
 import com.petconnect.backend.services.PetService;
 import com.petconnect.backend.utils.FileUtils;
+import com.petconnect.backend.validators.FileValidator;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,11 +33,13 @@ public class PetController {
 
     private final PetService petService;
     private final FileUtils fileUtils;
+    private final FileValidator fileValidator;
 
     @Autowired
-    public PetController(PetService petService, FileUtils fileUtils) {
+    public PetController(PetService petService, FileUtils fileUtils, FileValidator fileValidator) {
         this.petService = petService;
         this.fileUtils = fileUtils;
+        this.fileValidator = fileValidator;
     }
 
     /**
@@ -58,9 +61,9 @@ public class PetController {
         logger.info("Received request to create pet for user: {}", userDetails.getUsername());
 
         try {
-            MultipartFile avatarFile = fileUtils.getSingleFile(avatarFiles);
+            MultipartFile avatarFile = fileValidator.getSingleFile(avatarFiles);
             if (avatarFile != null) {
-                fileUtils.validateFile(avatarFile);
+                fileValidator.validateFile(avatarFile);
             }
 
             String username = userDetails.getUsername();
@@ -145,9 +148,9 @@ public class PetController {
         logger.info("Received request to update pet for user: {}", userDetails.getUsername());
 
         try {
-            MultipartFile avatarFile = fileUtils.getSingleFile(avatarFiles);
+            MultipartFile avatarFile = fileValidator.getSingleFile(avatarFiles);
             if (avatarFile != null) {
-                fileUtils.validateFile(avatarFile);
+                fileValidator.validateFile(avatarFile);
             }
 
             PetResponseDTO updatedPet = petService.updatePetForUser(id, petRequestDTO, avatarFile, userDetails.getUsername());
