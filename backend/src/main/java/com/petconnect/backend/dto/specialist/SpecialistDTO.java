@@ -1,4 +1,4 @@
-package com.petconnect.backend.dto;
+package com.petconnect.backend.dto.specialist;
 
 import com.petconnect.backend.dto.user.AddressDTO;
 

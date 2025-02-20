@@ -3,8 +3,10 @@ package com.petconnect.backend.controllers;
 import com.petconnect.backend.dto.*;
 import com.petconnect.backend.dto.pet.PetRequestDTO;
 import com.petconnect.backend.dto.pet.PetResponseDTO;
+import com.petconnect.backend.dto.specialist.SpecialistCreateRequestDTO;
+import com.petconnect.backend.dto.specialist.SpecialistDTO;
 import com.petconnect.backend.dto.specialist.SpecialistRegistrationResponseDTO;
-import com.petconnect.backend.dto.user.AddressDTO;
+import com.petconnect.backend.dto.specialist.SpecialistUpdateRequestDTO;
 import com.petconnect.backend.dto.user.UserDTO;
 import com.petconnect.backend.dto.user.UserUpdateDTO;
 import com.petconnect.backend.entity.Comment;
@@ -21,6 +23,7 @@ import jakarta.validation.constraints.Min;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -28,6 +31,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -380,128 +384,84 @@ public class AdminController {
      * Create a new specialist.
      * Consumes multipart/form-data for profile image.
      *
-     * @param firstName    Specialist's first name
-     * @param lastName     Specialist's last name
-     * @param email        Specialist's email
-     * @param password     Specialist's password
-     * @param mobileNumber Specialist's mobile number
-     * @param speciality   Specialist's speciality
-     * @param about        Information about the specialist
-     * @param profileImage Profile image file
-     * @param pincode      Address pincode
-     * @param city         Address city
-     * @param state        Address state
-     * @param locality     Address locality
-     * @param country      Address country
-     * @return ResponseEntity with ApiResponse containing the created specialist
-     * @throws IOException if there's an error processing the profile image
+     * @param specialistCreateRequestDTO   SpecialistCreateRequestDTO containing the specialist's details
+     * @param profileImage Profile image file of the specialist (optional)
+     * @param bindingResult BindingResult for validation errors
+     * @return ResponseEntity with ApiResponseDTO containing the created specialist's details
      */
-    @PostMapping(value = "specialists", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public  ResponseEntity<ApiResponseDTO<SpecialistRegistrationResponseDTO>> createSpecialist(
-            @RequestParam("firstName") String firstName,
-            @RequestParam("lastName") String lastName,
-            @RequestParam("email") String email,
-            @RequestParam("password") String password,
-            @RequestParam("mobileNumber") String mobileNumber,
-            @RequestParam("speciality") String speciality,
-            @RequestParam("about") String about,
+    @PostMapping(value = "/specialists", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ApiResponseDTO<SpecialistRegistrationResponseDTO>> createSpecialist(
+            @Valid @ModelAttribute SpecialistCreateRequestDTO specialistCreateRequestDTO,
             @RequestPart(value = "profileImage", required = false) MultipartFile profileImage,
-            @RequestParam("pincode") Long pincode,
-            @RequestParam("city") String city,
-            @RequestParam("state") String state,
-            @RequestParam("locality") String locality,
-            @RequestParam("country") String country) throws IOException {
+            BindingResult bindingResult) {
 
-        // Create and populate the request DTO
-        SpecialistCreateRequestDTO requestDTO = new SpecialistCreateRequestDTO();
-        requestDTO.setFirstName(firstName);
-        requestDTO.setLastName(lastName);
-        requestDTO.setEmail(email);
-        requestDTO.setPassword(password);
-        requestDTO.setMobileNumber(mobileNumber);
-        requestDTO.setSpeciality(speciality);
-        requestDTO.setAbout(about);
+        if (bindingResult.hasErrors()) {
+            String errorMessage = bindingResult.getAllErrors().stream()
+                    .map(DefaultMessageSourceResolvable::getDefaultMessage)
+                    .collect(Collectors.joining(", "));
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponseDTO<>("Validation error: " + errorMessage, null));
+        }
 
-        AddressDTO addressDTO = new AddressDTO();
-        addressDTO.setPincode(pincode);
-        addressDTO.setCity(city);
-        addressDTO.setState(state);
-        addressDTO.setLocality(locality);
-        addressDTO.setCountry(country);
-        requestDTO.setAddressDTO(addressDTO);
-
-        // Create the specialist
-        specialistService.createSpecialistByAdmin(requestDTO, profileImage);
-
-        String responseMessage = "Created specialist profile for: " + email;
-        logger.info(responseMessage);
-        SpecialistRegistrationResponseDTO response = new SpecialistRegistrationResponseDTO(responseMessage);
-        return ResponseEntity.status(HttpStatus.CREATED).body(new ApiResponseDTO<>("Specialist created successfully.",response));
+        try {
+            specialistService.createSpecialistByAdmin(specialistCreateRequestDTO, profileImage);
+            String responseMessage = "Created specialist profile for: " + specialistCreateRequestDTO.getEmail();
+            logger.info(responseMessage);
+            SpecialistRegistrationResponseDTO response = new SpecialistRegistrationResponseDTO(responseMessage);
+            return ResponseEntity.status(HttpStatus.CREATED).body(new ApiResponseDTO<>("Specialist created successfully.", response));
+        } catch (Exception e) {
+            logger.error("Error creating specialist profile for: {}", specialistCreateRequestDTO.getEmail(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponseDTO<>("Error creating specialist profile: " + e.getMessage(), null));
+        }
     }
+
 
     /**
      * Update an existing specialist by admin.
      * Consumes multipart/form-data for profile image.
      *
-     * @param id           Specialist ID
-     * @param firstName    Specialist's first name
-     * @param lastName     Specialist's last name
-     * @param email        Specialist's email
-     * @param mobileNumber Specialist's mobile number
-     * @param speciality   Specialist's speciality
-     * @param about        Information about the specialist
-     * @param pincode      Address pincode
-     * @param city         Address city
-     * @param state        Address state
-     * @param locality     Address locality
-     * @param country      Address country
-     * @param password     Specialist's password
-     * @param profileImage Profile image file
+     * @param id Specialist ID
+     * @param specialistUpdateRequestDTO DTO containing specialist information
+     * @param profileImages List of profile image files
+     * @param bindingResult BindingResult for validation errors
      * @return ResponseEntity with ApiResponse containing the updated specialist
-     * @throws IOException if there's an error processing the profile image
      */
-    @PutMapping(value = "/specialists/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @PutMapping(value = "/specialists/{id}", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
     public ResponseEntity<ApiResponseDTO<SpecialistDTO>> updateSpecialistByAdmin(
             @PathVariable Long id,
-            @RequestParam(value = "firstName", required = false) String firstName,
-            @RequestParam(value = "lastName", required = false) String lastName,
-            @RequestParam(value = "email", required = false) String email,
-            @RequestParam(value = "mobileNumber", required = false) String mobileNumber,
-            @RequestParam(value = "speciality", required = false) String speciality,
-            @RequestParam(value = "about", required = false) String about,
-            @RequestParam(value = "pincode", required = false) Long pincode,
-            @RequestParam(value = "city", required = false) String city,
-            @RequestParam(value = "state", required = false) String state,
-            @RequestParam(value = "locality", required = false) String locality,
-            @RequestParam(value = "country", required = false) String country,
-            @RequestParam(value = "password", required = false) String password,
-            @RequestPart(value = "profileImage", required = false) MultipartFile profileImage) throws IOException {
+            @Valid @ModelAttribute SpecialistUpdateRequestDTO specialistUpdateRequestDTO,
+            @RequestPart(value = "profileImage", required = false) List<MultipartFile> profileImages,
+            BindingResult bindingResult) {
 
-        // Create and populate the update request DTO
-        SpecialistUpdateRequestDTO specialistUpdateRequestDTO = new SpecialistUpdateRequestDTO();
-        specialistUpdateRequestDTO.setFirstName(firstName);
-        specialistUpdateRequestDTO.setLastName(lastName);
-        specialistUpdateRequestDTO.setEmail(email);
-        specialistUpdateRequestDTO.setMobileNumber(mobileNumber);
-        specialistUpdateRequestDTO.setSpeciality(speciality);
-        specialistUpdateRequestDTO.setAbout(about);
-        specialistUpdateRequestDTO.setPassword(password);
+        if (bindingResult.hasErrors()) {
+            String errorMessage = bindingResult.getAllErrors().stream()
+                    .map(DefaultMessageSourceResolvable::getDefaultMessage)
+                    .collect(Collectors.joining(", "));
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponseDTO<>("Validation error: " + errorMessage, null));
+        }
 
-        AddressDTO addressDTO = new AddressDTO();
-        addressDTO.setPincode(pincode);
-        addressDTO.setCity(city);
-        addressDTO.setState(state);
-        addressDTO.setLocality(locality);
-        addressDTO.setCountry(country);
-        specialistUpdateRequestDTO.setAddressDTO(addressDTO);
+        logger.info("Received request to update specialist profile for ID: {}", id);
 
         try {
+            MultipartFile profileImage = fileValidator.getSingleFile(profileImages);
+            if (profileImage != null) {
+                fileValidator.validateFile(profileImage);
+            }
+
             SpecialistDTO specialist = specialistService.updateSpecialistByAdmin(id, specialistUpdateRequestDTO, profileImage);
             logger.info("Updated specialist profile with ID: {}", id);
             return ResponseEntity.ok(new ApiResponseDTO<>("Updated specialist profile", specialist));
+        } catch (FileValidationException e) {
+            logger.error(e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponseDTO<>(e.getMessage(), null));
+        } catch (ResourceNotFoundException e) {
+            logger.error("Specialist not found with ID: {}", id, e);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiResponseDTO<>("Specialist not found", null));
+        } catch (IOException e) {
+            logger.error("IO Error: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponseDTO<>("Error updating specialist profile", null));
         } catch (Exception e) {
-            logger.error("Error updating specialist profile with ID {}: {}", id, e.getMessage());
-            return new ResponseEntity<>(new ApiResponseDTO<>("Error updating specialist profile"), HttpStatus.INTERNAL_SERVER_ERROR);
+            logger.error("Unexpected error: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponseDTO<>("Error updating specialist profile", null));
         }
     }
 

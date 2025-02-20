@@ -1,4 +1,4 @@
-package com.petconnect.backend.dto;
+package com.petconnect.backend.dto.specialist;//package com.petconnect.backend.dto;
 
 import com.petconnect.backend.dto.user.AddressDTO;
 import jakarta.validation.Valid;
@@ -34,13 +34,25 @@ public class SpecialistCreateRequestDTO {
     private String about;
 
 
-    @Valid
-    private AddressDTO addressDTO;
+    @Min(value = 100000, message = "Pincode must be at least 6 digits")
+    private Long pincode;
+
+    @Size(max = 100, message = "City cannot exceed 100 characters")
+    private String city;
+
+    @Size(max = 100, message = "State cannot exceed 100 characters")
+    private String state;
+
+    @Size(max = 100, message = "Country cannot exceed 100 characters")
+    private String country;
+
+    @Size(max = 255, message = "Locality cannot exceed 255 characters")
+    private String locality;
 
     public SpecialistCreateRequestDTO() {
     }
 
-    public SpecialistCreateRequestDTO(String firstName, String lastName, String email, String password, String mobileNumber, String speciality, String about, AddressDTO addressDTO) {
+    public SpecialistCreateRequestDTO(String firstName, String lastName, String email, String password, String mobileNumber, String speciality, String about, Long pincode, String city, String state, String country, String locality) {
         this.firstName = firstName;
         this.lastName = lastName;
         this.email = email;
@@ -48,7 +60,11 @@ public class SpecialistCreateRequestDTO {
         this.mobileNumber = mobileNumber;
         this.speciality = speciality;
         this.about = about;
-        this.addressDTO = addressDTO;
+        this.pincode = pincode;
+        this.city = city;
+        this.state = state;
+        this.country = country;
+        this.locality = locality;
     }
 
     public String getFirstName() {
@@ -107,11 +123,44 @@ public class SpecialistCreateRequestDTO {
         this.about = about;
     }
 
-    public AddressDTO getAddressDTO() {
-        return addressDTO;
+    public Long getPincode() {
+        return pincode;
     }
 
-    public void setAddressDTO(AddressDTO addressDTO) {
-        this.addressDTO = addressDTO;
+    public void setPincode(Long pincode) {
+        this.pincode = pincode;
+    }
+
+    public String getCity() {
+        return city;
+    }
+
+    public void setCity(String city) {
+        this.city = city;
+    }
+
+    public String getState() {
+        return state;
+    }
+
+    public void setState(String state) {
+        this.state = state;
+    }
+
+    public String getCountry() {
+        return country;
+    }
+
+    public void setCountry(String country) {
+        this.country = country;
+    }
+
+    public String getLocality() {
+        return locality;
+    }
+
+    public void setLocality(String locality) {
+        this.locality = locality;
     }
 }
+
