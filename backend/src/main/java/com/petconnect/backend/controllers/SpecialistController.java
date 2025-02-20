@@ -1,8 +1,8 @@
 package com.petconnect.backend.controllers;
 
 import com.petconnect.backend.dto.*;
+import com.petconnect.backend.dto.specialist.SpecialistResponseDTO;
 import com.petconnect.backend.dto.specialist.SpecialistUpdateRequestDTO;
-import com.petconnect.backend.dto.specialist.SpecialistDTO;
 import com.petconnect.backend.exceptions.FileValidationException;
 import com.petconnect.backend.exceptions.ResourceNotFoundException;
 import com.petconnect.backend.mappers.SpecialistMapper;
@@ -80,7 +80,7 @@ public class SpecialistController {
                 fileValidator.validateFile(profileImage);
             }
 
-            SpecialistDTO updatedSpecialist = specialistService.updateSpecialist(specialistUpdateRequestDTO, profileImage, userDetails);
+            SpecialistResponseDTO updatedSpecialist = specialistService.updateSpecialist(specialistUpdateRequestDTO, profileImage, userDetails);
             SpecialistResponseDTO specialistResponseDTO = specialistMapper.toSpecialistResponseDTO(updatedSpecialist);
             logger.info("Updated specialist profile for user: {}", userDetails.getUsername());
             return ResponseEntity.ok(new ApiResponseDTO<>("Specialist updated successfully", specialistResponseDTO));
@@ -109,7 +109,7 @@ public class SpecialistController {
      * @return ResponseEntity with ApiResponse containing a paginated list of specialists
      */
     @GetMapping
-    public ResponseEntity<ApiResponseDTO<Page<SpecialistDTO>>> getAllSpecialists(
+    public ResponseEntity<ApiResponseDTO<Page<SpecialistResponseDTO>>> getAllSpecialists(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "userId") String sortBy,
@@ -118,7 +118,7 @@ public class SpecialistController {
             // Create pageable object with given page, size, sortBy, and sortDir
             Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.fromString(sortDir), sortBy));
             // Fetch the specialists with pagination and sorting
-            Page<SpecialistDTO> specialists = specialistService.getAllSpecialists(pageable);
+            Page<SpecialistResponseDTO> specialists = specialistService.getAllSpecialists(pageable);
 
             logger.info("Fetched all specialists with pagination and sorting");
             return ResponseEntity.ok(new ApiResponseDTO<>("Fetched all specialists", specialists));
@@ -138,9 +138,9 @@ public class SpecialistController {
      * @return ResponseEntity with ApiResponse containing the specialist details
      */
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponseDTO<SpecialistDTO>> getSpecialistById(@PathVariable Long id) {
+    public ResponseEntity<ApiResponseDTO<SpecialistResponseDTO>> getSpecialistById(@PathVariable Long id) {
         try {
-            SpecialistDTO specialist = specialistService.getSpecialistById(id);
+            SpecialistResponseDTO specialist = specialistService.getSpecialistById(id);
             logger.info("Fetched specialist with ID: {}", id);
             return ResponseEntity.ok(new ApiResponseDTO<>("Fetched specialist", specialist));
         } catch (ResourceNotFoundException e) {

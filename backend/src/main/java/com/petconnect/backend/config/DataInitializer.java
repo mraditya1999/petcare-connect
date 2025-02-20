@@ -33,7 +33,7 @@ public class DataInitializer implements CommandLineRunner {
         createRoleIfNotFound(Role.RoleName.USER);
         createRoleIfNotFound(Role.RoleName.ADMIN);
         createRoleIfNotFound(Role.RoleName.SPECIALIST);
-//        initializeDefaultUsers();
+        initializeDefaultUsers();
     }
 
     private void createRoleIfNotFound(Role.RoleName roleName) {
@@ -48,10 +48,10 @@ public class DataInitializer implements CommandLineRunner {
         if (!userRepository.existsByEmail("ay5480620@gmail.com")) {
             createUser("Aditya", "Yadav", "ay5480620@gmail.com", "@mrAditya1999", Role.RoleName.ADMIN, true, createAddress());
         }
-//
-//        if (!userRepository.existsByEmail("dbadaditya@gmail.com")) {
-//            createUser("Honey", "Singh", "dbadaditya@gmail.com", "@mrAditya1999", Role.RoleName.USER, true ,createAddress());
-//        }
+
+        if (!userRepository.existsByEmail("dbadaditya@gmail.com")) {
+            createUser("Honey", "Singh", "dbadaditya@gmail.com", "@mrAditya1999", Role.RoleName.USER, true ,createAddress());
+        }
     }
 
     private void createUser(String firstName, String lastName, String email, String password, Role.RoleName role, boolean isVerified, Address address) {

@@ -1,9 +1,8 @@
 package com.petconnect.backend.mappers;
 
-import com.petconnect.backend.dto.*;
+import com.petconnect.backend.dto.specialist.SpecialistResponseDTO;
 import com.petconnect.backend.dto.specialist.SpecialistUpdateRequestDTO;
 import com.petconnect.backend.dto.specialist.SpecialistCreateRequestDTO;
-import com.petconnect.backend.dto.specialist.SpecialistDTO;
 import com.petconnect.backend.entity.Specialist;
 import com.petconnect.backend.entity.Role;
 import org.mapstruct.Mapper;
@@ -17,7 +16,7 @@ import java.util.stream.Collectors;
 public interface SpecialistMapper {
 
     @Mapping(target = "specialistId", source = "userId")
-    SpecialistDTO toDTO(Specialist specialist);
+    SpecialistResponseDTO toDTO(Specialist specialist);
 
     @Mapping(target = "address.pincode", source = "pincode")
     @Mapping(target = "address.city", source = "city")
@@ -30,7 +29,7 @@ public interface SpecialistMapper {
     SpecialistResponseDTO toSpecialistResponseDTO(Specialist specialist);
 
     @Mapping(target = "userId", source = "specialistId")
-    SpecialistResponseDTO toSpecialistResponseDTO(SpecialistDTO specialistDTO);
+    SpecialistResponseDTO toSpecialistResponseDTO(SpecialistResponseDTO specialistResponseDTO);
 
     @Mapping(target = "address.pincode", source = "pincode")
     @Mapping(target = "address.city", source = "city")

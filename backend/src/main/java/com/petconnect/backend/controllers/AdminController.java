@@ -3,10 +3,7 @@ package com.petconnect.backend.controllers;
 import com.petconnect.backend.dto.*;
 import com.petconnect.backend.dto.pet.PetRequestDTO;
 import com.petconnect.backend.dto.pet.PetResponseDTO;
-import com.petconnect.backend.dto.specialist.SpecialistCreateRequestDTO;
-import com.petconnect.backend.dto.specialist.SpecialistDTO;
-import com.petconnect.backend.dto.specialist.SpecialistRegistrationResponseDTO;
-import com.petconnect.backend.dto.specialist.SpecialistUpdateRequestDTO;
+import com.petconnect.backend.dto.specialist.*;
 import com.petconnect.backend.dto.user.UserDTO;
 import com.petconnect.backend.dto.user.UserUpdateDTO;
 import com.petconnect.backend.entity.Comment;
@@ -399,6 +396,7 @@ public class AdminController {
             String errorMessage = bindingResult.getAllErrors().stream()
                     .map(DefaultMessageSourceResolvable::getDefaultMessage)
                     .collect(Collectors.joining(", "));
+            logger.error("Validation error while creating specialist: {}", errorMessage);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponseDTO<>("Validation error: " + errorMessage, null));
         }
 
@@ -408,11 +406,18 @@ public class AdminController {
             logger.info(responseMessage);
             SpecialistRegistrationResponseDTO response = new SpecialistRegistrationResponseDTO(responseMessage);
             return ResponseEntity.status(HttpStatus.CREATED).body(new ApiResponseDTO<>("Specialist created successfully.", response));
+        } catch (UserAlreadyExistsException e) {
+            logger.error("Specialist already exists with email: {}", specialistCreateRequestDTO.getEmail(), e);
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(new ApiResponseDTO<>("Specialist already exists with this email.", null));
+        } catch (IOException e) {
+            logger.error("IO Error during specialist creation for email: {}", specialistCreateRequestDTO.getEmail(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponseDTO<>("IO Error during specialist creation: " + e.getMessage(), null));
         } catch (Exception e) {
-            logger.error("Error creating specialist profile for: {}", specialistCreateRequestDTO.getEmail(), e);
+            logger.error("Unexpected error creating specialist profile for: {}", specialistCreateRequestDTO.getEmail(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponseDTO<>("Error creating specialist profile: " + e.getMessage(), null));
         }
     }
+
 
 
     /**
@@ -426,7 +431,7 @@ public class AdminController {
      * @return ResponseEntity with ApiResponse containing the updated specialist
      */
     @PutMapping(value = "/specialists/{id}", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
-    public ResponseEntity<ApiResponseDTO<SpecialistDTO>> updateSpecialistByAdmin(
+    public ResponseEntity<ApiResponseDTO<SpecialistResponseDTO>> updateSpecialistByAdmin(
             @PathVariable Long id,
             @Valid @ModelAttribute SpecialistUpdateRequestDTO specialistUpdateRequestDTO,
             @RequestPart(value = "profileImage", required = false) List<MultipartFile> profileImages,
@@ -436,6 +441,7 @@ public class AdminController {
             String errorMessage = bindingResult.getAllErrors().stream()
                     .map(DefaultMessageSourceResolvable::getDefaultMessage)
                     .collect(Collectors.joining(", "));
+            logger.error("Validation error while updating specialist: {}", errorMessage);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponseDTO<>("Validation error: " + errorMessage, null));
         }
 
@@ -447,11 +453,11 @@ public class AdminController {
                 fileValidator.validateFile(profileImage);
             }
 
-            SpecialistDTO specialist = specialistService.updateSpecialistByAdmin(id, specialistUpdateRequestDTO, profileImage);
+            SpecialistResponseDTO specialist = specialistService.updateSpecialistByAdmin(id, specialistUpdateRequestDTO, profileImage);
             logger.info("Updated specialist profile with ID: {}", id);
             return ResponseEntity.ok(new ApiResponseDTO<>("Updated specialist profile", specialist));
         } catch (FileValidationException e) {
-            logger.error(e.getMessage());
+            logger.error("File validation error: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponseDTO<>(e.getMessage(), null));
         } catch (ResourceNotFoundException e) {
             logger.error("Specialist not found with ID: {}", id, e);
@@ -459,11 +465,15 @@ public class AdminController {
         } catch (IOException e) {
             logger.error("IO Error: {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponseDTO<>("Error updating specialist profile", null));
+        } catch (UnauthorizedAccessException e) {
+            logger.error("Unauthorized access attempt by user: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponseDTO<>("Unauthorized access", null));
         } catch (Exception e) {
             logger.error("Unexpected error: {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponseDTO<>("Error updating specialist profile", null));
         }
     }
+
 
     /**
      * Search for specialists with a keyword.
@@ -477,7 +487,7 @@ public class AdminController {
      * @return ResponseEntity with ApiResponse containing a page of specialists
      */
     @GetMapping("/specialists/search")
-    public ResponseEntity<ApiResponseDTO<Page<SpecialistDTO>>> searchSpecialists(
+    public ResponseEntity<ApiResponseDTO<Page<SpecialistResponseDTO>>> searchSpecialists(
             @RequestParam String keyword,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -485,12 +495,18 @@ public class AdminController {
             @RequestParam(defaultValue = "asc") String sortDir) {
         try {
             Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.fromString(sortDir), sortBy));
-            Page<SpecialistDTO> specialists = specialistService.searchSpecialists(keyword, pageable);
+            Page<SpecialistResponseDTO> specialists = specialistService.searchSpecialists(keyword, pageable);
             logger.info("Searched specialists with keyword: {}", keyword);
             return ResponseEntity.ok(new ApiResponseDTO<>("Searched specialists", specialists));
+        } catch (ResourceNotFoundException e) {
+            logger.error("Specialist not found with keyword {}: {}", keyword, e.getMessage());
+            return new ResponseEntity<>(new ApiResponseDTO<>("No specialists found with the keyword: " + keyword), HttpStatus.NOT_FOUND);
+        } catch (UnauthorizedAccessException e) {
+            logger.error("Unauthorized access attempt for keyword search: {}", keyword, e.getMessage());
+            return new ResponseEntity<>(new ApiResponseDTO<>("Unauthorized access"), HttpStatus.UNAUTHORIZED);
         } catch (Exception e) {
             logger.error("Error searching specialists with keyword {}: {}", keyword, e.getMessage());
-            return new ResponseEntity<>(new ApiResponseDTO<>("Error searching specialists"), HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(new ApiResponseDTO<>("Error searching specialists: " + e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -506,8 +522,17 @@ public class AdminController {
             specialistService.deleteSpecialistByAdmin(id);
             logger.info("Deleted specialist with ID: {}", id);
             return ResponseEntity.ok(new ApiResponseDTO<>("Specialist profile deleted successfully"));
+        } catch (ResourceNotFoundException e) {
+            logger.error("Specialist not found with ID {}: {}", id, e.getMessage());
+            return new ResponseEntity<>(new ApiResponseDTO<>("Specialist not found"), HttpStatus.NOT_FOUND);
+        } catch (UnauthorizedAccessException e) {
+            logger.error("Unauthorized access attempt to delete specialist with ID {}: {}", id, e.getMessage());
+            return new ResponseEntity<>(new ApiResponseDTO<>("Unauthorized access"), HttpStatus.UNAUTHORIZED);
+        } catch (IOException e) {
+            logger.error("IO Error deleting specialist with ID {}: {}", id, e.getMessage(), e);
+            return new ResponseEntity<>(new ApiResponseDTO<>("IO Error deleting specialist"), HttpStatus.INTERNAL_SERVER_ERROR);
         } catch (Exception e) {
-            logger.error("Error deleting specialist with ID {}: {}", id, e.getMessage());
+            logger.error("Unexpected error deleting specialist with ID {}: {}", id, e.getMessage(), e);
             return new ResponseEntity<>(new ApiResponseDTO<>("Error deleting specialist"), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }

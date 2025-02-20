@@ -1,18 +1,16 @@
 package com.petconnect.backend.services;
 
+import com.petconnect.backend.dto.specialist.SpecialistResponseDTO;
 import com.petconnect.backend.dto.specialist.SpecialistUpdateRequestDTO;
 import com.petconnect.backend.dto.specialist.SpecialistCreateRequestDTO;
-import com.petconnect.backend.dto.specialist.SpecialistDTO;
-import com.petconnect.backend.dto.user.AddressDTO;
 import com.petconnect.backend.entity.Specialist;
 import com.petconnect.backend.entity.Role;
-import com.petconnect.backend.entity.Address;
 import com.petconnect.backend.exceptions.ResourceNotFoundException;
+import com.petconnect.backend.exceptions.UnauthorizedAccessException;
 import com.petconnect.backend.exceptions.UserAlreadyExistsException;
 import com.petconnect.backend.mappers.SpecialistMapper;
 import com.petconnect.backend.repositories.SpecialistRepository;
 import com.petconnect.backend.repositories.UserRepository;
-import com.petconnect.backend.repositories.AddressRepository;
 import com.petconnect.backend.utils.RoleAssignmentUtil;
 import com.petconnect.backend.utils.TempUserStore;
 import org.slf4j.Logger;
@@ -38,7 +36,6 @@ public class SpecialistService {
     private final SpecialistRepository specialistRepository;
     private final UserRepository userRepository;
     private final RoleAssignmentUtil roleAssignmentUtil;
-    private final AddressRepository addressRepository;
     private final PasswordEncoder passwordEncoder;
     private final SpecialistMapper specialistMapper;
     private final UploadService uploadService;
@@ -47,12 +44,11 @@ public class SpecialistService {
 
     @Autowired
     public SpecialistService(SpecialistRepository specialistRepository, UserRepository userRepository, RoleAssignmentUtil roleAssignmentUtil,
-                             AddressRepository addressRepository, @Lazy PasswordEncoder passwordEncoder,
+                              @Lazy PasswordEncoder passwordEncoder,
                              SpecialistMapper specialistMapper, UploadService uploadService, VerificationService verificationService, TempUserStore tempUserStore) {
         this.specialistRepository = specialistRepository;
         this.userRepository = userRepository;
         this.roleAssignmentUtil = roleAssignmentUtil;
-        this.addressRepository = addressRepository;
         this.passwordEncoder = passwordEncoder;
         this.specialistMapper = specialistMapper;
         this.uploadService = uploadService;
@@ -66,7 +62,7 @@ public class SpecialistService {
      * @param pageable Pageable object for pagination
      * @return A page of SpecialistDTO objects
      */
-    public Page<SpecialistDTO> getAllSpecialists(Pageable pageable) {
+    public Page<SpecialistResponseDTO> getAllSpecialists(Pageable pageable) {
         try {
             Page<Specialist> specialists = specialistRepository.findAll(pageable);
             logger.info("Fetched all specialists with pagination");
@@ -84,7 +80,7 @@ public class SpecialistService {
      * @return A SpecialistDTO object
      * @throws ResourceNotFoundException if the specialist is not found
      */
-    public SpecialistDTO getSpecialistById(Long id) {
+    public SpecialistResponseDTO getSpecialistById(Long id) {
         try {
             Specialist specialist = specialistRepository.findById(id)
                     .orElseThrow(() -> new ResourceNotFoundException("Specialist not found with id " + id));
@@ -94,7 +90,7 @@ public class SpecialistService {
             logger.error("Specialist not found with ID: {}", id, e);
             throw e;
         } catch (Exception e) {
-            logger.error("Error fetching specialist with ID: {}", id, e.getMessage());
+            logger.error("Error fetching specialist with ID: {}, message: {}", id, e.getMessage());
             throw new RuntimeException("Error fetching specialist", e);
         }
     }
@@ -109,7 +105,7 @@ public class SpecialistService {
      * @throws IOException If an error occurs during image upload
      */
     @Transactional
-    public SpecialistDTO updateSpecialist(SpecialistUpdateRequestDTO specialistUpdateRequestDTO, MultipartFile profileImage, UserDetails userDetails) throws IOException {
+    public SpecialistResponseDTO updateSpecialist(SpecialistUpdateRequestDTO specialistUpdateRequestDTO, MultipartFile profileImage, UserDetails userDetails) throws IOException {
         try {
             Specialist specialist = (Specialist) userRepository.findByEmail(userDetails.getUsername())
                     .orElseThrow(() -> new ResourceNotFoundException("Specialist not found with email: " + userDetails.getUsername()));
@@ -173,34 +169,37 @@ public class SpecialistService {
         }
     }
 
-
-    /**
+   /**
      * Updates a specialist by admin.
      *
      * @param id Specialist ID
      * @param specialistUpdateRequestDTO DTO containing specialist information
      * @param profileImage Profile image file
-     * @return The updated SpecialistDTO object
+     * @return The updated specialistResponseDTO object
      * @throws IOException If an error occurs during image upload
      */
-    @Transactional
-    public SpecialistDTO updateSpecialistByAdmin(Long id, SpecialistUpdateRequestDTO specialistUpdateRequestDTO, MultipartFile profileImage) throws IOException {
-        try {
-            Specialist specialist = specialistRepository.findById(id)
-                    .orElseThrow(() -> new ResourceNotFoundException("Specialist not found with id " + id));
-            logger.info("Updating specialist profile with ID: {}", id);
-            return updateSpecialist(specialist, specialistUpdateRequestDTO, profileImage);
-        } catch (ResourceNotFoundException e) {
-            logger.error("Specialist not found with ID: {}", id, e);
-            throw e;
-        } catch (IOException e) {
-            logger.error("IO Error during profile update: {}", e.getMessage(), e);
-            throw e;
-        } catch (Exception e) {
-            logger.error("Error updating specialist profile: {}", e.getMessage(), e);
-            throw new RuntimeException("Error updating specialist profile", e);
-        }
-    }
+   @Transactional
+   public SpecialistResponseDTO updateSpecialistByAdmin(Long id, SpecialistUpdateRequestDTO specialistUpdateRequestDTO, MultipartFile profileImage) throws IOException {
+       try {
+           Specialist specialist = specialistRepository.findById(id)
+                   .orElseThrow(() -> new ResourceNotFoundException("Specialist not found with id " + id));
+           logger.info("Updating specialist profile with ID: {}", id);
+           return updateSpecialist(specialist, specialistUpdateRequestDTO, profileImage);
+       } catch (ResourceNotFoundException e) {
+           logger.error("Specialist not found with ID: {}", id, e);
+           throw e;
+       } catch (UnauthorizedAccessException e) {
+           logger.error("Unauthorized access attempt for user: {}", id, e);
+           throw new RuntimeException("Unauthorized access", e);
+       } catch (IOException e) {
+           logger.error("IO Error during profile update: {}", e.getMessage(), e);
+           throw e;
+       } catch (Exception e) {
+           logger.error("Error updating specialist profile: {}", e.getMessage(), e);
+           throw new RuntimeException("Error updating specialist profile", e);
+       }
+   }
+
 
     /**
      * Updates the specialist profile.
@@ -211,7 +210,7 @@ public class SpecialistService {
      * @return The updated SpecialistDTO object
      * @throws IOException If an error occurs during image upload
      */
-    private SpecialistDTO updateSpecialist(Specialist specialist, SpecialistUpdateRequestDTO specialistUpdateRequestDTO, MultipartFile profileImage) throws IOException {
+    private SpecialistResponseDTO updateSpecialist(Specialist specialist, SpecialistUpdateRequestDTO specialistUpdateRequestDTO, MultipartFile profileImage) throws IOException {
         try {
             // Handle profile image upload
             handleProfileImageUpload(profileImage, specialist);
@@ -303,11 +302,23 @@ public class SpecialistService {
      * @param pageable Pageable object for pagination
      * @return A page of specialists matching the keyword
      */
-    public Page<SpecialistDTO> searchSpecialists(String keyword, Pageable pageable) {
-        Page<Specialist> specialists = specialistRepository.findByFirstNameContainingOrSpecialityContaining(keyword, keyword, pageable);
-        logger.info("Searched specialists with keyword: {}", keyword);
-        return specialists.map(specialistMapper::toDTO);
+    public Page<SpecialistResponseDTO> searchSpecialists(String keyword, Pageable pageable) {
+        try {
+            Page<Specialist> specialists = specialistRepository.findByFirstNameContainingOrSpecialityContaining(keyword, keyword, pageable);
+            logger.info("Searched specialists with keyword: {}", keyword);
+            return specialists.map(specialistMapper::toDTO);
+        } catch (ResourceNotFoundException e) {
+            logger.error("Specialist not found with keyword: {}", keyword, e);
+            throw new RuntimeException("No specialists found with the keyword: " + keyword, e);
+        } catch (UnauthorizedAccessException e) {
+            logger.error("Unauthorized access attempt for keyword search: {}", keyword, e);
+            throw new RuntimeException("Unauthorized access", e);
+        } catch (Exception e) {
+            logger.error("Error searching specialists with keyword: {}", keyword, e);
+            throw new RuntimeException("Error searching specialists", e);
+        }
     }
+
 
     /**
      * Handles the upload of a profile image for a specialist.
