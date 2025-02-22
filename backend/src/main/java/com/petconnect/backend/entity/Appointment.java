@@ -2,6 +2,10 @@ package com.petconnect.backend.entity;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
+
 import java.util.Date;
 
 @Entity
@@ -46,6 +50,15 @@ public class Appointment {
     @Column(nullable = false)
     private int duration; // Duration in minutes
 
+    // New fields for feedback and rating
+    @Column(length = 1000)
+    private String feedback;
+
+    @NotNull(message = "Rating is required")
+    @Min(value = 1, message = "Rating must be at least 1")
+    @Max(value = 5, message = "Rating must be at most 5")
+    private Integer rating;
+
     @PrePersist
     protected void onCreate() {
         createdAt = new Date();
@@ -56,21 +69,7 @@ public class Appointment {
         updatedAt = new Date();
     }
 
-    public Appointment() {
-    }
-
-    public Appointment(Long appointmentId, Date date, Date createdAt, Date updatedAt, Pet pet, Specialist specialist, User petOwner, AppointmentStatus status, String notes, int duration) {
-        this.appointmentId = appointmentId;
-        this.date = date;
-        this.createdAt = createdAt;
-        this.updatedAt = updatedAt;
-        this.pet = pet;
-        this.specialist = specialist;
-        this.petOwner = petOwner;
-        this.status = status;
-        this.notes = notes;
-        this.duration = duration;
-    }
+    // Constructors, Getters, and Setters...
 
     public Long getAppointmentId() {
         return appointmentId;
@@ -150,6 +149,22 @@ public class Appointment {
 
     public void setDuration(int duration) {
         this.duration = duration;
+    }
+
+    public String getFeedback() {
+        return feedback;
+    }
+
+    public void setFeedback(String feedback) {
+        this.feedback = feedback;
+    }
+
+    public int getRating() {
+        return rating;
+    }
+
+    public void setRating(int rating) {
+        this.rating = rating;
     }
 
     public enum AppointmentStatus {
