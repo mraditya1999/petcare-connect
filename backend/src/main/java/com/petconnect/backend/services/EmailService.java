@@ -35,6 +35,11 @@ public class EmailService {
         this.templateEngine = templateEngine;
     }
 
+    /**
+     * Sends a verification email to the user.
+     *
+     * @param user the user to whom the verification email is to be sent
+     */
     public void sendVerificationEmail(User user) {
         String[] urls = frontendUrls.split(",");
         String verificationLink = chooseURL(urls) + "/user/verify-email?token=" + user.getVerificationToken() + "&email=" + user.getEmail();
@@ -51,12 +56,16 @@ public class EmailService {
             helper.setFrom("ay5480620@gmail.com"); // Or configure in MailConfig
             mailSender.send(message);
             logger.info("Verification email sent to: {}", user.getEmail());
-
         } catch (MessagingException e) {
             logger.error("Error sending verification email to: {}", user.getEmail(), e);
         }
     }
 
+    /**
+     * Sends a password reset email to the user.
+     *
+     * @param user the user to whom the password reset email is to be sent
+     */
     public void sendResetEmail(User user) {
         String[] urls = frontendUrls.split(",");
         String resetLink = chooseURL(urls) + "/user/reset-password?token=" + user.getResetToken() + "&email=" + user.getEmail();
@@ -78,7 +87,13 @@ public class EmailService {
         }
     }
 
-
+    /**
+     * Chooses a URL from the provided array of URLs.
+     *
+     * @param urls an array of URLs
+     * @return the chosen URL as a string
+     * @throws IllegalArgumentException if no URLs are configured or if an invalid URL is chosen
+     */
     private String chooseURL(String[] urls) {
         if (urls == null || urls.length == 0) {
             throw new IllegalArgumentException("No frontend URLs configured.");
@@ -93,13 +108,21 @@ public class EmailService {
         return chosenURL;
     }
 
+    /**
+     * Validates if the provided URL is valid.
+     *
+     * @param url the URL to be validated
+     * @return true if the URL is valid, false otherwise
+     */
     private boolean isValidURL(String url) {
         try {
-            new java.net.URI(url).toURL();  // Use URI and toURL()
+            java.net.URI uri = new java.net.URI(url);
+            uri.toURL();  // Use URI and toURL() to validate
             return true;
         } catch (java.net.MalformedURLException | java.net.URISyntaxException e) {
             logger.error("Invalid URL format: {}", url, e);
             return false;
         }
     }
+
 }

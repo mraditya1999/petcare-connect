@@ -1,6 +1,8 @@
 package com.petconnect.backend.mappers;
 
-import com.petconnect.backend.dto.*;
+import com.petconnect.backend.dto.specialist.SpecialistResponseDTO;
+import com.petconnect.backend.dto.specialist.SpecialistUpdateRequestDTO;
+import com.petconnect.backend.dto.specialist.SpecialistCreateRequestDTO;
 import com.petconnect.backend.entity.Specialist;
 import com.petconnect.backend.entity.Role;
 import org.mapstruct.Mapper;
@@ -10,22 +12,30 @@ import java.util.Set;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@Mapper(componentModel = "spring", uses = { AddressMapper.class, RoleMapper.class })
+@Mapper(componentModel = "spring", uses = { RoleMapper.class }) // Removed AddressMapper as it's not needed
 public interface SpecialistMapper {
 
     @Mapping(target = "specialistId", source = "userId")
-    SpecialistDTO toDTO(Specialist specialist);
+    SpecialistResponseDTO toDTO(Specialist specialist);
 
-    @Mapping(target = "address", source = "addressDTO")
+    @Mapping(target = "address.pincode", source = "pincode")
+    @Mapping(target = "address.city", source = "city")
+    @Mapping(target = "address.state", source = "state")
+    @Mapping(target = "address.country", source = "country")
+    @Mapping(target = "address.locality", source = "locality")
     Specialist toSpecialistEntity(SpecialistCreateRequestDTO specialistCreateRequestDTO);
 
     @Mapping(target = "userId", source = "specialistId")
     SpecialistResponseDTO toSpecialistResponseDTO(Specialist specialist);
 
     @Mapping(target = "userId", source = "specialistId")
-    SpecialistResponseDTO toSpecialistResponseDTO(SpecialistDTO specialistDTO);
+    SpecialistResponseDTO toSpecialistResponseDTO(SpecialistResponseDTO specialistResponseDTO);
 
-    @Mapping(target = "address", source = "addressDTO")
+    @Mapping(target = "address.pincode", source = "pincode")
+    @Mapping(target = "address.city", source = "city")
+    @Mapping(target = "address.state", source = "state")
+    @Mapping(target = "address.country", source = "country")
+    @Mapping(target = "address.locality", source = "locality")
     void updateSpecialistEntity(SpecialistUpdateRequestDTO specialistUpdateRequestDTO, @MappingTarget Specialist specialist);
 
     // Custom mapping for roles to handle enum conversion

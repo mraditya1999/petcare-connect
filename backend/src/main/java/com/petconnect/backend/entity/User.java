@@ -93,10 +93,9 @@ public class User {
     @JsonManagedReference
     private List<Pet> pets;
 
-//        @PrePersist
-//        public void onPersist() {
-//            this.isVerified = false;
-//        }
+    @OneToMany(mappedBy = "petOwner", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
+    @JsonManagedReference
+    private List<Appointment> appointments;
 
     public boolean hasRole(Role.RoleName roleName) {
         return roles.stream().anyMatch(role -> role.getAuthority().equals(roleName));

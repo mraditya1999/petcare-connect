@@ -8,6 +8,7 @@ import com.petconnect.backend.exceptions.FileValidationException;
 import com.petconnect.backend.exceptions.ResourceNotFoundException;
 import com.petconnect.backend.services.UserService;
 import com.petconnect.backend.utils.FileUtils;
+import com.petconnect.backend.validators.FileValidator;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,11 +32,13 @@ public class UserController {
     private final UserService userService;
     private static final Logger logger = LoggerFactory.getLogger(UserController.class);
     private final FileUtils fileUtils;
+    private final FileValidator fileValidator;
 
     @Autowired
-    public UserController(UserService userService, FileUtils fileUtils) {
+    public UserController(UserService userService, FileUtils fileUtils, FileValidator fileValidator) {
         this.userService = userService;
         this.fileUtils = fileUtils;
+        this.fileValidator = fileValidator;
     }
 
     /**
@@ -78,9 +81,9 @@ public class UserController {
         logger.info("Received request to update user profile for: {}", userDetails.getUsername());
 
         try {
-            MultipartFile profileImage = fileUtils.getSingleFile(profileImages);
+            MultipartFile profileImage = fileValidator.getSingleFile(profileImages);
             if (profileImage != null) {
-                fileUtils.validateFile(profileImage);
+                fileValidator.validateFile(profileImage);
             }
 
             String username = userDetails.getUsername();

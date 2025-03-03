@@ -4,7 +4,6 @@ import com.petconnect.backend.entity.Role;
 import com.petconnect.backend.entity.User;
 import com.petconnect.backend.exceptions.AuthenticationException;
 import com.petconnect.backend.exceptions.UserAlreadyExistsException;
-import com.petconnect.backend.repositories.RoleRepository;
 import com.petconnect.backend.utils.RoleAssignmentUtil;
 import com.petconnect.backend.repositories.UserRepository;
 import com.petconnect.backend.security.JwtUtil;

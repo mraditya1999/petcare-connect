@@ -10,6 +10,7 @@ export { default as ProtectedRoute } from "./auth/ProtectedRoute";
 export { default as Header } from "./shared/Header";
 export { default as Footer } from "./shared/Footer";
 export { default as Navbar } from "./shared/Navbar";
+export { default as ProfileShimmer } from "./shared/ProfileShimmer";
 export { default as CustomButton } from "./shared/CustomButton";
 export { default as ContentCard } from "./shared/ContentCard";
 export { default as GenericAlert } from "./shared/GenericAlert";

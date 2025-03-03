@@ -1,52 +1,51 @@
-// export interface Address {
-//   addressId: number;
-//   pincode: number;
-//   city: string;
-//   state: string;
-//   country: string;
-//   locality: string;
-// }
-
-// export interface IProfile {
-//   userId: string;
-//   firstName: string;
-//   lastName: string;
-//   email: string;
-//   address: Address;
-//   avatarUrl: string;
-//   avatarPublicId: string;
-//   mobileNumber: string;
-//   role: "USER" | "ADMIN" | "SPECIALIST";
-// }
-
-// export interface IProfileState {
-//   profile: IProfile | null;
-//   loading: boolean;
-//   error: string | null;
-//   success: string | null;
-// }
-export interface Address {
-  pincode: number;
+interface IAddress {
+  addressId: number;
+  pincode: string;
   city: string;
   state: string;
   country: string;
   locality: string;
 }
 
-export interface IProfile {
+export interface IUserData {
+  userId: number;
+  firstName: string;
+  lastName: string;
+  email: string;
+  address: IAddress;
+  avatarUrl: string | null;
+  avatarPublicId: string | null;
+  mobileNumber: string | null;
+}
+
+export interface IProfileData {
+  userId: number;
+  firstName: string;
+  lastName: string;
+  email: string;
+  address: IAddress;
+  avatarUrl: string | null;
+  avatarPublicId: string | null;
+  mobileNumber: string | null;
+}
+
+export interface IProfileFormData {
   userId: string;
   firstName: string;
   lastName: string;
   email: string;
-  address: Address;
-  avatarUrl: string;
-  avatarPublicId: string;
-  mobileNumber: string;
-  roles: Array<"USER" | "ADMIN" | "SPECIALIST">;
+  pincode: string;
+  city: string;
+  state: string;
+  country: string;
+  locality: string;
+  avatarUrl: string | null;
+  avatarPublicId: string | null;
+  mobileNumber: string | null;
 }
 
 export interface IProfileState {
-  profile: IProfile | null;
+  profile: IProfileData | null;
   loading: boolean;
   error: string | null;
   success: string | null;

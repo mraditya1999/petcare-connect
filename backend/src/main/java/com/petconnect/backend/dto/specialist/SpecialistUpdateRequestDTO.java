@@ -1,7 +1,7 @@
-package com.petconnect.backend.dto;
+package com.petconnect.backend.dto.specialist;
 
 import com.petconnect.backend.dto.user.AddressDTO;
-import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Size;
 
 public class SpecialistUpdateRequestDTO {
@@ -10,9 +10,6 @@ public class SpecialistUpdateRequestDTO {
 
     @Size(max = 255, message = "Last name cannot exceed 255 characters")
     private String lastName;
-
-    @Email(message = "Invalid email format")
-    private String email;
 
     @Size(min = 6, message = "Password must be at least 6 characters")
     private String password;
@@ -29,22 +26,39 @@ public class SpecialistUpdateRequestDTO {
     private String avatarUrl;
     private String avatarPublicId;
 
-    private AddressDTO addressDTO;
+    @Min(value = 100000, message = "Pincode must be at least 6 digits")
+    private Long pincode;
+
+    @Size(max = 100, message = "City cannot exceed 100 characters")
+    private String city;
+
+    @Size(max = 100, message = "State cannot exceed 100 characters")
+    private String state;
+
+    @Size(max = 100, message = "Country cannot exceed 100 characters")
+    private String country;
+
+    @Size(max = 255, message = "Locality cannot exceed 255 characters")
+    private String locality;
+
 
     public SpecialistUpdateRequestDTO() {
     }
 
-    public SpecialistUpdateRequestDTO(String firstName, String lastName, String email, String password, String mobileNumber, String speciality, String about, String avatarUrl, String avatarPublicId, AddressDTO addressDTO) {
+    public SpecialistUpdateRequestDTO(String firstName, String lastName, String password, String mobileNumber, String speciality, String about, String avatarUrl, String avatarPublicId, Long pincode, String city, String state, String country, String locality) {
         this.firstName = firstName;
         this.lastName = lastName;
-        this.email = email;
         this.password = password;
         this.mobileNumber = mobileNumber;
         this.speciality = speciality;
         this.about = about;
         this.avatarUrl = avatarUrl;
         this.avatarPublicId = avatarPublicId;
-        this.addressDTO = addressDTO;
+        this.pincode = pincode;
+        this.city = city;
+        this.state = state;
+        this.country = country;
+        this.locality = locality;
     }
 
     public String getFirstName() {
@@ -61,14 +75,6 @@ public class SpecialistUpdateRequestDTO {
 
     public void setLastName(String lastName) {
         this.lastName = lastName;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
     }
 
     public String getPassword() {
@@ -120,12 +126,44 @@ public class SpecialistUpdateRequestDTO {
         this.avatarPublicId = avatarPublicId;
     }
 
-    public AddressDTO getAddressDTO() {
-        return addressDTO;
+    public Long getPincode() {
+        return pincode;
     }
 
-    public void setAddressDTO(AddressDTO addressDTO) {
-        this.addressDTO = addressDTO;
+    public void setPincode(Long pincode) {
+        this.pincode = pincode;
+    }
+
+    public String getCity() {
+        return city;
+    }
+
+    public void setCity(String city) {
+        this.city = city;
+    }
+
+    public String getState() {
+        return state;
+    }
+
+    public void setState(String state) {
+        this.state = state;
+    }
+
+    public String getCountry() {
+        return country;
+    }
+
+    public void setCountry(String country) {
+        this.country = country;
+    }
+
+    public String getLocality() {
+        return locality;
+    }
+
+    public void setLocality(String locality) {
+        this.locality = locality;
     }
 }
 

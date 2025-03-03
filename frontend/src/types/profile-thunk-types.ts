@@ -1,11 +1,12 @@
-import { IProfile } from "./profile-types";
+import { IProfileData } from "./profile-types";
 
 export interface FetchProfileResponse {
-  profile: IProfile;
+  message: string;
+  data: IProfileData;
 }
 
 export interface IUpdateProfileResponse {
-  profile: IProfile;
+  profile: IProfileData;
 }
 
 export interface IDeleteProfileResponse {

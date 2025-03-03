@@ -1,5 +1,5 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
-import { IProfile } from "@/types/profile-types";
+import { IProfileData } from "@/types/profile-types";
 import { customFetch } from "@/utils/customFetch";
 import { handleError } from "@/utils/helpers";
 import {
@@ -9,13 +9,14 @@ import {
 } from "@/types/profile-thunk-types";
 
 export const fetchProfile = createAsyncThunk<
-  IProfile,
+  IProfileData,
   void,
   { rejectValue: string }
 >("user/fetchProfile", async (_, { rejectWithValue }) => {
   try {
     const response = await customFetch.get("/profile");
-    const data: IProfile = response.data.data;
+    const data = response.data.data;
+    console.log(data);
     return data;
   } catch (error) {
     return rejectWithValue(handleError(error));
@@ -23,7 +24,7 @@ export const fetchProfile = createAsyncThunk<
 });
 
 export const updateProfile = createAsyncThunk<
-  IProfile,
+  IProfileData,
   FormData,
   { rejectValue: string }
 >("user/updateProfile", async (formData: FormData, { rejectWithValue }) => {
@@ -33,7 +34,7 @@ export const updateProfile = createAsyncThunk<
       console.log(`${key}:`, value instanceof File ? value.name : value);
     }
 
-    const response = await customFetch.put<IProfile>("/profile", formData);
+    const response = await customFetch.put<IProfileData>("/profile", formData);
     console.log(response);
     return response.data;
   } catch (error) {

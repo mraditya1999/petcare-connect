@@ -2,8 +2,8 @@ package com.petconnect.backend.config;
 
 import com.petconnect.backend.entity.Address;
 import com.petconnect.backend.entity.Role;
+import com.petconnect.backend.entity.Specialist;
 import com.petconnect.backend.entity.User;
-import com.petconnect.backend.exceptions.ResourceNotFoundException;
 import com.petconnect.backend.repositories.RoleRepository;
 import com.petconnect.backend.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,7 +33,8 @@ public class DataInitializer implements CommandLineRunner {
         createRoleIfNotFound(Role.RoleName.USER);
         createRoleIfNotFound(Role.RoleName.ADMIN);
         createRoleIfNotFound(Role.RoleName.SPECIALIST);
-//        initializeDefaultUsers();
+        initializeDefaultUsers();
+        initializeSpecialist();
     }
 
     private void createRoleIfNotFound(Role.RoleName roleName) {
@@ -48,10 +49,16 @@ public class DataInitializer implements CommandLineRunner {
         if (!userRepository.existsByEmail("ay5480620@gmail.com")) {
             createUser("Aditya", "Yadav", "ay5480620@gmail.com", "@mrAditya1999", Role.RoleName.ADMIN, true, createAddress());
         }
-//
-//        if (!userRepository.existsByEmail("dbadaditya@gmail.com")) {
-//            createUser("Honey", "Singh", "dbadaditya@gmail.com", "@mrAditya1999", Role.RoleName.USER, true ,createAddress());
-//        }
+
+        if (!userRepository.existsByEmail("dbadaditya@gmail.com")) {
+            createUser("Honey", "Singh", "dbadaditya@gmail.com", "@mrAditya1999", Role.RoleName.USER, true ,createAddress());
+        }
+    }
+
+    private void initializeSpecialist() {
+        if (!userRepository.existsByEmail("specialist@example.com")) {
+            createSpecialist("Jane", "Doe", "specialist@example.com", "@mrAditya1999", createAddress(), "Experienced veterinarian with a focus on canine health.", "Veterinary Medicine");
+        }
     }
 
     private void createUser(String firstName, String lastName, String email, String password, Role.RoleName role, boolean isVerified, Address address) {
@@ -67,6 +74,20 @@ public class DataInitializer implements CommandLineRunner {
         userRepository.save(user);
     }
 
+    private void createSpecialist(String firstName, String lastName, String email, String password, Address address, String about, String speciality) {
+        Specialist specialist = new Specialist();
+        specialist.setFirstName(firstName);
+        specialist.setLastName(lastName);
+        specialist.setEmail(email);
+        specialist.setPassword(passwordEncoder.encode(password));
+        specialist.setVerified(true);
+        specialist.setRoles(new HashSet<>(Set.of(roleRepository.findByRoleName(Role.RoleName.SPECIALIST).orElseThrow(() -> new IllegalArgumentException("Role not found")))));
+        specialist.setAddress(address);
+        specialist.setAbout(about);
+        specialist.setSpeciality(speciality);
+
+        userRepository.save(specialist);
+    }
 
     private Address createAddress() {
         Address address = new Address();
