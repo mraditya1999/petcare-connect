@@ -80,30 +80,6 @@ export const resetPasswordFormSchema = z
     path: ["confirmPassword"],
   });
 
-export const profileFormSchema = z.object({
-  firstName: z.string().nonempty("First name is required"),
-  lastName: z.string().nonempty("Last name is required"),
-  email: z
-    .string()
-    .email("Invalid email address")
-    .nonempty("Please enter a valid email address"),
-  mobileNumber: z
-    .union([
-      z.string().regex(/^\d{10}$/, "Mobile number must be exactly 10 digits"),
-      z.null(),
-    ])
-    .optional(),
-  pincode: z
-    .string()
-    .regex(/^\d{6}$/, "Pincode must be exactly 6 digits")
-    .optional()
-    .transform((val) => (val ? parseInt(val, 10) : undefined)),
-  city: z.string().optional(),
-  state: z.string().optional(),
-  country: z.string().optional(),
-  locality: z.string().optional(),
-});
-
 export const updatePasswordSchema = z
   .object({
     currentPassword: z.string().min(1, "Current password is required"),
@@ -118,3 +94,29 @@ export const updatePasswordSchema = z
     message: "Passwords do not match",
     path: ["confirmPassword"],
   });
+
+  import { z } from "zod";
+
+  export const profileFormSchema = z.object({
+    firstName: z.string().nonempty("First name is required"),
+    lastName: z.string().nonempty("Last name is required"),
+    email: z
+      .string()
+      .email("Invalid email address")
+      .nonempty("Please enter a valid email address"),
+    mobileNumber: z
+      .union([
+        z.string().regex(/^\d{10}$/, "Mobile number must be exactly 10 digits"),
+        z.null(),
+      ])
+      .optional(),
+    pincode: z
+      .string()
+      .regex(/^\d{6}$/, "Pincode must be exactly 6 digits")
+      .optional(),
+    city: z.string().optional(),
+    state: z.string().optional(),
+    country: z.string().optional(),
+    locality: z.string().optional(),
+  });
+  

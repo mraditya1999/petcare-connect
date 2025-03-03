@@ -13,13 +13,15 @@ import {
   ErrorPage,
   ProfilePage,
   SingleForumPage,
+  AdminDashboardPage,
+  SpecialistDashboardPage,
+  UserDashboardPage,
 } from "@/pages";
 import { ROUTES } from "@/utils/constants";
 import {
   ForgetPassword,
   Login,
   ProtectedRoute,
-  // ProtectedRoute,
   Register,
   ResetPassword,
   VerifyEmailPage,
@@ -28,10 +30,14 @@ import {
 const router = createBrowserRouter(
   createRoutesFromElements(
     <>
-      {/* Protected Route  */}
+      {/* Protected Route */}
       <Route
         element={
-          <ProtectedRoute>
+          <ProtectedRoute
+            adminComponent={<AdminDashboardPage />}
+            specialistComponent={<SpecialistDashboardPage />}
+            userComponent={<UserDashboardPage />}
+          >
             <LayoutPage />
           </ProtectedRoute>
         }
@@ -42,7 +48,6 @@ const router = createBrowserRouter(
 
       {/* Public Route */}
       <Route element={<LayoutPage />}>
-        {/* <Route path={ROUTES.PROFILE} element={<ProfilePage />} /> */}
         <Route index path={ROUTES.HOME} element={<HomePage />} />
         <Route path={ROUTES.ABOUT} element={<AboutPage />} />
         <Route path={ROUTES.FORUM} element={<ForumPage />} />

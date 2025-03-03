@@ -7,3 +7,7 @@ export { default as ForumPage } from "./ForumPage/ForumPage";
 export { default as SingleForumPage } from "./ForumPage/SingleForumPage";
 export { default as ServicePage } from "./ServicePage/ServicePage";
 export { default as ErrorPage } from "./ErrorPage/ErrorPage";
+
+export { default as AdminDashboardPage } from "./DashboardPage/AdminDashboard";
+export { default as SpecialistDashboardPage } from "./DashboardPage/SpecialistDashboard";
+export { default as UserDashboardPage } from "./DashboardPage/UserDashboardPage";
