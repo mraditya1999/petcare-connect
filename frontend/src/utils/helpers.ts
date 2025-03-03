@@ -68,7 +68,7 @@ export function handleError(error: unknown): string {
   return "An unexpected error occurred.";
 }
 
-export const formatRelativeTime = (dateStr) => {
+export const formatRelativeTime = (dateStr: string | null): string => {
   if (!dateStr) return "Just now";
   const date = new Date(dateStr);
   return formatDistanceToNow(date, { addSuffix: true });

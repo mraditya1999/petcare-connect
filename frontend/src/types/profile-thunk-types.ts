@@ -1,4 +1,4 @@
-import { IProfileData } from "./profile-types";
+import { IProfileData } from "@/types/profile-types";
 
 export interface FetchProfileResponse {
   message: string;

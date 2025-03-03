@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { IProfileState, IProfile } from "@/types/profile-types";
+import { IProfileState, IProfileData } from "@/types/profile-types";
 import { fetchProfile, updateProfile, deleteProfile } from "./userThunk";
 import { IDeleteProfileResponse } from "@/types/profile-thunk-types";
 
@@ -22,7 +22,7 @@ export const profileSlice = createSlice({
       })
       .addCase(
         fetchProfile.fulfilled,
-        (state, action: PayloadAction<IProfile>) => {
+        (state, action: PayloadAction<IProfileData>) => {
           state.profile = action.payload;
           state.loading = false;
         },
@@ -37,7 +37,7 @@ export const profileSlice = createSlice({
       })
       .addCase(
         updateProfile.fulfilled,
-        (state, action: PayloadAction<IProfile>) => {
+        (state, action: PayloadAction<IProfileData>) => {
           state.profile = action.payload;
           state.loading = false;
           state.success = "Profile updated successfully";

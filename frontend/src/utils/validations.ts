@@ -95,8 +95,6 @@ export const updatePasswordSchema = z
     path: ["confirmPassword"],
   });
 
-  import { z } from "zod";
-
   export const profileFormSchema = z.object({
     firstName: z.string().nonempty("First name is required"),
     lastName: z.string().nonempty("Last name is required"),

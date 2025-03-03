@@ -359,7 +359,7 @@ const SingleForumPage = () => {
       <div className="section-width mx-auto mt-6 space-y-6 rounded-lg p-4 shadow-lg">
         <div className="flex items-center space-x-3 rounded-t-lg bg-gray-50 p-6">
           <Avatar className="h-10 w-10">
-            <AvatarImage src={forum?.userProfile || ""} alt="User Avatar" />
+            <AvatarImage src={forum?.firstName || ""} alt="User Avatar" />
             <AvatarFallback>
               {forum?.firstName?.slice(0, 1) || "?"}
             </AvatarFallback>{" "}
@@ -418,7 +418,7 @@ const SingleForumPage = () => {
         <div className="mt-4 rounded-lg bg-white p-6 shadow-md">
           {/* Added margin top */}
           <h2 className="text-lg font-semibold">Comments</h2>
-          {forum?.comments?.length > 0 ? (
+          {forum && forum.comments && forum?.comments?.length > 0 ? (
             forum.comments.map((comment) => (
               <div key={comment.commentId} className="mt-2 border-t p-2">
                 {/* Use commentId as key */}
