@@ -320,7 +320,7 @@ import { useEffect, useState } from "react";
 import { customFetch } from "@/utils/customFetch";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { Search, MessageCircle, Eye, Check } from "lucide-react";
+import { Search, MessageCircle, Check } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import ReactQuill from "react-quill";
@@ -340,8 +340,8 @@ import { formatRelativeTime } from "@/utils/helpers";
 import { ROUTES } from "@/utils/constants";
 
 const ForumPage = () => {
-  const [newForumTitle, setNewForumTitle] = useState(""); // Default title
-  const [newForumTags, setNewForumTags] = useState([]); // Default tags
+  const [newForumTitle, setNewForumTitle] = useState("");
+  const [newForumTags, setNewForumTags] = useState<string[]>(["community"]);
   const [forums, setForums] = useState<IForum[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -373,12 +373,6 @@ const ForumPage = () => {
       title: "Adoption & Rescue",
       src: img6,
     },
-  ];
-
-  const featuredTopics = [
-    "Mood of the Month",
-    "Product Reviews and Recommendations",
-    "How do you adapt your care routine for senior pets to keep them happy and healthy?",
   ];
 
   const solvedTopics = [
@@ -418,7 +412,7 @@ const ForumPage = () => {
       });
       setNewForumContent("");
       setNewForumTitle("New Forum"); // Reset title
-      setNewForumTags(["community"]); // Reset tags
+      setNewForumTags([]); // Reset tags
       fetchForums();
     } catch (error) {
       console.error("Error creating forum:", error);
@@ -515,10 +509,6 @@ const ForumPage = () => {
                           <MessageCircle className="h-4 w-4" />{" "}
                           {forum.comments?.length || 0}
                         </span>
-                        <span className="flex items-center gap-1">
-                          <Eye className="h-4 w-4" /> {forum.views || 0}{" "}
-                          {/* Add views if available */}
-                        </span>
                       </div>
                     </div>
                   </Card>
@@ -576,7 +566,7 @@ const ForumPage = () => {
                             {forum.comments?.length || 0}
                           </Button>
                           <span className="flex items-center gap-1">
-                            {formatRelativeTime(forum.createdAt)}
+                            formatRelativeTime(forum?.createdAt || "");
                           </span>
                         </div>
                       </div>
@@ -729,8 +719,9 @@ const ForumPage = () => {
             />
           </div>
           <Button onClick={handleCreateForum} className="mt-4">
-            Create Forum
+            {loading ? "Creating..." : "Create Forum"}
           </Button>
+          {error && <p className="mt-2 text-red-500">{error}</p>}
         </div>
       </section>
     </div>
