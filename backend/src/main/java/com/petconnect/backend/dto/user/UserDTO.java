@@ -1,8 +1,5 @@
 package com.petconnect.backend.dto.user;
 
-import lombok.Builder;
-
-@Builder
 public class UserDTO {
     private Long userId;
     private String firstName;

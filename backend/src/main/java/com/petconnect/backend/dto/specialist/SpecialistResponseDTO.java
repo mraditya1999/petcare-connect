@@ -142,4 +142,6 @@ public class SpecialistResponseDTO extends UserDTO {
     public void setSpecialistId(Long specialistId) {
         SpecialistId = specialistId;
     }
+
+
 }
