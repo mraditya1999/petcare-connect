@@ -43,7 +43,7 @@ services:
     ports:
       - '5173:5173'
 
-   mysql:
+  mysql:
     image: mysql:5.7
     environment:
       MYSQL_DATABASE: petcare_connect
@@ -53,7 +53,7 @@ services:
     ports:
       - '3306:3306'
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      test: ['CMD', 'mysqladmin', 'ping', '-h', 'localhost']
       interval: 30s
       timeout: 10s
       retries: 5
