@@ -1,23 +1,23 @@
-# Use the official Node.js image
-FROM node:16-alpine
+# Use an official Node.js runtime as a parent image
+FROM node:14-alpine
 
-# Set the working directory inside the container
+# Set the working directory in the container
 WORKDIR /app
 
-# Copy package.json and package-lock.json
+# Copy package.json and package-lock.json files
 COPY package*.json ./
 
 # Install dependencies
 RUN npm install
 
-# Copy the rest of the application code
+# Copy the rest of the application
 COPY . .
 
 # Build the application
 RUN npm run build
 
-# Expose port 3000 (or the port your frontend uses)
+# Expose the port the app runs on
 EXPOSE 5173
 
-# Start the application
-CMD ["npm", "run", "serve"]
+# Serve the application
+CMD ["npx", "serve", "-s", "build"]
