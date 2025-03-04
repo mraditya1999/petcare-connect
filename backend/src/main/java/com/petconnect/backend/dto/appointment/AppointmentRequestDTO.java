@@ -1,7 +1,6 @@
 package com.petconnect.backend.dto.appointment;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import lombok.Data;
 import jakarta.validation.constraints.NotNull;
 import java.util.Date;
 

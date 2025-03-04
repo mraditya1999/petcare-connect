@@ -17,6 +17,8 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.List;
@@ -24,6 +26,8 @@ import java.util.List;
 @Configuration
 @EnableSpringDataWebSupport(pageSerializationMode = EnableSpringDataWebSupport.PageSerializationMode.VIA_DTO)
 public class WebConfig implements WebMvcConfigurer {
+
+    private static final Logger logger = LoggerFactory.getLogger(WebConfig.class);
 
     private final RequestInterceptor requestInterceptor;
     private final Environment env;
@@ -35,12 +39,14 @@ public class WebConfig implements WebMvcConfigurer {
     public WebConfig(RequestInterceptor requestInterceptor, Environment env) {
         this.requestInterceptor = requestInterceptor;
         this.env = env;
+        logger.info("WebConfig initialized with frontendUrls: {}", frontendUrls);
     }
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(requestInterceptor)
                 .addPathPatterns("/auth/**", "/profiles/**", "/users/**", "/specialists/**", "/pets/**", "/forums/**", "/comments/**", "/likes/**", "/admin/**");
+        logger.info("Interceptors added");
     }
 
     @Bean
@@ -49,6 +55,7 @@ public class WebConfig implements WebMvcConfigurer {
 
         if (frontendUrls != null && !frontendUrls.isEmpty()) {
             List<String> allowedOrigins = Arrays.asList(frontendUrls.split(","));
+            logger.info("Allowed Origins: {}", allowedOrigins);
 
             // Validate origins
             for (String origin : allowedOrigins) {
@@ -57,6 +64,7 @@ public class WebConfig implements WebMvcConfigurer {
                 }
             }
             configuration.setAllowedOrigins(allowedOrigins);
+            configuration.setAllowCredentials(true); // Allow credentials
 
         } else {
             String message = "WARNING: No frontend URLs configured. CORS may not work as expected.";
@@ -67,12 +75,10 @@ public class WebConfig implements WebMvcConfigurer {
             }
         }
 
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS")); // Be as specific as possible
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
 
-        List<String> allowedHeaders = Arrays.asList("Content-Type", "Authorization", "X-Requested-With"); // Customize!
+        List<String> allowedHeaders = Arrays.asList("Content-Type", "Authorization", "X-Requested-With");
         configuration.setAllowedHeaders(allowedHeaders);
-
-        configuration.setAllowCredentials(false); // Set to true ONLY if you need it AND origins are specific!
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
@@ -84,13 +90,17 @@ public class WebConfig implements WebMvcConfigurer {
             new java.net.URL(url).toURI();
             return true;
         } catch (Exception e) {
+            logger.error("Invalid URL: {}", url);
             return false;
         }
     }
 
     @Bean
     public WebServerFactoryCustomizer<TomcatServletWebServerFactory> webServerFactoryCustomizer() {
-        return factory -> factory.setContextPath("/api/v1");
+        return factory -> {
+            factory.setContextPath("/api/v1");
+            logger.info("Customizing Tomcat context path to /api/v1");
+        };
     }
 
     @Bean
@@ -100,8 +110,9 @@ public class WebConfig implements WebMvcConfigurer {
         factory.setMaxRequestSize(DataSize.ofMegabytes(20));
 
         String uploadLocation = env.getProperty("upload.location");
-        factory.setLocation(uploadLocation != null ? uploadLocation : "/tmp/uploads"); // Production-safe location
+        factory.setLocation(uploadLocation != null ? uploadLocation : "/tmp/uploads");
 
+        logger.info("MultipartConfigElement configured with upload location: {}", uploadLocation);
         return factory.createMultipartConfig();
     }
 }
