@@ -51,7 +51,7 @@ const Footer = () => {
         </article>
       </div>
       <div className="section-width flex flex-col gap-2 p-6 text-sm text-gray-600 md:flex-row md:items-center">
-        <p>© PetCare.co</p>
+        <p>© PetCare.com</p>
         <a href="#" className="hover:text-primary">
           Terms and Privacy Policy
         </a>
