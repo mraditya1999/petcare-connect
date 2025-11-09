@@ -14,7 +14,6 @@ import ForumEditor from "@/components/forum/ForumEditor";
 import SolvedTopics from "@/components/forum/SolvedTopics";
 import PaginationControl from "@/components/forum/PaginationControl";
 import { IPageResponse } from "@/types/pagination-types";
-
 const ForumPage = () => {
   const [forums, setForums] = useState<IForum[]>([]);
   const [featuredForums, setFeaturedForums] = useState<IForum[]>([]);
@@ -189,6 +188,10 @@ const ForumPage = () => {
               forums={forums}
               loading={loading}
               error={error}
+              sortBy={sortBy}
+              sortDir={sortDir}
+              onSortByChange={setSortBy}
+              onSortDirChange={setSortDir}
             />
 
             <PaginationControl

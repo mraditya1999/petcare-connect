@@ -1,6 +1,7 @@
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import ForumCard from "@/components/forum/ForumCard";
 import { IForum } from "@/types/forum-types";
+import SortDropdown from "./SortDropdown";
 
 interface ForumSectionProps {
   title: string;
@@ -8,18 +9,37 @@ interface ForumSectionProps {
   loading: boolean;
   error: string | null;
   emptyMessage?: string;
+  sortBy?: string;
+  sortDir?: "asc" | "desc";
+  onSortByChange?: (field: string) => void;
+  onSortDirChange?: (dir: "asc" | "desc") => void;
 }
-
 const ForumSection = ({
   title,
   forums,
   loading,
   error,
   emptyMessage = "No forums available yet.",
+  sortBy,
+  sortDir,
+  onSortByChange,
+  onSortDirChange,
 }: ForumSectionProps) => {
   return (
     <div>
-      <h2 className="mb-6 text-2xl font-semibold">{title}</h2>
+      <div className="flex items-center justify-between">
+        <h2 className="mb-6 text-2xl font-semibold">{title}</h2>
+        {sortBy && sortDir && onSortByChange && onSortDirChange && (
+          <div className="mb-6">
+            <SortDropdown
+              sortBy={sortBy}
+              sortDir={sortDir}
+              onSortByChange={onSortByChange}
+              onSortDirChange={onSortDirChange}
+            />
+          </div>
+        )}
+      </div>
       {loading ? (
         <div className="flex justify-center">
           <LoadingSpinner />
