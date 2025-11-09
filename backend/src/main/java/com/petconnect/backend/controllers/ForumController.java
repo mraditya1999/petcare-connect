@@ -75,9 +75,11 @@ public class ForumController {
      * @return a list of top featured forums
      */
     @GetMapping("/top-featured")
-    public ResponseEntity<List<ForumDTO>> getTopFeaturedForums() {
-        List<ForumDTO> forums = forumService.getTopFeaturedForums();
-        return ResponseEntity.ok(forums);
+    public ResponseEntity<ApiResponseDTO<List<ForumDTO>>> getTopFeaturedForums() {
+        List<ForumDTO> forumDTO = forumService.getTopFeaturedForums();
+
+        ApiResponseDTO<List<ForumDTO>> apiResponseDTO = new ApiResponseDTO<>("Forum fetched successfully", forumDTO);
+        return ResponseEntity.ok(apiResponseDTO);
     }
 
     /**

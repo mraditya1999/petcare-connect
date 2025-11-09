@@ -1,20 +1,29 @@
 export interface IComment {
   userId: string;
   text: string;
+  createdAt?: string;
+}
+
+export interface ILike {
+  likeId: string;
+  forumId: string;
+  userId: string;
+  createdAt: string;
 }
 
 export interface IForum {
   forumId: string;
-  userId: string;
+  title: string;
+  content: string;
+  tags: string[];
   firstName: string;
   lastName: string;
   email: string;
-  title: string;
-  content: string;
-  createdAt: string | null;
-  updatedAt: string | null;
-  likes: { userId: string }[];
-  comments: IComment[] | null;
-  tags: string[];
-  userProfile?: string | null; 
+  likesCount: number;
+  commentsCount: number;
+  createdAt: string;
+  updatedAt: string;
+  userProfile?: string | null;
+  comments?: IComment[];
+  likes?: ILike[];
 }

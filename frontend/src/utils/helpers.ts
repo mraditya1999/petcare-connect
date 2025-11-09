@@ -73,3 +73,11 @@ export const formatRelativeTime = (dateStr: string | null): string => {
   const date = new Date(dateStr);
   return formatDistanceToNow(date, { addSuffix: true });
 };
+
+export const truncateContent = (content: string, maxLength = 50) => {
+  if (!content) return "";
+  if (content.length <= maxLength) {
+    return content;
+  }
+  return content.substring(0, maxLength) + "...";
+};
