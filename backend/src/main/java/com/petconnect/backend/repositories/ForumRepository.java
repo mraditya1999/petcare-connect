@@ -14,8 +14,8 @@ import java.util.List;
 @Repository
 public interface ForumRepository extends MongoRepository<Forum, String> {
     Page<Forum> findByUserId(Long userId, Pageable pageable);
-    List<Forum> findByTitleContainingIgnoreCaseOrContentContainingIgnoreCase(String title, String content);
+    Page<Forum> findByTitleContainingIgnoreCaseOrContentContainingIgnoreCase(String title, String content,Pageable pageable);
     @NotNull List<Forum> findAll(@NotNull Sort sort);
     @NotNull Page<Forum> findAll(@NotNull Pageable pageable);
-    List<Forum> findByTagsIn(List<String> tags);
+    Page<Forum> findByTagsIn(List<String> tags,Pageable pageable);
 }

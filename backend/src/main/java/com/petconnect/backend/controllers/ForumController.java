@@ -89,10 +89,21 @@ public class ForumController {
      * @return a list of matching forums
      */
     @GetMapping("/search")
-    public ResponseEntity<List<ForumDTO>> searchForums(@RequestParam String keyword) {
-        List<ForumDTO> forums = forumService.searchForums(keyword);
+    public ResponseEntity<Page<ForumDTO>> searchForums(
+            @RequestParam String keyword,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDir) {
+
+
+        Sort sort = Sort.by(sortDir.equalsIgnoreCase("asc") ? Sort.Direction.ASC : Sort.Direction.DESC, sortBy);
+        PageRequest pageRequest = PageRequest.of(page, size, sort);
+
+        Page<ForumDTO> forums = forumService.searchForums(keyword, pageRequest);
         return ResponseEntity.ok(forums);
     }
+
 
     /**
      * Search forums by tags.
@@ -101,10 +112,17 @@ public class ForumController {
      * @return a response containing a list of matching forums
      */
     @GetMapping("/search-by-tags")
-    public ResponseEntity<ApiResponseDTO<List<ForumDTO>>> searchForumsByTags(@RequestParam List<String> tags) {
-        List<ForumDTO> forums = forumService.searchForumsByTags(tags);
-        ApiResponseDTO<List<ForumDTO>> apiResponseDTO = new ApiResponseDTO<>("Forums fetched successfully", forums);
-        return ResponseEntity.ok(apiResponseDTO);
+    public ResponseEntity<Page<ForumDTO>> searchForumsByTags(@RequestParam List<String> tags,
+                                                             @RequestParam(defaultValue = "0") int page,
+                                                             @RequestParam(defaultValue = "10") int size,
+                                                             @RequestParam(defaultValue = "createdAt") String sortBy,
+                                                             @RequestParam(defaultValue = "desc") String sortDir) {
+
+        Sort sort = Sort.by(sortDir.equalsIgnoreCase("asc") ? Sort.Direction.ASC : Sort.Direction.DESC, sortBy);
+        PageRequest pageRequest = PageRequest.of(page, size, sort);
+
+        Page<ForumDTO> forums = forumService.searchForumsByTags(tags, pageRequest);
+        return ResponseEntity.ok(forums);
     }
 
     /**

@@ -77,15 +77,15 @@ public class ForumService {
     }
 
     @Transactional(readOnly = true)
-    public List<ForumDTO> searchForums(String keyword) {
-        List<Forum> forums = forumRepository.findByTitleContainingIgnoreCaseOrContentContainingIgnoreCase(keyword, keyword);
-        return forums.stream().map(this::convertToForumDTO).collect(Collectors.toList());
+    public Page<ForumDTO> searchForums(String keyword,Pageable pageable) {
+        Page<Forum> forums = forumRepository.findByTitleContainingIgnoreCaseOrContentContainingIgnoreCase(keyword, keyword,pageable);
+        return forums.map(this::convertToForumDTO);
     }
 
     @Transactional(readOnly = true)
-    public List<ForumDTO> searchForumsByTags(List<String> tags) {
-        List<Forum> forums = forumRepository.findByTagsIn(tags);
-        return forums.stream().map(this::convertToForumDTO).collect(Collectors.toList());
+    public Page<ForumDTO> searchForumsByTags(List<String> tags,Pageable pageable) {
+        Page<Forum> forums = forumRepository.findByTagsIn(tags,pageable);
+        return forums.map(this::convertToForumDTO);
     }
 
     @Transactional(readOnly = true)
