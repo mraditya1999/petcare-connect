@@ -43,7 +43,7 @@ const SortDropdown: FC<SortDropdownProps> = ({
           Newest
         </DropdownMenuItem>
 
-        <DropdownMenuItem
+        {/* <DropdownMenuItem
           onClick={() => onSortByChange("likesCount")}
           className="cursor-pointer"
         >
@@ -57,7 +57,7 @@ const SortDropdown: FC<SortDropdownProps> = ({
         >
           {sortBy === "commentsCount" && <Check className="mr-2 h-4 w-4" />}
           Most Commented
-        </DropdownMenuItem>
+        </DropdownMenuItem> */}
 
         <DropdownMenuSeparator />
         <DropdownMenuLabel>Order</DropdownMenuLabel>

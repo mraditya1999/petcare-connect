@@ -5,6 +5,7 @@ import org.jetbrains.annotations.NotNull;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.mongodb.repository.Aggregation;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
 
@@ -18,4 +19,11 @@ public interface ForumRepository extends MongoRepository<Forum, String> {
     @NotNull List<Forum> findAll(@NotNull Sort sort);
     @NotNull Page<Forum> findAll(@NotNull Pageable pageable);
     Page<Forum> findByTagsIn(List<String> tags,Pageable pageable);
+    @Aggregation(pipeline = {
+            "{ $addFields: { likesCount: { $size: { $ifNull: ['$likes', []] } } } }",
+            "{ $sort: { likesCount: -1, createdAt: -1 } }",
+            "{ $limit: 3 }"
+    })
+    List<Forum> findTop3ByLikes();
+
 }

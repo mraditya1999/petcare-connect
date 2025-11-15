@@ -8,8 +8,19 @@ import {
   showToast,
 } from "@/utils/helpers";
 import { Button } from "@/components/ui/button";
-import { FaHeart, FaRegHeart, FaRegMessage } from "react-icons/fa6";
-import { IForum, IComment, ISingleForumResponse } from "@/types/forum-types";
+import {
+  FaHeart,
+  FaRegHeart,
+  FaRegMessage,
+  FaTrash,
+  FaPenToSquare,
+} from "react-icons/fa6";
+import {
+  IForum,
+  IComment,
+  ISingleForumResponse,
+  ICommentResponse,
+} from "@/types/forum-types";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import PaginationControl from "@/components/forum/PaginationControl";
 
@@ -27,13 +38,51 @@ const SingleForumPage = () => {
   const [likeProcessing, setLikeProcessing] = useState(false);
   const [commentPage, setCommentPage] = useState(0);
   const [totalCommentPages, setTotalCommentPages] = useState(1);
+  const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
+  const [editText, setEditText] = useState("");
 
   const COMMENTS_PER_PAGE = 5;
   const user = getUserFromStorage();
+  const currentUserId = user?.data?.userId;
 
-  /* -------------------------------------------
-   ✅ Fetch comments (separate and reusable)
--------------------------------------------- */
+  const handleEditComment = (comment: IComment) => {
+    setEditingCommentId(comment.commentId);
+    setEditText(comment.text);
+  };
+
+  const handleSaveEdit = async (commentId: string) => {
+    try {
+      const response = await customFetch.put(
+        `/comments/${commentId}`,
+        {
+          text: editText,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        },
+      );
+
+      if (response.data?.data) {
+        // Update UI immediately
+        setComments((prev) =>
+          prev.map((c) =>
+            c.commentId === commentId ? { ...c, text: editText } : c,
+          ),
+        );
+
+        setEditingCommentId(null);
+        showToast("Comment updated successfully!", "default");
+      } else {
+        showToast("Failed to update comment.", "destructive");
+      }
+    } catch (error) {
+      console.error("Error updating comment:", error);
+      showToast("Error updating comment.", "destructive");
+    }
+  };
+
   const fetchForumComments = async (forumId: string, page: number) => {
     try {
       const response = await customFetch(
@@ -50,9 +99,6 @@ const SingleForumPage = () => {
     }
   };
 
-  /* -------------------------------------------
-   ✅ Fetch forum details
--------------------------------------------- */
   const fetchForumData = async () => {
     if (!forumId) return;
     try {
@@ -62,7 +108,8 @@ const SingleForumPage = () => {
       const forumData = forumResponse.data;
       setForum(forumData.data);
 
-      await fetchForumComments(forumId, commentPage); // ✅ call comment fetch
+      // fetch comments for the current page (commentPage)
+      await fetchForumComments(forumId, commentPage);
       if (user) {
         const checkLikeResponse = await customFetch(
           `/likes/forums/${forumId}/check`,
@@ -82,18 +129,111 @@ const SingleForumPage = () => {
     }
   };
 
-  /* -------------------------------------------
-   ✅ Effects for data loading and pagination
--------------------------------------------- */
+  useEffect(() => {
+    if (error) {
+      showToast(error, "destructive");
+    }
+  }, [error]);
+
+  /* effects */
   useEffect(() => {
     fetchForumData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [forumId]);
 
   useEffect(() => {
     if (forumId) {
       fetchForumComments(forumId, commentPage);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [commentPage, forumId]);
+
+  const handleDeleteComment = async (commentId: string) => {
+    try {
+      await customFetch.delete(`/comments/${commentId}`);
+
+      const updatedCount = Math.max((forum?.commentsCount || 1) - 1, 0);
+      const newTotalPages = Math.max(
+        Math.ceil(updatedCount / COMMENTS_PER_PAGE),
+        1,
+      );
+
+      // Update forum count
+      setForum((prev) =>
+        prev ? { ...prev, commentsCount: updatedCount } : prev,
+      );
+
+      // Move to previous page if needed
+      let finalPage = commentPage;
+      if (commentPage > newTotalPages - 1) {
+        finalPage = newTotalPages - 1;
+        setCommentPage(finalPage);
+      }
+
+      // 🔥 MOST IMPORTANT PART → FETCH UPDATED PAGE DATA
+      await fetchForumComments(forumId!, finalPage);
+
+      showToast("Comment deleted successfully", "default");
+    } catch (error) {
+      console.error(error);
+      showToast("Failed to delete comment", "destructive");
+    }
+  };
+
+  const handleAddComment = async () => {
+    if (newComment.trim() === "") return;
+    setAddingComment(true);
+
+    try {
+      const response = await customFetch.post<ICommentResponse>(
+        `/comments/forums/${forumId}`,
+        { text: newComment },
+      );
+
+      if (response.data?.data) {
+        const newAddedComment = response.data.data;
+
+        // Derive the updated count reliably: prefer forum?.commentsCount if available else comments.length
+        const priorCount = (forum?.commentsCount ?? comments.length) || 0;
+        const updatedCount = priorCount + 1;
+        const newTotalPages = Math.max(
+          Math.ceil(updatedCount / COMMENTS_PER_PAGE),
+          1,
+        );
+
+        // Update forum count atomically
+        setForum((prev) =>
+          prev
+            ? { ...prev, commentsCount: (prev.commentsCount || 0) + 1 }
+            : prev,
+        );
+
+        // Update total pages
+        setTotalCommentPages(newTotalPages);
+
+        // If user is on first page (page 0), show the new comment there (prepend)
+        // Trim to COMMENTS_PER_PAGE to avoid letting page contain > size
+        if (commentPage === 0) {
+          setComments((prev) =>
+            [newAddedComment, ...prev].slice(0, COMMENTS_PER_PAGE),
+          );
+        } else {
+          // If user is on another page, do not mutate that page — it will reflect count when they navigate.
+          // Optionally you could navigate user to page 0; we keep current behaviour.
+        }
+
+        setNewComment("");
+        showToast("Comment added successfully!", "default");
+      } else {
+        showToast("Failed to add comment. Please try again.", "destructive");
+      }
+    } catch (error) {
+      console.error("Error adding comment:", error);
+      showToast("Error adding comment. Please try again.", "destructive");
+    } finally {
+      setAddingComment(false);
+    }
+  };
 
   const handleLike = async () => {
     if (likeProcessing) return;
@@ -160,121 +300,21 @@ const SingleForumPage = () => {
     }
   };
 
-  // const handleLike = async () => {
-  //   if (likeProcessing) return;
-  //   setLikeProcessing(true);
-
-  //   try {
-  //     const response = await customFetch.post<ILikeResponse>(
-  //       `/likes/forums/${forumId}`,
-  //     );
-
-  //     const message = response.data.message.toLowerCase();
-  //     const user = getUserFromStorage();
-
-  //     const currentUserId = user?.data?.userId;
-
-  //     if (!currentUserId) {
-  //       showToast("Please log in to like this post.", "destructive");
-  //       return;
-  //     }
-
-  //     setForum((prev) => {
-  //       if (!prev) return prev;
-  //       const existingLikes = prev.likes || [];
-
-  //       // ✅ Detect unlike action
-  //       if (message.includes("unlike")) {
-  //         const updatedLikes = existingLikes.filter(
-  //           (l) => l.userId !== currentUserId,
-  //         );
-  //         setLiked(false);
-  //         return {
-  //           ...prev,
-  //           likes: updatedLikes,
-  //           likesCount: (prev.likesCount || existingLikes.length) - 1,
-  //         };
-  //       }
-
-  //       // ✅ Detect like action
-  //       if (message.includes("like")) {
-  //         const alreadyLiked = existingLikes.some(
-  //           (l) => l.userId === currentUserId,
-  //         );
-  //         if (!alreadyLiked) {
-  //           setLiked(true);
-  //           return {
-  //             ...prev,
-  //             likes: [
-  //               ...existingLikes,
-  //               {
-  //                 likeId: crypto.randomUUID(),
-  //                 forumId: forumId!,
-  //                 userId: currentUserId,
-  //                 createdAt: new Date().toISOString(),
-  //               },
-  //             ],
-  //             likesCount: (prev.likesCount || existingLikes.length) + 1,
-  //           };
-  //         }
-  //       }
-
-  //       return prev;
-  //     });
-  //   } catch (err) {
-  //     console.error("Error toggling like:", err);
-  //     showToast("Please log in to like this forum post.", "destructive");
-  //   } finally {
-  //     setLikeProcessing(false);
-  //   }
-  // };
-
-  const handleAddComment = async () => {
-    if (newComment.trim() === "") return;
-    setAddingComment(true);
-    try {
-      const response = await customFetch.post<ICommentResponse>(
-        `/comments/forums/${forumId}`,
-        {
-          text: newComment,
-        },
-      );
-
-      if (response.data?.data) {
-        setForum((prevForum) => {
-          if (!prevForum) return prevForum;
-
-          const updatedComments = [
-            ...(prevForum.comments || []),
-            response.data.data,
-          ];
-
-          return {
-            ...prevForum,
-            comments: updatedComments,
-            commentsCount: (prevForum.commentsCount || 0) + 1,
-          };
-        });
-        setNewComment("");
-        showToast("Comment added successfully!", "default");
-      } else {
-        showToast("Failed to add comment. Please try again.", "destructive");
-      }
-    } catch (error) {
-      console.error("Error adding comment:", error);
-      showToast("Error adding comment. Please try again.", "destructive");
-    } finally {
-      setAddingComment(false);
-    }
-  };
-
-  if (loading)
+  if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <LoadingSpinner />
       </div>
     );
-  if (error) return showToast(error, "destructive");
+  }
+
+  if (error) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <p className="text-red-600">Something went wrong. Please try again.</p>
+      </div>
+    );
+  }
 
   return (
     <section className="py-16">
@@ -288,7 +328,6 @@ const SingleForumPage = () => {
           </Avatar>
           <div>
             <p className="text-sm font-semibold">{`${forum?.firstName || ""} ${forum?.lastName || ""}`}</p>{" "}
-            {/* Handle null names */}
             <p className="text-xs text-gray-500">
               {forum?.createdAt
                 ? formatRelativeTime(forum.createdAt)
@@ -326,7 +365,6 @@ const SingleForumPage = () => {
             title={!user ? "Log in to comment this forum" : undefined}
           >
             {forum?.commentsCount || 0} <FaRegMessage className="h-4 w-4" />{" "}
-            {/* Display comments count */}
           </Button>
         </div>
         {forum && forum.tags && forum.tags.length > 0 && (
@@ -342,44 +380,105 @@ const SingleForumPage = () => {
           </div>
         )}
         <div className="mt-4 rounded-lg bg-white p-6 shadow-md">
-          {/* Added margin top */}
           <h2 className="text-lg font-semibold">Comments</h2>
-          {forum && forum.commentsCount > 0 ? (
+          {comments.length > 0 ? (
             comments.map((comment) => (
-              <div className="mb-2 flex items-center space-x-3 rounded-t-lg bg-gray-50 p-6">
-                <Avatar className="h-10 w-10">
-                  <AvatarImage
-                    src={comment?.firstName || ""}
-                    alt="User Avatar"
-                  />
-                  <AvatarFallback>
-                    {comment?.firstName?.slice(0, 1) || "?"}
-                  </AvatarFallback>
-                </Avatar>
-                <div>
-                  <p className="text-sm font-semibold">{`${comment?.firstName || ""} ${comment?.lastName || ""}`}</p>
-                  <p className="text-sm">{comment.text}</p>
-                  <p className="text-xs text-gray-500">
-                    {comment?.createdAt
-                      ? formatRelativeTime(comment.createdAt)
-                      : "Just now"}
-                  </p>
+              <div
+                key={comment.commentId}
+                className="mb-3 flex justify-between rounded-xl border border-gray-100 bg-white p-4 shadow"
+              >
+                <div className="flex w-full items-start space-x-3">
+                  <Avatar className="h-10 w-10">
+                    <AvatarImage
+                      src={comment?.firstName || ""}
+                      alt="User Avatar"
+                    />
+                    <AvatarFallback>
+                      {comment?.firstName?.slice(0, 1) || "?"}
+                    </AvatarFallback>
+                  </Avatar>
+
+                  <div className="w-full">
+                    <p className="text-sm font-semibold">
+                      {`${comment?.firstName || ""} ${comment?.lastName || ""}`}
+                    </p>
+
+                    {editingCommentId === comment.commentId ? (
+                      <div className="mt-2 w-full">
+                        <textarea
+                          className="w-full rounded-md border p-2 text-sm focus:outline-none focus:ring focus:ring-blue-200"
+                          rows={3}
+                          value={editText}
+                          onChange={(e) => setEditText(e.target.value)}
+                          placeholder="Edit your comment..."
+                        ></textarea>
+
+                        <div className="mt-3 flex gap-2">
+                          <Button
+                            size="sm"
+                            onClick={() => handleSaveEdit(comment.commentId)}
+                          >
+                            Save
+                          </Button>
+
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setEditingCommentId(null)}
+                          >
+                            Cancel
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div
+                        className="prose mt-1 max-w-none text-sm"
+                        dangerouslySetInnerHTML={{ __html: comment.text }}
+                      />
+                    )}
+
+                    <p className="mt-1 text-xs text-gray-500">
+                      {comment?.createdAt
+                        ? formatRelativeTime(comment.createdAt)
+                        : "Just now"}
+                    </p>
+                  </div>
                 </div>
+
+                {comment.userId === currentUserId &&
+                  editingCommentId !== comment.commentId && (
+                    <div className="flex flex-col items-center gap-3">
+                      <button
+                        className="text-gray-600 transition hover:text-blue-600"
+                        onClick={() => handleEditComment(comment)}
+                      >
+                        <FaPenToSquare />
+                      </button>
+
+                      <button
+                        className="text-gray-600 transition hover:text-red-600"
+                        onClick={() => handleDeleteComment(comment.commentId)}
+                      >
+                        <FaTrash />
+                      </button>
+                    </div>
+                  )}
               </div>
             ))
           ) : (
             <p className="text-gray-500">No comments yet.</p>
           )}
-          <PaginationControl
-            currentPage={commentPage}
-            totalPages={totalCommentPages}
-            onPageChange={setCommentPage}
-          />
+          {totalCommentPages > 1 && (
+            <PaginationControl
+              currentPage={commentPage}
+              totalPages={totalCommentPages}
+              onPageChange={setCommentPage}
+            />
+          )}
         </div>
 
         {user && (
           <div className="mt-4 rounded-lg bg-white p-6 shadow-md">
-            {/* Added margin top */}
             <h2 className="mb-2 text-lg font-semibold">Add a Comment</h2>
             <textarea
               className="mb-4 w-full rounded-md border p-2 text-sm"

@@ -71,9 +71,10 @@ public class ForumService {
 
     @Transactional(readOnly = true)
     public List<ForumDTO> getTopFeaturedForums() {
-        Pageable topThree = PageRequest.of(0, 3, Sort.by(Sort.Direction.DESC, "likes.size"));
-        Page<Forum> forums = forumRepository.findAll(topThree);
-        return forums.stream().map(this::convertToForumDTO).collect(Collectors.toList());
+        List<Forum> forums = forumRepository.findTop3ByLikes();
+        return forums.stream()
+                .map(this::convertToForumDTO)
+                .collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
@@ -89,10 +90,33 @@ public class ForumService {
     }
 
     @Transactional(readOnly = true)
-    public List<ForumDTO> sortForums(String field) {
-        List<Forum> forums = forumRepository.findAll(Sort.by(Sort.Direction.DESC, field));
-        return forums.stream().map(this::convertToForumDTO).collect(Collectors.toList());
+    public List<ForumDTO> sortForums(String sortBy, String sortDir) {
+        // Default to descending if sortDir is not provided
+        Sort.Direction direction = sortDir != null && sortDir.equalsIgnoreCase("asc")
+                ? Sort.Direction.ASC
+                : Sort.Direction.DESC;
+
+        // Validate the field to avoid SQL injection / invalid fields
+        String field;
+        switch (sortBy.toLowerCase()) {
+            case "likes":
+                field = "likesCount";
+                break;
+            case "comments":
+                field = "commentsCount";
+                break;
+            case "createdat":
+            default:
+                field = "createdAt";
+                break;
+        }
+
+        List<Forum> forums = forumRepository.findAll(Sort.by(direction, field));
+        return forums.stream()
+                .map(this::convertToForumDTO)
+                .collect(Collectors.toList());
     }
+
 
     @Transactional
     public ForumDTO createForum(String email, ForumCreateDTO forumCreateDTO) {

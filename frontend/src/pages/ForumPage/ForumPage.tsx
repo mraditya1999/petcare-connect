@@ -29,15 +29,27 @@ const ForumPage = () => {
   const [sortBy, setSortBy] = useState<string>("createdAt");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const [searchTerm, setSearchTerm] = useState<string>("");
+  const [tagSearchTerm, setTagSearchTerm] = useState<string>("");
 
   const user = getUserFromStorage();
 
   const fetchForums = useCallback(async () => {
     setLoading(true);
     try {
-      const url = searchTerm.trim()
-        ? `/forums/search?keyword=${encodeURIComponent(searchTerm)}&page=${page}&size=5&sortBy=${sortBy}&sortDir=${sortDir}`
-        : `/forums?page=${page}&size=5&sortBy=${sortBy}&sortDir=${sortDir}`;
+      let url = `/forums?page=${page}&size=5&sortBy=${sortBy}&sortDir=${sortDir}`;
+
+      if (tagSearchTerm.trim()) {
+        const tags = tagSearchTerm
+          .split(",")
+          .map((tag) => tag.trim())
+          .filter(Boolean);
+        const tagsQuery = tags
+          .map((tag) => `tags=${encodeURIComponent(tag)}`)
+          .join("&");
+        url = `/forums/search-by-tags?${tagsQuery}&page=${page}&size=5&sortBy=${sortBy}&sortDir=${sortDir}`;
+      } else if (searchTerm.trim()) {
+        url = `/forums/search?keyword=${encodeURIComponent(searchTerm)}&page=${page}&size=5&sortBy=${sortBy}&sortDir=${sortDir}`;
+      }
 
       const forumsResponse = await customFetch.get<IPageResponse<IForum>>(url);
       const forumData = forumsResponse.data;
@@ -56,51 +68,20 @@ const ForumPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [page, sortBy, sortDir, searchTerm]);
+  }, [page, sortBy, sortDir, searchTerm, tagSearchTerm]);
 
   useEffect(() => {
     const delay = setTimeout(() => fetchForums(), 500);
     return () => clearTimeout(delay);
   }, [fetchForums]);
 
-  // const fetchForums = async () => {
-  //   try {
-  //     let forumData: IForum[] = [];
-
-  //     if (searchTerm.trim()) {
-  //       // 🔍 Call search API when user is typing
-  //       const response = await customFetch.get<IForum[]>(
-  //         `/forums/search?keyword=${encodeURIComponent(searchTerm)}`,
-  //       );
-  //       forumData = response.data;
-  //       setForums(forumData);
-  //       setTotalPages(1); // since search results likely aren’t paginated
-  //     } else {
-  //       // 📄 Normal paginated fetch
-  //       const forumsResponse = await customFetch.get<IPageResponse<IForum>>(
-  //         `/forums?page=${page}&size=5&sortBy=${sortBy}&sortDir=${sortDir}`,
-  //       );
-
-  //       forumData = forumsResponse.data.content;
-  //       setForums(forumData);
-  //       setTotalPages(forumsResponse.data.page.totalPages);
-  //     }
-
-  //     // 🏆 Fetch featured forums always
-  //     const featuredForumsResponse =
-  //       await customFetch.get<IFeaturedForumResponse>("forums/top-featured");
-
-  //     setFeaturedForums(featuredForumsResponse.data.data);
-  //   } catch (error) {
-  //     console.error(error);
-  //     setError("Error fetching forums. Please try again.");
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
-
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
+    setPage(0);
+  };
+
+  const handleTagSearch = (value: string) => {
+    setTagSearchTerm(value);
     setPage(0);
   };
 
@@ -192,6 +173,8 @@ const ForumPage = () => {
               sortDir={sortDir}
               onSortByChange={setSortBy}
               onSortDirChange={setSortDir}
+              tagSearchTerm={tagSearchTerm}
+              onTagSearchChange={handleTagSearch}
             />
 
             <PaginationControl

@@ -77,8 +77,8 @@ public class ForumController {
     @GetMapping("/top-featured")
     public ResponseEntity<ApiResponseDTO<List<ForumDTO>>> getTopFeaturedForums() {
         List<ForumDTO> forumDTO = forumService.getTopFeaturedForums();
-
-        ApiResponseDTO<List<ForumDTO>> apiResponseDTO = new ApiResponseDTO<>("Forum fetched successfully", forumDTO);
+        ApiResponseDTO<List<ForumDTO>> apiResponseDTO =
+                new ApiResponseDTO<>("Forum fetched successfully", forumDTO);
         return ResponseEntity.ok(apiResponseDTO);
     }
 
@@ -128,14 +128,18 @@ public class ForumController {
     /**
      * Sort forums by a specified field.
      *
-     * @param field the field to sort by
+     * @param sortDir  the field to sort by
      * @return a list of sorted forums
      */
     @GetMapping("/sort")
-    public ResponseEntity<List<ForumDTO>> sortForums(@RequestParam String field) {
-        List<ForumDTO> forums = forumService.sortForums(field);
+    public ResponseEntity<List<ForumDTO>> sortForums(
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDir
+    ) {
+        List<ForumDTO> forums = forumService.sortForums(sortBy, sortDir);
         return ResponseEntity.ok(forums);
     }
+
 
 
     /**
