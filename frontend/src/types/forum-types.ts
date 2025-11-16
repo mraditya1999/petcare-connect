@@ -1,5 +1,3 @@
-import { IPageInfo } from "./pagination-types";
-
 export interface IForum {
   forumId: string;
   title: string;
@@ -30,27 +28,24 @@ export interface IFeaturedForumResponse {
   message: string;
   data: IForum[];
 }
-// *******************************************************
+
+export interface ISingleForum {
+  forumId: string;
+  title: string;
+  content: string;
+  tags: string[];
+  firstName: string;
+  lastName: string;
+  email: string;
+  likesCount: number;
+  commentsCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface ISingleForumResponse {
   message: string;
-  data: IForum;
-}
-
-export interface ILikeCheckResponse {
-  message: string;
-  data: {
-    isLiked: boolean;
-  };
-}
-
-export interface ICommentsPageData {
-  content: IComment[];
-  page: IPageInfo;
-}
-
-export interface ICommentsResponse {
-  message: string;
-  data: ICommentsPageData;
+  data: ISingleForum;
 }
 
 export interface IComment {
@@ -63,42 +58,70 @@ export interface IComment {
   lastName: string;
   email: string;
   parentId: string | null;
-  likedByUsers: string[];
+  likedByUsers: number[];
   replies: IComment[];
 }
 
-export interface ICommentResponse {
+export interface ICommentPageInfo {
+  size: number;
+  number: number;
+  totalElements: number;
+  totalPages: number;
+}
+
+export interface ICommentListData {
+  content: IComment[];
+  page: ICommentPageInfo;
+}
+
+export interface ICommentListResponse {
+  message: string;
+  data: ICommentListData;
+}
+
+export interface ILikeCheckResponse {
+  message: string;
+  data: {
+    isLiked: boolean;
+  };
+}
+
+export interface IAddCommentResponse {
   message: string;
   data: IComment;
 }
 
-export interface ILike {
-  likeId: string;
-  forumId: string;
-  userId: number | string;
-  createdAt: string;
-}
-
-export interface ILikeResponse {
+export interface IUpdateCommentResponse {
   message: string;
-  data: null | ILike;
+  data: IUpdatedComment;
 }
 
-export interface IForumState {
-  forum: IForum | null;
-  comments: IComment[];
-  commentPage: number;
-  totalCommentPages: number;
-  loading: boolean;
-  error: string | null;
-}
-
-export interface CreateCommentParams {
-  forumId: string;
-  text: string;
-}
-
-export interface UpdateCommentParams {
+export interface IUpdatedComment {
   commentId: string;
+  forumId: string;
+  userId: number;
   text: string;
+  createdAt: string;
+
+  firstName: string;
+  lastName: string;
+  email: string;
+
+  parentId: string | null;
+  // likedByUsers: any[];
+  // replies: any[];
+}
+
+export interface IToggleLikeResponse {
+  message: string;
+  data: null;
+}
+
+export interface ICheckLikeData {
+  isLiked: boolean;
+}
+
+export interface ICheckLikeResponse {
+  message: string;
+  data: ICheckLikeData;
 }
