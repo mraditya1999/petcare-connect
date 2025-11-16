@@ -4,6 +4,7 @@ import { IForum } from "@/types/forum-types";
 import SortDropdown from "./SortDropdown";
 import { Search } from "lucide-react";
 import { Input } from "../ui/input";
+import React from "react";
 
 interface ForumSectionProps {
   title: string;
@@ -21,7 +22,7 @@ interface ForumSectionProps {
 
 const ForumSection = ({
   title,
-  forums = [], // <-- FIXED HERE
+  forums = [],
   loading,
   error,
   emptyMessage = "No forums available yet.",
@@ -78,4 +79,4 @@ const ForumSection = ({
   );
 };
 
-export default ForumSection;
+export default React.memo(ForumSection);

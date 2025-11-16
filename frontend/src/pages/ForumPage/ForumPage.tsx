@@ -1,17 +1,17 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import "react-quill/dist/quill.snow.css";
 import forumHeaderImg from "@/assets/images/forumpage/forumheader.png";
-import { getUserFromStorage } from "@/utils/helpers";
+import { getUserFromStorage, showToast } from "@/utils/helpers";
 import Categories from "@/components/forum/Categories";
 import ForumSection from "@/components/forum/ForumSection";
 import ForumEditor from "@/components/forum/ForumEditor";
 import SolvedTopics from "@/components/forum/SolvedTopics";
 import PaginationControl from "@/components/forum/PaginationControl";
-
-// Redux imports - adjust paths if your files are elsewhere
+import { useAppDispatch, useAppSelector } from "@/app/hooks";
+import { useDebounce } from "@/hooks/useDebounce";
 import {
   fetchForums,
   fetchFeaturedForums,
@@ -24,11 +24,10 @@ import {
   setSearchTerm,
   setTagSearchTerm,
 } from "@/features/forumList/forumListSlice";
-import { useAppDispatch, useAppSelector } from "@/app/hooks";
 
 const ForumPage: React.FC = () => {
   const dispatch = useAppDispatch();
-  // Select everything the original component relied on from Redux
+
   const {
     forums,
     featuredForums,
@@ -44,37 +43,39 @@ const ForumPage: React.FC = () => {
     tagSearchTerm,
   } = useAppSelector((state) => state.forumList);
 
-  // Keep local draft state for creating forum exactly as original (no UI change)
   const [newForumTitle, setNewForumTitle] = useState("");
   const [newForumTags, setNewForumTags] = useState<string[]>(["community"]);
   const [newForumContent, setNewForumContent] = useState("");
 
   const user = getUserFromStorage();
 
-  useEffect(() => {
-    const t = setTimeout(() => {
+  useDebounce(
+    () => {
       dispatch(
-        fetchForums({
-          page: page ?? 0,
-          size: size ?? 5,
-          sortBy: sortBy ?? "createdAt",
-          sortDir: sortDir ?? "desc",
-          searchTerm: searchTerm ?? "",
-          tagSearchTerm: tagSearchTerm ?? "",
-        }),
+        fetchForums({ page, size, sortBy, sortDir, searchTerm, tagSearchTerm }),
       );
-      // featured list can be fetched each time (cheap) — same as original
-      dispatch(fetchFeaturedForums());
-    }, 500);
+    },
+    500,
+    [page, size, sortBy, sortDir, searchTerm, tagSearchTerm],
+  );
 
-    return () => clearTimeout(t);
-  }, [dispatch, page, size, sortBy, sortDir, searchTerm, tagSearchTerm]);
+  useEffect(() => {
+    dispatch(fetchFeaturedForums());
+  }, [dispatch]);
 
-  // handlers match original behavior but now dispatch redux
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     dispatch(setSearchTerm(e.target.value));
     dispatch(setPage(0));
   };
+
+  const handleSortBy = useCallback(
+    (val: string) => dispatch(setSortBy(val)),
+    [dispatch],
+  );
+  const handleSortDir = useCallback(
+    (val: string) => dispatch(setSortDir(val as "asc" | "desc")),
+    [dispatch],
+  );
 
   const handleTagSearch = (value: string) => {
     dispatch(setTagSearchTerm(value));
@@ -85,7 +86,6 @@ const ForumPage: React.FC = () => {
     if (newForumContent.trim() === "") return;
 
     try {
-      // createForum thunk will re-fetch the list & featured (per thunk implementation)
       await dispatch(
         createForum({
           title: newForumTitle || "New Forum",
@@ -94,16 +94,17 @@ const ForumPage: React.FC = () => {
         }),
       ).unwrap();
 
-      // reset drafts exactly like original
-      setNewForumContent("");
-      setNewForumTitle("New Forum");
-      setNewForumTags([]);
+      resetEditor();
     } catch (err) {
-      // error state is already handled in Redux — log for debug
-      // (keeps UI unchanged)
-      // eslint-disable-next-line no-console
+      showToast("Failed to create forum", "destructive");
       console.error("Error creating forum:", err);
     }
+  };
+
+  const resetEditor = () => {
+    setNewForumContent("");
+    setNewForumTitle("");
+    setNewForumTags(["community"]);
   };
 
   return (
@@ -172,8 +173,8 @@ const ForumPage: React.FC = () => {
               error={error}
               sortBy={sortBy}
               sortDir={sortDir}
-              onSortByChange={(val) => dispatch(setSortBy(val))}
-              onSortDirChange={(val) => dispatch(setSortDir(val))}
+              onSortByChange={handleSortBy}
+              onSortDirChange={handleSortDir}
               tagSearchTerm={tagSearchTerm}
               onTagSearchChange={handleTagSearch}
             />
