@@ -93,7 +93,16 @@ const ForumPage: React.FC = () => {
           tags: newForumTags,
         }),
       ).unwrap();
-
+      await dispatch(
+        fetchForums({
+          page: 0,
+          size,
+          sortBy,
+          sortDir,
+          searchTerm,
+          tagSearchTerm,
+        }),
+      );
       resetEditor();
     } catch (err) {
       showToast("Failed to create forum", "destructive");

@@ -73,24 +73,24 @@ const SingleForumPage = () => {
     );
   }, [dispatch, forumId, commentPage]);
 
-  useEffect(() => {
-    const loadForum = async () => {
-      if (!forumId) return;
-      try {
-        // fetch forum data
-        await dispatch(fetchSingleForum(forumId)).unwrap();
+  // useEffect(() => {
+  //   const loadForum = async () => {
+  //     if (!forumId) return;
+  //     try {
+  //       // fetch forum data
+  //       await dispatch(fetchSingleForum(forumId)).unwrap();
 
-        // check if current user liked it (Redux will store isLiked)
-        if (user) {
-          await dispatch(checkLike({ forumId })).unwrap();
-        }
-      } catch (err) {
-        showToast("Error loading forum", "destructive");
-      }
-    };
+  //       // check if current user liked it (Redux will store isLiked)
+  //       if (user) {
+  //         await dispatch(checkLike({ forumId })).unwrap();
+  //       }
+  //     } catch (err) {
+  //       showToast("Error loading forum", "destructive");
+  //     }
+  //   };
 
-    loadForum();
-  }, [forumId]);
+  //   loadForum();
+  // }, [forumId]);
 
   // Show toast for errors
   useEffect(() => {
