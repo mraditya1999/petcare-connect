@@ -1,5 +1,6 @@
 package com.petconnect.backend.controllers;
 
+import com.cloudinary.api.ApiResponse;
 import com.petconnect.backend.dto.ApiResponseDTO;
 import com.petconnect.backend.dto.LikeDTO;
 import com.petconnect.backend.entity.User;
@@ -15,6 +16,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -156,6 +158,37 @@ public class LikeController {
             // Toggle the like status for the comment
             Map<String, String> response = likeService.toggleLikeOnComment(commentId, username);
             return ResponseEntity.ok(new ApiResponseDTO<>(response.get("message"), null));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponseDTO<>("An error occurred: " + e.getMessage(), null));
+        }
+    }
+
+    @GetMapping("/forums/{forumId}/check")
+    public ResponseEntity<ApiResponseDTO<Map<String, Boolean>>> checkIfUserLikedForum(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @PathVariable String forumId) {
+
+        if (userDetails == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(new ApiResponseDTO<>("User is not authenticated", null));
+        }
+
+        Optional<User> user = userRepository.findByEmail(userDetails.getUsername());
+
+        if (!user.isPresent()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new ApiResponseDTO<>("User not found", null));
+        }
+
+        try {
+            boolean isLiked = likeService.checkIfUserLikedForum(user.get().getUserId(), forumId);
+            String message = isLiked ? "User has liked the forum" : "User has not liked the forum";
+
+            Map<String, Boolean> responseData = new HashMap<>();
+            responseData.put("isLiked", isLiked);
+
+            return ResponseEntity.ok(new ApiResponseDTO<>(message, responseData));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponseDTO<>("An error occurred: " + e.getMessage(), null));
