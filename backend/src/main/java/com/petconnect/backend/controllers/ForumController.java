@@ -112,11 +112,12 @@ public class ForumController {
      * @return a response containing a list of matching forums
      */
     @GetMapping("/search-by-tags")
-    public ResponseEntity<Page<ForumDTO>> searchForumsByTags(@RequestParam List<String> tags,
-                                                             @RequestParam(defaultValue = "0") int page,
-                                                             @RequestParam(defaultValue = "10") int size,
-                                                             @RequestParam(defaultValue = "createdAt") String sortBy,
-                                                             @RequestParam(defaultValue = "desc") String sortDir) {
+    public ResponseEntity<Page<ForumDTO>> searchForumsByTags(
+            @RequestParam List<String> tags,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDir) {
 
         Sort sort = Sort.by(sortDir.equalsIgnoreCase("asc") ? Sort.Direction.ASC : Sort.Direction.DESC, sortBy);
         PageRequest pageRequest = PageRequest.of(page, size, sort);

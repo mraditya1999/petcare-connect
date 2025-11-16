@@ -1,44 +1,22 @@
-// forumListSlice.ts
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { IForumListState } from "@/types/forum-types";
 import {
   fetchForums,
   fetchFeaturedForums,
   createForum,
 } from "./forumListThunk";
-import { IForum } from "@/types/forum-types";
 
-export interface IForumState {
-  forums: IForum[];
-  featuredForums: IForum[];
-
-  page: number;
-  size: number;
-  totalPages: number;
-  totalElements: number;
-
-  sortBy: string;
-  sortDir: "asc" | "desc";
-  searchTerm: string;
-  tagSearchTerm: string;
-
-  loading: boolean;
-  error: string | null;
-}
-
-const initialState: IForumState = {
+const initialState: IForumListState = {
   forums: [],
   featuredForums: [],
-
   page: 0,
   size: 5,
   totalPages: 0,
   totalElements: 0,
-
   sortBy: "createdAt",
   sortDir: "desc",
   searchTerm: "",
   tagSearchTerm: "",
-
   loading: false,
   error: null,
 };

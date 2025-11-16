@@ -18,6 +18,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -42,9 +46,10 @@ public class ForumService {
     private final CommentMapper commentMapper;
     private final LikeService likeService;
     private final CommentService commentService;
+    private final MongoTemplate mongoTemplate;
 
     @Autowired
-    public ForumService(ForumRepository forumRepository, UserRepository userRepository, LikeRepository likeRepository, CommentRepository commentRepository, ForumMapper forumMapper, LikeMapper likeMapper, CommentMapper commentMapper, LikeService likeService, CommentService commentService) {
+    public ForumService(ForumRepository forumRepository, UserRepository userRepository, LikeRepository likeRepository, CommentRepository commentRepository, ForumMapper forumMapper, LikeMapper likeMapper, CommentMapper commentMapper, LikeService likeService, CommentService commentService, MongoTemplate mongoTemplate) {
         this.forumRepository = forumRepository;
         this.userRepository = userRepository;
         this.likeRepository = likeRepository;
@@ -54,6 +59,7 @@ public class ForumService {
         this.commentMapper = commentMapper;
         this.likeService = likeService;
         this.commentService = commentService;
+        this.mongoTemplate = mongoTemplate;
     }
 
     @Transactional(readOnly = true)
@@ -84,10 +90,20 @@ public class ForumService {
     }
 
     @Transactional(readOnly = true)
-    public Page<ForumDTO> searchForumsByTags(List<String> tags,Pageable pageable) {
-        Page<Forum> forums = forumRepository.findByTagsIn(tags,pageable);
-        return forums.map(this::convertToForumDTO);
+    public Page<ForumDTO> searchForumsByTags(List<String> tags, Pageable pageable) {
+        // Build case-insensitive regex criteria for each tag
+        List<Criteria> criteria = tags.stream()
+                .map(tag -> Criteria.where("tags").regex(tag, "i"))
+                .toList();
+
+        Query query = new Query(new Criteria().orOperator(criteria.toArray(new Criteria[0])));
+        long count = mongoTemplate.count(query, Forum.class);
+        List<Forum> forums = mongoTemplate.find(query.with(pageable), Forum.class);
+
+        return PageableExecutionUtils.getPage(forums, pageable, () -> count)
+                .map(this::convertToForumDTO);
     }
+
 
     @Transactional(readOnly = true)
     public List<ForumDTO> sortForums(String sortBy, String sortDir) {

@@ -1,5 +1,6 @@
-// src/features/forum/forumDetailSlice.ts
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { IForumDetailState } from "@/types/forum-types";
+import { RootState } from "@/app/store";
 import {
   fetchSingleForum,
   fetchComments,
@@ -10,27 +11,16 @@ import {
   checkLike,
 } from "./forumDetailThunk";
 import {
-  IForum,
-  IComment,
-  ICommentListResponse,
-  ISingleForumResponse,
+  IFetchSingleForumResponse,
+  IFetchCommentsResponse,
+  ICreateCommentResponse,
+  IUpdateCommentResponse,
+  IDeleteCommentResponse,
   IToggleLikeResponse,
   ICheckLikeResponse,
-} from "@/types/forum-types";
-import { RootState } from "@/app/store";
+} from "@/types/forum-thunk-types";
 
-export interface ForumDetailState {
-  forum: IForum | null;
-  comments: IComment[];
-  commentPage: number;
-  totalCommentPages: number;
-  loading: boolean;
-  error: string | null;
-  likeProcessing: boolean;
-  isLiked: boolean;
-}
-
-const initialState: ForumDetailState = {
+const initialState: IForumDetailState = {
   forum: null,
   comments: [],
   commentPage: 0,
@@ -55,9 +45,6 @@ const forumDetailSlice = createSlice({
   },
 
   extraReducers: (builder) => {
-    // =======================
-    // FETCH SINGLE FORUM
-    // =======================
     builder
       .addCase(fetchSingleForum.pending, (state) => {
         state.loading = true;
@@ -65,7 +52,7 @@ const forumDetailSlice = createSlice({
       })
       .addCase(
         fetchSingleForum.fulfilled,
-        (state, action: PayloadAction<ISingleForumResponse>) => {
+        (state, action: PayloadAction<IFetchSingleForumResponse>) => {
           state.loading = false;
           state.forum = action.payload.data;
         },
@@ -74,10 +61,6 @@ const forumDetailSlice = createSlice({
         state.loading = false;
         state.error = action.payload || "Failed to fetch forum";
       });
-
-    // =======================
-    // FETCH COMMENTS
-    // =======================
     builder
       .addCase(fetchComments.pending, (state) => {
         state.loading = true;
@@ -85,68 +68,64 @@ const forumDetailSlice = createSlice({
       })
       .addCase(
         fetchComments.fulfilled,
-        (state, action: PayloadAction<ICommentListResponse>) => {
+        (state, action: PayloadAction<IFetchCommentsResponse>) => {
           state.loading = false;
           state.comments = action.payload.data.content ?? [];
           const rawPages = action.payload.data.page?.totalPages ?? 1;
-          state.totalCommentPages = Math.max(rawPages, 1); // FIXED
+          state.totalCommentPages = Math.max(rawPages, 1);
         },
       )
       .addCase(fetchComments.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload || "Failed to fetch comments";
       });
-
-    // =======================
-    // CREATE COMMENT
-    // =======================
     builder
       .addCase(createComment.pending, (state) => {
         state.loading = true;
       })
-      .addCase(createComment.fulfilled, (state, action) => {
-        state.loading = false;
-        if (state.forum) state.forum.commentsCount++;
+      .addCase(
+        createComment.fulfilled,
+        (state, action: PayloadAction<ICreateCommentResponse>) => {
+          state.loading = false;
+          if (state.forum) state.forum.commentsCount++;
 
-        if (action.payload.data) {
-          // prepend new comment to the comments list
-          state.comments = [action.payload.data, ...state.comments].slice(
-            0,
-            COMMENTS_PER_PAGE,
-          );
-        }
-      })
-
+          if (action.payload.data) {
+            state.comments = [action.payload.data, ...state.comments].slice(
+              0,
+              COMMENTS_PER_PAGE,
+            );
+          }
+        },
+      )
       .addCase(createComment.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload || "Failed to add comment";
       });
+    builder.addCase(
+      updateComment.fulfilled,
+      (state, action: PayloadAction<IUpdateCommentResponse>) => {
+        const updated = action.payload.data;
+        state.comments = state.comments.map((c) =>
+          c.commentId === updated.commentId ? { ...c, ...updated } : c,
+        );
+      },
+    );
+    builder.addCase(
+      deleteComment.fulfilled,
+      (state, action: PayloadAction<IDeleteCommentResponse>) => {
+        const deletedId = action.payload.commentId;
+        state.comments = state.comments.filter(
+          (c) => c.commentId !== deletedId,
+        );
 
-    // =======================
-    // UPDATE COMMENT
-    // =======================
-    builder.addCase(updateComment.fulfilled, (state, action) => {
-      const updated = action.payload.data;
-      state.comments = state.comments.map((c) =>
-        c.commentId === updated.commentId ? { ...c, ...updated } : c,
-      );
-    });
-
-    // =======================
-    // DELETE COMMENT
-    // =======================
-    builder.addCase(deleteComment.fulfilled, (state, action) => {
-      const deletedId = action.payload.commentId;
-      state.comments = state.comments.filter((c) => c.commentId !== deletedId);
-
-      if (state.forum) {
-        state.forum.commentsCount = Math.max(state.forum.commentsCount - 1, 0);
-      }
-    });
-
-    // =======================
-    // TOGGLE LIKE (LIKE / UNLIKE)
-    // =======================
+        if (state.forum) {
+          state.forum.commentsCount = Math.max(
+            state.forum.commentsCount - 1,
+            0,
+          );
+        }
+      },
+    );
     builder
       .addCase(toggleLike.pending, (state) => {
         state.likeProcessing = true;
@@ -172,10 +151,6 @@ const forumDetailSlice = createSlice({
         state.likeProcessing = false;
         state.error = action.payload || "Failed to toggle like";
       });
-
-    // =======================
-    // CHECK LIKE
-    // =======================
     builder.addCase(
       checkLike.fulfilled,
       (state, action: PayloadAction<ICheckLikeResponse>) => {

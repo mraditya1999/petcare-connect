@@ -10,8 +10,8 @@ export const store = configureStore({
     auth: authReducer,
     user: userReducer,
     theme: themeReducer,
-    forumDetail: forumDetailReducer,
     forumList: forumListReducer,
+    forumDetail: forumDetailReducer,
   },
 });
 
