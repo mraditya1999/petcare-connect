@@ -1,10 +1,7 @@
-import { useCallback, useEffect, useState } from "react";
-import { customFetch } from "@/utils/customFetch";
+import React, { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import "react-quill/dist/quill.snow.css";
-import { IFeaturedForumResponse, IForum } from "@/types/forum-types";
 import "react-quill/dist/quill.snow.css";
 import forumHeaderImg from "@/assets/images/forumpage/forumheader.png";
 import { getUserFromStorage } from "@/utils/helpers";
@@ -13,94 +10,99 @@ import ForumSection from "@/components/forum/ForumSection";
 import ForumEditor from "@/components/forum/ForumEditor";
 import SolvedTopics from "@/components/forum/SolvedTopics";
 import PaginationControl from "@/components/forum/PaginationControl";
-import { IPageResponse } from "@/types/pagination-types";
-const ForumPage = () => {
-  const [forums, setForums] = useState<IForum[]>([]);
-  const [featuredForums, setFeaturedForums] = useState<IForum[]>([]);
 
+// Redux imports - adjust paths if your files are elsewhere
+import {
+  fetchForums,
+  fetchFeaturedForums,
+  createForum,
+} from "@/features/forumList/forumListThunk";
+import {
+  setPage,
+  setSortBy,
+  setSortDir,
+  setSearchTerm,
+  setTagSearchTerm,
+} from "@/features/forumList/forumListSlice";
+import { useAppDispatch, useAppSelector } from "@/app/hooks";
+
+const ForumPage: React.FC = () => {
+  const dispatch = useAppDispatch();
+  // Select everything the original component relied on from Redux
+  const {
+    forums,
+    featuredForums,
+    loading,
+    error,
+    page,
+    size,
+    totalPages,
+    totalElements,
+    sortBy,
+    sortDir,
+    searchTerm,
+    tagSearchTerm,
+  } = useAppSelector((state) => state.forumList);
+
+  // Keep local draft state for creating forum exactly as original (no UI change)
   const [newForumTitle, setNewForumTitle] = useState("");
   const [newForumTags, setNewForumTags] = useState<string[]>(["community"]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
   const [newForumContent, setNewForumContent] = useState("");
-  const [totalElements, setTotalElements] = useState<number>(0);
-  const [page, setPage] = useState<number>(0);
-  const [totalPages, setTotalPages] = useState<number>(1);
-  const [sortBy, setSortBy] = useState<string>("createdAt");
-  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
-  const [searchTerm, setSearchTerm] = useState<string>("");
-  const [tagSearchTerm, setTagSearchTerm] = useState<string>("");
 
   const user = getUserFromStorage();
 
-  const fetchForums = useCallback(async () => {
-    setLoading(true);
-    try {
-      let url = `/forums?page=${page}&size=5&sortBy=${sortBy}&sortDir=${sortDir}`;
-
-      if (tagSearchTerm.trim()) {
-        const tags = tagSearchTerm
-          .split(",")
-          .map((tag) => tag.trim())
-          .filter(Boolean);
-        const tagsQuery = tags
-          .map((tag) => `tags=${encodeURIComponent(tag)}`)
-          .join("&");
-        url = `/forums/search-by-tags?${tagsQuery}&page=${page}&size=5&sortBy=${sortBy}&sortDir=${sortDir}`;
-      } else if (searchTerm.trim()) {
-        url = `/forums/search?keyword=${encodeURIComponent(searchTerm)}&page=${page}&size=5&sortBy=${sortBy}&sortDir=${sortDir}`;
-      }
-
-      const forumsResponse = await customFetch.get<IPageResponse<IForum>>(url);
-      const forumData = forumsResponse.data;
-
-      setForums(forumData.content);
-      setTotalPages(forumData.page.totalPages);
-      setTotalElements(forumData.page.totalElements);
-
-      const featuredResponse = await customFetch.get<IFeaturedForumResponse>(
-        "forums/top-featured",
-      );
-      setFeaturedForums(featuredResponse.data.data);
-    } catch (err) {
-      console.error(err);
-      setError("Error fetching forums. Please try again.");
-    } finally {
-      setLoading(false);
-    }
-  }, [page, sortBy, sortDir, searchTerm, tagSearchTerm]);
-
   useEffect(() => {
-    const delay = setTimeout(() => fetchForums(), 500);
-    return () => clearTimeout(delay);
-  }, [fetchForums]);
+    const t = setTimeout(() => {
+      dispatch(
+        fetchForums({
+          page: page ?? 0,
+          size: size ?? 5,
+          sortBy: sortBy ?? "createdAt",
+          sortDir: sortDir ?? "desc",
+          searchTerm: searchTerm ?? "",
+          tagSearchTerm: tagSearchTerm ?? "",
+        }),
+      );
+      // featured list can be fetched each time (cheap) — same as original
+      dispatch(fetchFeaturedForums());
+    }, 500);
 
+    return () => clearTimeout(t);
+  }, [dispatch, page, size, sortBy, sortDir, searchTerm, tagSearchTerm]);
+
+  // handlers match original behavior but now dispatch redux
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value);
-    setPage(0);
+    dispatch(setSearchTerm(e.target.value));
+    dispatch(setPage(0));
   };
 
   const handleTagSearch = (value: string) => {
-    setTagSearchTerm(value);
-    setPage(0);
+    dispatch(setTagSearchTerm(value));
+    dispatch(setPage(0));
   };
 
   const handleCreateForum = async () => {
     if (newForumContent.trim() === "") return;
 
     try {
-      await customFetch.post("/forums", {
-        title: newForumTitle,
-        content: newForumContent,
-        tags: newForumTags,
-      });
+      // createForum thunk will re-fetch the list & featured (per thunk implementation)
+      await dispatch(
+        createForum({
+          title: newForumTitle || "New Forum",
+          content: newForumContent,
+          tags: newForumTags,
+        }),
+      ).unwrap();
+
+      // reset drafts exactly like original
       setNewForumContent("");
       setNewForumTitle("New Forum");
       setNewForumTags([]);
-
-      fetchForums();
-    } catch (error) {
-      console.error("Error creating forum:", error);
+    } catch (err) {
+      // error state is already handled in Redux — log for debug
+      // (keeps UI unchanged)
+      // eslint-disable-next-line no-console
+      console.error("Error creating forum:", err);
     }
   };
 
@@ -128,7 +130,6 @@ const ForumPage = () => {
             <div className="flex items-center gap-1 rounded-md bg-white p-2">
               <Search className="h-5 w-5 text-gray-400" />
               <Input
-                // placeholder="Search everything pet care related..."
                 placeholder="Search by 'title' or 'description'"
                 className="border-0 bg-transparent px-1 focus-visible:ring-0 focus-visible:ring-offset-0"
                 value={searchTerm}
@@ -137,7 +138,7 @@ const ForumPage = () => {
             </div>
             {searchTerm && (
               <p className="mt-2 text-sm text-gray-500">
-                Found {totalElements} results for "{searchTerm}"
+                Found {totalElements ?? 0} results for "{searchTerm}"
               </p>
             )}
           </div>
@@ -153,7 +154,7 @@ const ForumPage = () => {
       <section className="section-width py-16">
         <ForumSection
           title="Featured Forums"
-          forums={featuredForums}
+          forums={featuredForums ?? []}
           loading={loading}
           error={error}
           emptyMessage="No featured forums available yet."
@@ -166,13 +167,13 @@ const ForumPage = () => {
           <article className="col-span-2">
             <ForumSection
               title="Recent activity"
-              forums={forums}
+              forums={forums ?? []}
               loading={loading}
               error={error}
               sortBy={sortBy}
               sortDir={sortDir}
-              onSortByChange={setSortBy}
-              onSortDirChange={setSortDir}
+              onSortByChange={(val) => dispatch(setSortBy(val))}
+              onSortDirChange={(val) => dispatch(setSortDir(val))}
               tagSearchTerm={tagSearchTerm}
               onTagSearchChange={handleTagSearch}
             />
@@ -180,7 +181,7 @@ const ForumPage = () => {
             <PaginationControl
               currentPage={page}
               totalPages={totalPages}
-              onPageChange={setPage}
+              onPageChange={(p) => dispatch(setPage(p))}
             />
           </article>
 

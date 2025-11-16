@@ -81,3 +81,18 @@ export const truncateContent = (content: string, maxLength = 50) => {
   }
   return content.substring(0, maxLength) + "...";
 };
+
+let DOMPurify: any = null;
+try {
+  // optional sanitize lib — install dompurify to enable
+  // npm i dompurify @types/dompurify
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  DOMPurify = require("dompurify")(typeof window !== "undefined" ? window : {});
+} catch (e) {
+  DOMPurify = null;
+}
+export const sanitizeHtml = (html: string) => {
+  if (!html) return "";
+  if (DOMPurify) return DOMPurify.sanitize(html);
+  return html; // fallback (not recommended) — install DOMPurify for safety
+};

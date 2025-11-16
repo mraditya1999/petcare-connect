@@ -14,16 +14,23 @@ export interface IForum {
   updatedAt: string;
 }
 
-export interface IFeaturedForumResponse {
-  message: string;
-  data: IForum[];
+export interface IPaginationInfo {
+  size: number;
+  number: number;
+  totalElements: number;
+  totalPages: number;
+}
+
+export interface IForumListResponse {
+  content: IForum[];
+  page: IPaginationInfo;
 }
 
 export interface IFeaturedForumResponse {
   message: string;
   data: IForum[];
 }
-
+// *******************************************************
 export interface ISingleForumResponse {
   message: string;
   data: IForum;
@@ -75,4 +82,23 @@ export interface ILike {
 export interface ILikeResponse {
   message: string;
   data: null | ILike;
+}
+
+export interface IForumState {
+  forum: IForum | null;
+  comments: IComment[];
+  commentPage: number;
+  totalCommentPages: number;
+  loading: boolean;
+  error: string | null;
+}
+
+export interface CreateCommentParams {
+  forumId: string;
+  text: string;
+}
+
+export interface UpdateCommentParams {
+  commentId: string;
+  text: string;
 }
