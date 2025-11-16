@@ -2,9 +2,8 @@ import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import ForumCard from "@/components/forum/ForumCard";
 import { IForum } from "@/types/forum-types";
 import SortDropdown from "./SortDropdown";
-import { Search } from "lucide-react";
-import { Input } from "../ui/input";
 import React from "react";
+import SearchBar from "../shared/SearchBar";
 
 interface ForumSectionProps {
   title: string;
@@ -49,15 +48,12 @@ const ForumSection = ({
           )}
 
           {onTagSearchChange && (
-            <div className="flex items-center gap-1 rounded-md border bg-white p-1">
-              <Search className="h-5 w-5 text-gray-400" />
-              <Input
-                placeholder="Search by tags (comma-separated)"
-                className="border-0 bg-transparent px-1 focus-visible:ring-0 focus-visible:ring-offset-0"
-                value={tagSearchTerm}
-                onChange={(e) => onTagSearchChange(e.target.value)}
-              />
-            </div>
+            <SearchBar
+              searchTerm={tagSearchTerm}
+              onChange={(e) => onTagSearchChange(e.target.value)}
+              placeholder="Search by tags (comma-separated)"
+              showResults={false} // don’t show “Found X results” line
+            />
           )}
         </div>
       </div>

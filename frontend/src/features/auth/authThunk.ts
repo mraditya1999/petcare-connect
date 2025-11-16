@@ -14,7 +14,7 @@ import {
   ResetPasswordResponse,
   VerifyEmailParams,
   VerifyEmailResponse,
-} from "@/types/thunk-types";
+} from "@/types/auth-thunk-types";
 
 export const loginUser = createAsyncThunk<
   IUser,

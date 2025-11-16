@@ -1,13 +1,10 @@
+import { useEffect, useState, useCallback } from "react";
 import { useParams } from "react-router-dom";
-import { useEffect, useState } from "react";
-import { customFetch } from "@/utils/customFetch";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import {
-  formatRelativeTime,
-  getUserFromStorage,
-  showToast,
-} from "@/utils/helpers";
 import { Button } from "@/components/ui/button";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
+import { useAppDispatch, useAppSelector } from "@/app/hooks";
+import { PaginationControl } from "@/components";
 import {
   FaHeart,
   FaRegHeart,
@@ -16,318 +13,176 @@ import {
   FaPenToSquare,
 } from "react-icons/fa6";
 import {
-  IForum,
-  IComment,
-  ISingleForumResponse,
-  ICommentResponse,
-} from "@/types/forum-types";
-import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
-import PaginationControl from "@/components/forum/PaginationControl";
+  fetchSingleForum,
+  fetchComments,
+  createComment,
+  updateComment,
+  deleteComment,
+  toggleLike,
+  checkLike,
+} from "@/features/forum/forumDetailThunk";
+import {
+  getUserFromStorage,
+  showToast,
+  formatRelativeTime,
+} from "@/utils/helpers";
+import {
+  setCommentPage,
+  selectIsLiked,
+} from "@/features/forum/forumDetailSlice";
+
+const COMMENTS_PER_PAGE = 5;
 
 const SingleForumPage = () => {
   const { forumId } = useParams<{ forumId: string }>();
+  const dispatch = useAppDispatch();
+  const {
+    forum,
+    comments,
+    commentPage,
+    totalCommentPages,
+    loading,
+    error,
+    likeProcessing,
+  } = useAppSelector((state) => state.forumDetail);
 
-  const [forum, setForum] = useState<IForum | null>(null);
-  const [comments, setComments] = useState<IComment[]>([]); // ✅ separate state
-  const [newComment, setNewComment] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [addingComment, setAddingComment] = useState(false);
-  const [showCommentBox, setShowCommentBox] = useState(false);
-  const [liked, setLiked] = useState(false);
-  const [likeProcessing, setLikeProcessing] = useState(false);
-  const [commentPage, setCommentPage] = useState(0);
-  const [totalCommentPages, setTotalCommentPages] = useState(1);
-  const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
-  const [editText, setEditText] = useState("");
-
-  const COMMENTS_PER_PAGE = 5;
   const user = getUserFromStorage();
   const currentUserId = user?.data?.userId;
+  const isLiked = useAppSelector(selectIsLiked);
 
-  const handleEditComment = (comment: IComment) => {
-    setEditingCommentId(comment.commentId);
-    setEditText(comment.text);
-  };
+  const [newComment, setNewComment] = useState("");
+  const [addingComment, setAddingComment] = useState(false);
+  const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
+  const [editText, setEditText] = useState("");
+  const [showCommentBox, setShowCommentBox] = useState(false);
 
-  const handleSaveEdit = async (commentId: string) => {
-    try {
-      const response = await customFetch.put(
-        `/comments/${commentId}`,
-        {
-          text: editText,
-        },
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-        },
-      );
-
-      if (response.data?.data) {
-        // Update UI immediately
-        setComments((prev) =>
-          prev.map((c) =>
-            c.commentId === commentId ? { ...c, text: editText } : c,
-          ),
-        );
-
-        setEditingCommentId(null);
-        showToast("Comment updated successfully!", "default");
-      } else {
-        showToast("Failed to update comment.", "destructive");
-      }
-    } catch (error) {
-      console.error("Error updating comment:", error);
-      showToast("Error updating comment.", "destructive");
-    }
-  };
-
-  const fetchForumComments = async (forumId: string, page: number) => {
-    try {
-      const response = await customFetch(
-        `/comments/forums/${forumId}?page=${page}&size=${COMMENTS_PER_PAGE}`,
-      );
-      const commentsData = response.data.data?.content || [];
-      const totalPages = response.data.data?.page?.totalPages || 1;
-
-      setComments(commentsData);
-      setTotalCommentPages(totalPages);
-    } catch (err) {
-      console.error("Error fetching comments:", err);
-      showToast("Error fetching comments. Please try again.", "destructive");
-    }
-  };
-
-  const fetchForumData = async () => {
+  // Fetch forum and initial comments
+  useEffect(() => {
     if (!forumId) return;
-    try {
-      const forumResponse = await customFetch.get<ISingleForumResponse>(
-        `/forums/${forumId}`,
-      );
-      const forumData = forumResponse.data;
-      setForum(forumData.data);
 
-      // fetch comments for the current page (commentPage)
-      await fetchForumComments(forumId, commentPage);
-      if (user) {
-        const checkLikeResponse = await customFetch(
-          `/likes/forums/${forumId}/check`,
-        );
-        const isLiked = checkLikeResponse.data.data?.isLiked || false;
-        setLiked(isLiked);
-      }
-    } catch (err) {
-      setError("Error fetching forum details. Please try again.");
-      showToast(
-        "Error fetching forum details. Please try again.",
-        "destructive",
-      );
-      console.error("Error fetching forum details:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+    dispatch(fetchSingleForum(forumId));
+    dispatch(
+      fetchComments({ forumId, page: commentPage, size: COMMENTS_PER_PAGE }),
+    );
+
+    if (user) dispatch(checkLike({ forumId }));
+  }, [dispatch, forumId]);
+
+  // Refetch comments on page change
+  useEffect(() => {
+    if (!forumId) return;
+    dispatch(
+      fetchComments({ forumId, page: commentPage, size: COMMENTS_PER_PAGE }),
+    );
+  }, [dispatch, forumId, commentPage]);
 
   useEffect(() => {
-    if (error) {
-      showToast(error, "destructive");
-    }
+    if (error) showToast(error, "destructive");
   }, [error]);
 
-  /* effects */
-  useEffect(() => {
-    fetchForumData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [forumId]);
+  const handleAddComment = useCallback(async () => {
+    if (!forumId || !newComment.trim()) return;
 
-  useEffect(() => {
-    if (forumId) {
-      fetchForumComments(forumId, commentPage);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [commentPage, forumId]);
-
-  const handleDeleteComment = async (commentId: string) => {
-    try {
-      await customFetch.delete(`/comments/${commentId}`);
-
-      const updatedCount = Math.max((forum?.commentsCount || 1) - 1, 0);
-      const newTotalPages = Math.max(
-        Math.ceil(updatedCount / COMMENTS_PER_PAGE),
-        1,
-      );
-
-      // Update forum count
-      setForum((prev) =>
-        prev ? { ...prev, commentsCount: updatedCount } : prev,
-      );
-
-      // Move to previous page if needed
-      let finalPage = commentPage;
-      if (commentPage > newTotalPages - 1) {
-        finalPage = newTotalPages - 1;
-        setCommentPage(finalPage);
-      }
-
-      // 🔥 MOST IMPORTANT PART → FETCH UPDATED PAGE DATA
-      await fetchForumComments(forumId!, finalPage);
-
-      showToast("Comment deleted successfully", "default");
-    } catch (error) {
-      console.error(error);
-      showToast("Failed to delete comment", "destructive");
-    }
-  };
-
-  const handleAddComment = async () => {
-    if (newComment.trim() === "") return;
     setAddingComment(true);
-
     try {
-      const response = await customFetch.post<ICommentResponse>(
-        `/comments/forums/${forumId}`,
-        { text: newComment },
-      );
-
-      if (response.data?.data) {
-        const newAddedComment = response.data.data;
-
-        // Derive the updated count reliably: prefer forum?.commentsCount if available else comments.length
-        const priorCount = (forum?.commentsCount ?? comments.length) || 0;
-        const updatedCount = priorCount + 1;
-        const newTotalPages = Math.max(
-          Math.ceil(updatedCount / COMMENTS_PER_PAGE),
-          1,
-        );
-
-        // Update forum count atomically
-        setForum((prev) =>
-          prev
-            ? { ...prev, commentsCount: (prev.commentsCount || 0) + 1 }
-            : prev,
-        );
-
-        // Update total pages
-        setTotalCommentPages(newTotalPages);
-
-        // If user is on first page (page 0), show the new comment there (prepend)
-        // Trim to COMMENTS_PER_PAGE to avoid letting page contain > size
-        if (commentPage === 0) {
-          setComments((prev) =>
-            [newAddedComment, ...prev].slice(0, COMMENTS_PER_PAGE),
-          );
-        } else {
-          // If user is on another page, do not mutate that page — it will reflect count when they navigate.
-          // Optionally you could navigate user to page 0; we keep current behaviour.
-        }
-
-        setNewComment("");
-        showToast("Comment added successfully!", "default");
-      } else {
-        showToast("Failed to add comment. Please try again.", "destructive");
-      }
-    } catch (error) {
-      console.error("Error adding comment:", error);
+      await dispatch(createComment({ forumId, text: newComment })).unwrap();
+      dispatch(fetchComments({ forumId, page: 0, size: COMMENTS_PER_PAGE }));
+      dispatch(fetchSingleForum(forumId));
+      setNewComment("");
+      showToast("Comment added successfully!", "default");
+    } catch {
       showToast("Error adding comment. Please try again.", "destructive");
     } finally {
       setAddingComment(false);
     }
-  };
+  }, [dispatch, forumId, newComment]);
 
-  const handleLike = async () => {
-    if (likeProcessing) return;
-    setLikeProcessing(true);
+  const handleSaveEdit = useCallback(
+    async (commentId: string) => {
+      try {
+        await dispatch(updateComment({ commentId, text: editText })).unwrap();
+        setEditingCommentId(null);
+        showToast("Comment updated successfully!", "default");
+      } catch {
+        showToast("Error updating comment.", "destructive");
+      }
+    },
+    [dispatch, editText],
+  );
+
+  const handleDeleteComment = useCallback(
+    async (commentId: string) => {
+      if (!forumId) return;
+
+      try {
+        await dispatch(deleteComment({ commentId })).unwrap();
+
+        const updatedCount = Math.max((forum?.commentsCount || 1) - 1, 0);
+        const newTotalPages = Math.max(
+          Math.ceil(updatedCount / COMMENTS_PER_PAGE),
+          1,
+        );
+        const newPage = Math.min(commentPage, newTotalPages - 1);
+
+        if (newPage !== commentPage) dispatch(setCommentPage(newPage));
+
+        dispatch(
+          fetchComments({ forumId, page: newPage, size: COMMENTS_PER_PAGE }),
+        );
+        dispatch(fetchSingleForum(forumId));
+
+        showToast("Comment deleted successfully", "default");
+      } catch {
+        showToast("Failed to delete comment", "destructive");
+      }
+    },
+    [dispatch, forumId, forum?.commentsCount, commentPage],
+  );
+
+  const handleLike = useCallback(async () => {
+    if (!forumId || likeProcessing) return;
+
+    if (!user) {
+      showToast("Please log in to like this post.", "destructive");
+      return;
+    }
 
     try {
-      const response = await customFetch.post<ILikeResponse>(
-        `/likes/forums/${forumId}`,
-      );
-
-      const message = response.data.message.toLowerCase();
-      const user = getUserFromStorage();
-      const currentUserId = user?.data?.userId;
-
-      if (!currentUserId) {
-        showToast("Please log in to like this post.", "destructive");
-        return;
-      }
-
-      const isUnlike = message.includes("unlike");
-      const isLike = message.includes("like");
-
-      setForum((prev) => {
-        if (!prev) return prev;
-        const existingLikes = prev.likes || [];
-
-        if (isUnlike) {
-          setLiked(false);
-          return {
-            ...prev,
-            likes: existingLikes.filter((l) => l.userId !== currentUserId),
-            likesCount: Math.max(
-              (prev.likesCount || existingLikes.length) - 1,
-              0,
-            ),
-          };
-        }
-
-        if (isLike && !existingLikes.some((l) => l.userId === currentUserId)) {
-          setLiked(true);
-          showToast("You liked this forum post.", "default");
-          return {
-            ...prev,
-            likes: [
-              ...existingLikes,
-              {
-                likeId: crypto.randomUUID(),
-                forumId: forumId!,
-                userId: currentUserId,
-                createdAt: new Date().toISOString(),
-              },
-            ],
-            likesCount: (prev.likesCount || existingLikes.length) + 1,
-          };
-        }
-
-        return prev;
-      });
-    } catch (err) {
-      console.error("Error toggling like:", err);
-      showToast("Please log in to like this forum post.", "destructive");
-    } finally {
-      setLikeProcessing(false);
+      await dispatch(toggleLike({ forumId })).unwrap();
+      dispatch(fetchSingleForum(forumId));
+      dispatch(checkLike({ forumId }));
+    } catch {
+      showToast("Failed to like the forum. Please try again.", "destructive");
     }
-  };
+  }, [dispatch, forumId, likeProcessing, user]);
 
-  if (loading) {
+  if (loading && !forum)
     return (
       <div className="flex min-h-screen items-center justify-center">
         <LoadingSpinner />
       </div>
     );
-  }
 
-  if (error) {
+  if (error && !forum)
     return (
       <div className="flex min-h-screen items-center justify-center">
         <p className="text-red-600">Something went wrong. Please try again.</p>
       </div>
     );
-  }
 
   return (
     <section className="py-16">
       <div className="section-width mx-auto mt-6 space-y-6 rounded-lg p-4 shadow-lg">
+        {/* Forum Header */}
         <div className="flex items-center space-x-3 rounded-t-lg bg-gray-50 p-6">
           <Avatar className="h-10 w-10">
             <AvatarImage src={forum?.firstName || ""} alt="User Avatar" />
             <AvatarFallback>
               {forum?.firstName?.slice(0, 1) || "?"}
-            </AvatarFallback>{" "}
+            </AvatarFallback>
           </Avatar>
           <div>
-            <p className="text-sm font-semibold">{`${forum?.firstName || ""} ${forum?.lastName || ""}`}</p>{" "}
+            <p className="text-sm font-semibold">{`${forum?.firstName || ""} ${forum?.lastName || ""}`}</p>
             <p className="text-xs text-gray-500">
               {forum?.createdAt
                 ? formatRelativeTime(forum.createdAt)
@@ -335,12 +190,15 @@ const SingleForumPage = () => {
             </p>
           </div>
         </div>
+
+        {/* Forum Content */}
         <h1 className="text-3xl font-bold">{forum?.title}</h1>
         <div
           className="text-lg text-gray-700"
           dangerouslySetInnerHTML={{ __html: forum?.content || "" }}
-        ></div>
+        />
 
+        {/* Actions */}
         <div className="mt-4 flex items-center justify-end gap-4">
           <Button
             variant="ghost"
@@ -349,7 +207,7 @@ const SingleForumPage = () => {
             disabled={!user || likeProcessing}
             title={!user ? "Log in to like this forum" : undefined}
           >
-            {liked ? (
+            {isLiked ? (
               <FaHeart className="h-4 w-4 text-red-500 transition-colors duration-200" />
             ) : (
               <FaRegHeart className="h-4 w-4 text-gray-500 transition-colors duration-200" />
@@ -364,10 +222,12 @@ const SingleForumPage = () => {
             disabled={!user || likeProcessing}
             title={!user ? "Log in to comment this forum" : undefined}
           >
-            {forum?.commentsCount || 0} <FaRegMessage className="h-4 w-4" />{" "}
+            {forum?.commentsCount || 0} <FaRegMessage className="h-4 w-4" />
           </Button>
         </div>
-        {forum && forum.tags && forum.tags.length > 0 && (
+
+        {/* Tags */}
+        {forum?.tags?.length ? (
           <div className="mt-4 flex flex-wrap gap-2">
             {forum.tags.map((tag) => (
               <span
@@ -378,10 +238,12 @@ const SingleForumPage = () => {
               </span>
             ))}
           </div>
-        )}
+        ) : null}
+
+        {/* Comments */}
         <div className="mt-4 rounded-lg bg-white p-6 shadow-md">
           <h2 className="text-lg font-semibold">Comments</h2>
-          {comments.length > 0 ? (
+          {comments.length ? (
             comments.map((comment) => (
               <div
                 key={comment.commentId}
@@ -399,9 +261,7 @@ const SingleForumPage = () => {
                   </Avatar>
 
                   <div className="w-full">
-                    <p className="text-sm font-semibold">
-                      {`${comment?.firstName || ""} ${comment?.lastName || ""}`}
-                    </p>
+                    <p className="text-sm font-semibold">{`${comment?.firstName || ""} ${comment?.lastName || ""}`}</p>
 
                     {editingCommentId === comment.commentId ? (
                       <div className="mt-2 w-full">
@@ -411,8 +271,7 @@ const SingleForumPage = () => {
                           value={editText}
                           onChange={(e) => setEditText(e.target.value)}
                           placeholder="Edit your comment..."
-                        ></textarea>
-
+                        />
                         <div className="mt-3 flex gap-2">
                           <Button
                             size="sm"
@@ -420,7 +279,6 @@ const SingleForumPage = () => {
                           >
                             Save
                           </Button>
-
                           <Button
                             size="sm"
                             variant="outline"
@@ -445,16 +303,18 @@ const SingleForumPage = () => {
                   </div>
                 </div>
 
-                {comment.userId === currentUserId &&
+                {comment.userId === Number(currentUserId) &&
                   editingCommentId !== comment.commentId && (
                     <div className="flex flex-col items-center gap-3">
                       <button
                         className="text-gray-600 transition hover:text-blue-600"
-                        onClick={() => handleEditComment(comment)}
+                        onClick={() => {
+                          setEditingCommentId(comment.commentId);
+                          setEditText(comment.text);
+                        }}
                       >
                         <FaPenToSquare />
                       </button>
-
                       <button
                         className="text-gray-600 transition hover:text-red-600"
                         onClick={() => handleDeleteComment(comment.commentId)}
@@ -468,15 +328,17 @@ const SingleForumPage = () => {
           ) : (
             <p className="text-gray-500">No comments yet.</p>
           )}
+
           {totalCommentPages > 1 && (
             <PaginationControl
               currentPage={commentPage}
               totalPages={totalCommentPages}
-              onPageChange={setCommentPage}
+              onPageChange={(page) => dispatch(setCommentPage(page))}
             />
           )}
         </div>
 
+        {/* Add Comment */}
         {user && (
           <div className="mt-4 rounded-lg bg-white p-6 shadow-md">
             <h2 className="mb-2 text-lg font-semibold">Add a Comment</h2>
@@ -486,7 +348,7 @@ const SingleForumPage = () => {
               placeholder="Add a comment..."
               value={newComment}
               onChange={(e) => setNewComment(e.target.value)}
-            ></textarea>
+            />
             <Button onClick={handleAddComment} disabled={addingComment}>
               {addingComment ? "Adding..." : "Add Comment"}
             </Button>

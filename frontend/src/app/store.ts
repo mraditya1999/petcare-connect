@@ -2,7 +2,7 @@ import { configureStore } from "@reduxjs/toolkit";
 import themeReducer from "@/features/theme/themeSlice";
 import authReducer from "@/features/auth/authSlice";
 import userReducer from "@/features/user/userSlice";
-import forumReducer from "@/features/forum/forumSlice";
+import forumDetailReducer from "@/features/forum/forumDetailSlice";
 import forumListReducer from "@/features/forumList/forumListSlice";
 
 export const store = configureStore({
@@ -10,8 +10,8 @@ export const store = configureStore({
     auth: authReducer,
     user: userReducer,
     theme: themeReducer,
-    forum: forumReducer,
     forumList: forumListReducer,
+    forumDetail: forumDetailReducer,
   },
 });
 

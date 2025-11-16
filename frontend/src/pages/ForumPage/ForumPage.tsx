@@ -1,16 +1,18 @@
-import React, { useCallback, useEffect, useState } from "react";
-import { Input } from "@/components/ui/input";
-import { Search } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import "react-quill/dist/quill.snow.css";
+import { useCallback, useEffect, useState } from "react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import forumHeaderImg from "@/assets/images/forumpage/forumheader.png";
-import { getUserFromStorage, showToast } from "@/utils/helpers";
-import Categories from "@/components/forum/Categories";
-import ForumSection from "@/components/forum/ForumSection";
-import ForumEditor from "@/components/forum/ForumEditor";
-import SolvedTopics from "@/components/forum/SolvedTopics";
-import PaginationControl from "@/components/forum/PaginationControl";
 import { useAppDispatch, useAppSelector } from "@/app/hooks";
+import { getUserFromStorage, showToast } from "@/utils/helpers";
+import {
+  PaginationControl,
+  SolvedTopics,
+  Categories,
+  ForumSection,
+  ForumEditor,
+  SearchBar,
+} from "@/components";
 import { useDebounce } from "@/hooks/useDebounce";
 import {
   fetchForums,
@@ -93,7 +95,16 @@ const ForumPage: React.FC = () => {
           tags: newForumTags,
         }),
       ).unwrap();
-
+      await dispatch(
+        fetchForums({
+          page: 0,
+          size,
+          sortBy,
+          sortDir,
+          searchTerm,
+          tagSearchTerm,
+        }),
+      );
       resetEditor();
     } catch (err) {
       showToast("Failed to create forum", "destructive");
@@ -125,24 +136,11 @@ const ForumPage: React.FC = () => {
           <p className="tight mb-8 text-center text-xs text-gray-600 md:text-sm">
             Share, Learn, and Connect with Fellow Pet Owners
           </p>
-
-          {/* Search Bar */}
-          <div className="max-w-3xl">
-            <div className="flex items-center gap-1 rounded-md bg-white p-2">
-              <Search className="h-5 w-5 text-gray-400" />
-              <Input
-                placeholder="Search by 'title' or 'description'"
-                className="border-0 bg-transparent px-1 focus-visible:ring-0 focus-visible:ring-offset-0"
-                value={searchTerm}
-                onChange={handleSearch}
-              />
-            </div>
-            {searchTerm && (
-              <p className="mt-2 text-sm text-gray-500">
-                Found {totalElements ?? 0} results for "{searchTerm}"
-              </p>
-            )}
-          </div>
+          <SearchBar
+            searchTerm={searchTerm}
+            onChange={handleSearch}
+            totalElements={totalElements}
+          />
         </div>
       </section>
 
@@ -227,7 +225,6 @@ const ForumPage: React.FC = () => {
             <Button onClick={handleCreateForum} className="mt-4">
               {loading ? "Creating..." : "Create Forum"}
             </Button>
-            {error && <p className="mt-2 text-red-500">{error}</p>}
           </div>
         </section>
       )}

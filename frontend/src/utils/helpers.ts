@@ -4,6 +4,8 @@ import { IUser } from "@/types/auth-types";
 import { ZodError } from "zod";
 import { formatDistanceToNow } from "date-fns";
 
+export type Theme = "dark" | "light" | "system";
+
 export const saveUserToStorage = (user: IUser, rememberMe: boolean) => {
   const storage = rememberMe ? localStorage : sessionStorage;
   storage.setItem("user", JSON.stringify(user));
@@ -29,8 +31,6 @@ export const showToast = (
 ) => {
   toast({ description, variant });
 };
-
-export type Theme = "dark" | "light" | "system";
 
 export const getInitialTheme = (): Theme => {
   const storedTheme = localStorage.getItem("theme") as Theme;
@@ -82,17 +82,6 @@ export const truncateContent = (content: string, maxLength = 50) => {
   return content.substring(0, maxLength) + "...";
 };
 
-let DOMPurify: any = null;
-try {
-  // optional sanitize lib — install dompurify to enable
-  // npm i dompurify @types/dompurify
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  DOMPurify = require("dompurify")(typeof window !== "undefined" ? window : {});
-} catch (e) {
-  DOMPurify = null;
+export function makeImmutable<T extends object>(obj: T): Readonly<T> {
+  return Object.freeze(obj);
 }
-export const sanitizeHtml = (html: string) => {
-  if (!html) return "";
-  if (DOMPurify) return DOMPurify.sanitize(html);
-  return html; // fallback (not recommended) — install DOMPurify for safety
-};
