@@ -1,38 +1,3 @@
-// import { FaMagnifyingGlass } from "react-icons/fa6";
-// import { Input } from "@/components/ui/input";
-
-// interface SearchBarProps {
-//   searchTerm: string;
-//   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-//   totalElements?: number;
-// }
-
-// const SearchBar: React.FC<SearchBarProps> = ({
-//   searchTerm,
-//   onChange,
-//   totalElements,
-// }) => {
-//   return (
-//     <div className="max-w-3xl">
-//       <div className="flex items-center gap-1 rounded-md bg-white p-2">
-//         <FaMagnifyingGlass className="h-5 w-5 text-gray-400" />
-//         <Input
-//           placeholder="Search by 'title' or 'description'"
-//           className="border-0 bg-transparent px-1 focus-visible:ring-0 focus-visible:ring-offset-0"
-//           value={searchTerm}
-//           onChange={onChange}
-//         />
-//       </div>
-//       {searchTerm && (
-//         <p className="mt-2 text-sm text-gray-500">
-//           Found {totalElements ?? 0} results for "{searchTerm}"
-//         </p>
-//       )}
-//     </div>
-//   );
-// };
-
-// export default SearchBar;
 import { Input } from "@/components/ui/input";
 import { FaMagnifyingGlass } from "react-icons/fa6";
 
@@ -41,7 +6,8 @@ interface SearchBarProps {
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   totalElements?: number;
   placeholder?: string;
-  showResults?: boolean; // default true
+  showResults?: boolean;
+  darkMode?: boolean; // false = force light, true = follow theme
 }
 
 const SearchBar: React.FC<SearchBarProps> = ({
@@ -50,20 +16,40 @@ const SearchBar: React.FC<SearchBarProps> = ({
   totalElements,
   placeholder = "Search by 'title' or 'description'",
   showResults = true,
+  darkMode = true, // default: follow theme
 }) => {
+  // If darkMode is false, force light classes (no dark: variants)
+  const wrapperClasses = !darkMode
+    ? "flex items-center gap-2 rounded-md border border-gray-200 bg-white px-3 py-2 shadow-sm transition-all hover:border-gray-300"
+    : "flex items-center gap-2 rounded-md border border-gray-200 bg-white px-3 py-2 shadow-sm transition-all hover:border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:hover:border-gray-600";
+
+  const iconClasses = !darkMode
+    ? "text-gray-500"
+    : "text-gray-500 dark:text-gray-300";
+
+  const inputClasses = !darkMode
+    ? "border-0 bg-transparent p-0 text-gray-800 placeholder-gray-400 focus-visible:ring-0 focus-visible:ring-offset-0"
+    : "border-0 bg-transparent p-0 text-gray-800 placeholder-gray-400 focus-visible:ring-0 focus-visible:ring-offset-0 dark:text-gray-200 dark:placeholder-gray-500";
+
+  const resultClasses = !darkMode
+    ? "text-gray-600"
+    : "text-gray-600 dark:text-gray-400";
+
   return (
     <div className="max-w-3xl">
-      <div className="flex items-center gap-1 rounded-md bg-white p-2">
-        <FaMagnifyingGlass />
+      <div className={wrapperClasses}>
+        <FaMagnifyingGlass className={iconClasses} />
+
         <Input
           placeholder={placeholder}
-          className="border-0 bg-transparent px-1 focus-visible:ring-0 focus-visible:ring-offset-0"
+          className={inputClasses}
           value={searchTerm}
           onChange={onChange}
         />
       </div>
+
       {showResults && searchTerm && (
-        <p className="mt-2 text-sm text-gray-500">
+        <p className={`mt-2 text-sm ${resultClasses}`}>
           Found {totalElements ?? 0} results for "{searchTerm}"
         </p>
       )}

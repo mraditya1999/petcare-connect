@@ -5,6 +5,7 @@
 import { Outlet } from "react-router-dom";
 // import { Outlet, useNavigate } from "react-router-dom";
 import dogImg from "@/assets/images/authpage/dog.jpeg";
+import ThemeSwitcher from "@/components/ui/ThemeSwitcher";
 
 const AuthLayoutPage = () => {
   // const navigate = useNavigate();
@@ -38,8 +39,14 @@ const AuthLayoutPage = () => {
           />
         </div>
       </section>
-      <section className="col-span-1 grid h-full w-full place-items-center bg-background px-5 shadow-md">
-        <Outlet />
+      <section className="col-span-1 flex h-full w-full flex-col bg-background px-5 shadow-md">
+        <div className="mt-4 flex justify-end p-2">
+          <ThemeSwitcher />
+        </div>
+
+        <div className="grid flex-1 place-items-center">
+          <Outlet />
+        </div>
       </section>
     </div>
   );

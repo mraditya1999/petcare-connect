@@ -4,11 +4,13 @@ import {
   fetchForums,
   fetchFeaturedForums,
   createForum,
+  fetchMyForums,
 } from "./forumListThunk";
 
 const initialState: IForumListState = {
   forums: [],
   featuredForums: [],
+  myForums: [],
   page: 0,
   size: 5,
   totalPages: 0,
@@ -19,6 +21,9 @@ const initialState: IForumListState = {
   tagSearchTerm: "",
   loading: false,
   error: null,
+  myForumsPage: 0,
+  myForumsTotalPages: 0,
+  myForumsTotalElements: 0,
 };
 
 const forumListSlice = createSlice({
@@ -47,6 +52,9 @@ const forumListSlice = createSlice({
     },
     clearError(state) {
       state.error = null;
+    },
+    setMyForumsPage(state, action: PayloadAction<number>) {
+      state.myForumsPage = action.payload;
     },
   },
   extraReducers: (builder) => {
@@ -84,6 +92,21 @@ const forumListSlice = createSlice({
         state.loading = false;
         state.error = action.payload || "Failed to create forum";
       });
+    builder
+      .addCase(fetchMyForums.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchMyForums.fulfilled, (state, action) => {
+        state.loading = false;
+        state.myForums = action.payload.data.content;
+        state.myForumsTotalPages = action.payload.data.page.totalPages;
+        state.myForumsTotalElements = action.payload.data.page.totalElements;
+      })
+      .addCase(fetchMyForums.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload || "Failed to load my forums";
+      });
   },
 });
 
@@ -95,6 +118,7 @@ export const {
   setTagSearchTerm,
   setSize,
   clearError,
+  setMyForumsPage,
 } = forumListSlice.actions;
 
 export default forumListSlice.reducer;

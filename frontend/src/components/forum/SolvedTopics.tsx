@@ -46,15 +46,17 @@ const SolvedTopics = () => {
         <AccordionItem
           key={index}
           value={`item-${index}`}
-          className="rounded-lg border bg-white px-4"
+          className="rounded-lg border bg-white px-4 dark:border-gray-700 dark:bg-gray-800"
         >
-          <AccordionTrigger className="flex items-start gap-2 py-3">
+          <AccordionTrigger className="flex items-start gap-2 py-3 text-gray-900 dark:text-gray-100">
             <Check className="mt-1 h-4 w-4 text-green-500" />
             <span className="text-left text-sm">{topic.title}</span>
           </AccordionTrigger>
 
           <AccordionContent>
-            <p className="pb-3 text-sm text-gray-600">{topic.description}</p>
+            <p className="pb-3 text-sm text-gray-600 dark:text-gray-300">
+              {topic.description}
+            </p>
           </AccordionContent>
         </AccordionItem>
       ))}

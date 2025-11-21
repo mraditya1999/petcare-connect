@@ -20,48 +20,51 @@ const ForumCard = ({ forums }: ForumCardProps) => {
           to={`${ROUTES.FORUM}/${forum.forumId}`}
           className="block"
         >
-          <Card key={forum.forumId} className="border-2 bg-white p-4 shadow-sm">
+          <Card className="border bg-white p-4 shadow-sm transition hover:shadow-md dark:border-gray-700 dark:bg-gray-800 dark:hover:shadow-gray-900">
             <div className="flex items-center gap-4">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 text-blue-600">
-                <Avatar className="h-8 w-8">
-                  <AvatarImage
-                    src={forum.userProfile || ""}
-                    alt={forum.firstName}
-                  />
-                  <AvatarFallback>
-                    {forum.firstName?.charAt(0) || "?"}
-                  </AvatarFallback>
-                </Avatar>
-              </div>
+              <Avatar className="h-10 w-10">
+                <AvatarImage
+                  src={forum.userProfile || ""}
+                  alt={forum.firstName}
+                />
+                <AvatarFallback>
+                  {forum.firstName?.charAt(0) || "?"}
+                </AvatarFallback>
+              </Avatar>
 
               <div className="flex-grow">
-                <h3 className="mb-2 text-sm font-semibold capitalize">
+                <h3 className="mb-1 text-sm font-semibold capitalize text-gray-900 dark:text-gray-100">
                   {forum.firstName} {forum.lastName}
                 </h3>
-                <p className="text-sm capitalize text-gray-900">
+
+                <p className="text-sm capitalize text-gray-800 dark:text-gray-200">
                   {forum.title}
                 </p>
+
                 <div
-                  className="prose mt-1 max-w-none text-xs text-gray-500"
+                  className="prose dark:prose-invert mt-1 max-w-none text-xs text-gray-600 dark:text-gray-300"
                   dangerouslySetInnerHTML={{
                     __html: truncateContent(forum.content),
                   }}
                 />
-                <div className="mt-2 flex items-center gap-4 text-xs text-gray-500">
+
+                <div className="mt-2 flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
                   <Button
                     variant="ghost"
-                    className="flex w-auto items-center gap-1 p-0 hover:bg-transparent"
+                    className="flex w-auto items-center gap-1 p-0 hover:bg-transparent dark:hover:text-gray-200"
                   >
                     <FaRegHeart className="h-4 w-4" />
                     {forum.likesCount || 0}
                   </Button>
+
                   <Button
                     variant="ghost"
-                    className="flex w-auto items-center gap-1 p-0 hover:bg-transparent"
+                    className="flex w-auto items-center gap-1 p-0 hover:bg-transparent dark:hover:text-gray-200"
                   >
                     <FaRegMessage className="h-4 w-4" />
                     {forum.commentsCount || 0}
                   </Button>
+
                   <span className="flex items-center gap-1">
                     {formatRelativeTime(forum?.createdAt || "")}
                   </span>

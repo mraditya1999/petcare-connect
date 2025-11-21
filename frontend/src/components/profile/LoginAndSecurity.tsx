@@ -32,20 +32,20 @@ const LoginAndSecurity: React.FC = () => {
         description: "Password changed successfully",
       });
     } catch (error) {
-       const errorMessage = handleError(error);
-            showToast(errorMessage, "destructive");
+      const errorMessage = handleError(error);
+      showToast(errorMessage, "destructive");
     }
   };
 
   useEffect(() => {
     if (errors.currentPassword) {
-      showToast(errors.currentPassword.message|| '',"destructive");
+      showToast(errors.currentPassword.message || "", "destructive");
     }
     if (errors.newPassword) {
-      showToast(errors.newPassword.message|| '',"destructive");
+      showToast(errors.newPassword.message || "", "destructive");
     }
     if (errors.confirmPassword) {
-      showToast(errors.confirmPassword.message|| '',"destructive");
+      showToast(errors.confirmPassword.message || "", "destructive");
     }
   }, [errors, toast]);
 
@@ -58,21 +58,32 @@ const LoginAndSecurity: React.FC = () => {
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div>
             <Label>Current Password</Label>
-            <PasswordInput {...register("currentPassword")} placeholder="Enter current password" />
+            <PasswordInput
+              {...register("currentPassword")}
+              placeholder="Enter current password"
+            />
           </div>
           <div>
             <Label>New Password</Label>
-            <PasswordInput {...register("newPassword")} placeholder="Enter new password" />
+            <PasswordInput
+              {...register("newPassword")}
+              placeholder="Enter new password"
+            />
           </div>
           <div>
             <Label>Re-enter New Password</Label>
-            <PasswordInput {...register("confirmPassword")} placeholder="Re-enter new password" />
+            <PasswordInput
+              {...register("confirmPassword")}
+              placeholder="Re-enter new password"
+            />
           </div>
-          <Button type="submit" className="w-full">Change Password</Button>
+          <Button type="submit" className="w-full">
+            Change Password
+          </Button>
         </form>
       </CardContent>
     </Card>
   );
-}
+};
 
 export default LoginAndSecurity;

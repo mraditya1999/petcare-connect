@@ -1,7 +1,7 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import { customFetch } from "@/utils/customFetch";
 import { handleError } from "@/utils/helpers";
-import { IForum } from "@/types/forum-types";
+import { IFetchMyForumsResponse, IForum } from "@/types/forum-types";
 import {
   IFetchForumsParams,
   IFetchForumsResponse,
@@ -81,6 +81,23 @@ export const createForum = createAsyncThunk<
     );
 
     dispatch(fetchFeaturedForums());
+  } catch (err) {
+    return rejectWithValue(handleError(err));
+  }
+});
+
+// Fetch my forums
+// forumListThunk.ts
+export const fetchMyForums = createAsyncThunk<
+  IFetchMyForumsResponse,
+  { page: number; size: number },
+  { rejectValue: string }
+>("forumList/fetchMyForums", async ({ page, size }, { rejectWithValue }) => {
+  try {
+    const res = await customFetch.get<IFetchMyForumsResponse>(
+      `/forums/my-forums?page=${page}&size=${size}`,
+    );
+    return res.data;
   } catch (err) {
     return rejectWithValue(handleError(err));
   }

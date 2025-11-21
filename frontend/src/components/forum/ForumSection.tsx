@@ -32,44 +32,58 @@ const ForumSection = ({
   onTagSearchChange,
   tagSearchTerm,
 }: ForumSectionProps) => {
+  // show shimmer even during error
+  const showShimmer = loading || !!error;
+
+  // Handle undefined/no response gracefully
+  const safeForums = Array.isArray(forums) ? forums : [];
+
   return (
     <div>
-      <div>
-        <h2 className="mb-6 text-2xl font-semibold">{title}</h2>
+      <h2 className="mb-6 text-2xl font-semibold text-gray-900 dark:text-gray-100">
+        {title}
+      </h2>
 
-        <div className="mb-4 flex items-center justify-between">
-          {sortBy && sortDir && onSortByChange && onSortDirChange && (
-            <SortDropdown
-              sortBy={sortBy}
-              sortDir={sortDir}
-              onSortByChange={onSortByChange}
-              onSortDirChange={onSortDirChange}
-            />
-          )}
+      {/* SORT + TAG SEARCH */}
+      <div className="mb-4 flex items-center justify-between">
+        {sortBy && sortDir && onSortByChange && onSortDirChange && (
+          <SortDropdown
+            sortBy={sortBy}
+            sortDir={sortDir}
+            onSortByChange={onSortByChange}
+            onSortDirChange={onSortDirChange}
+          />
+        )}
 
-          {onTagSearchChange && (
-            <SearchBar
-              searchTerm={tagSearchTerm}
-              onChange={(e) => onTagSearchChange(e.target.value)}
-              placeholder="Search by tags (comma-separated)"
-              showResults={false} // don’t show “Found X results” line
-            />
-          )}
-        </div>
+        {onTagSearchChange && (
+          <SearchBar
+            searchTerm={tagSearchTerm}
+            onChange={(e) => onTagSearchChange(e.target.value)}
+            placeholder="Search by tags (comma-separated)"
+            showResults={false}
+            darkMode={true}
+          />
+        )}
       </div>
 
-      {loading ? (
-        <div className="flex justify-center">
-          <LoadingSpinner />
-        </div>
-      ) : error ? (
-        <p className="rounded-md bg-red-100 p-2 text-sm text-red-500">
+      {/* ERROR TEXT */}
+      {error && (
+        <p className="mb-3 rounded-md bg-red-100 p-2 text-sm text-red-600 dark:bg-red-900/40 dark:text-red-400">
           {error}
         </p>
-      ) : forums.length === 0 ? (
-        <p className="text-sm text-gray-500">{emptyMessage}</p>
+      )}
+
+      {/* SHIMMER for loading + error */}
+      {showShimmer ? (
+        <div className="flex justify-center py-6">
+          <LoadingSpinner />
+        </div>
+      ) : safeForums.length === 0 ? (
+        <p className="text-sm text-gray-500 dark:text-gray-400">
+          {emptyMessage}
+        </p>
       ) : (
-        <ForumCard forums={forums} />
+        <ForumCard forums={safeForums} />
       )}
     </div>
   );

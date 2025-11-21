@@ -117,37 +117,40 @@ const AccountSetting = () => {
   };
 
   return (
-    <Card className="mt-6 h-full">
+    <Card className="mt-6 h-full bg-white text-gray-900 dark:bg-gray-900 dark:text-gray-100">
       <CardContent className="pt-6">
         {isLoadingProfile ? (
           <ProfileShimmer />
         ) : (
           <>
             <label
-              className={`mx-auto flex h-32 w-32 cursor-pointer flex-col items-center justify-center rounded-full border border-dashed ${!isEditing && "cursor-not-allowed"}`}
+              className={`mx-auto flex h-32 w-32 cursor-pointer flex-col items-center justify-center rounded-full border border-dashed border-gray-300 dark:border-gray-600 ${
+                !isEditing && "cursor-not-allowed"
+              }`}
             >
               {profileImage ? (
                 typeof profileImage === "string" ? (
                   <img
                     src={profileImage}
                     alt="Profile"
-                    className="h-full w-full rounded-lg"
+                    className="h-full w-full rounded-lg object-cover"
                   />
                 ) : (
                   <img
                     src={URL.createObjectURL(profileImage)}
                     alt="Profile"
-                    className="h-full w-full rounded-lg"
+                    className="h-full w-full rounded-lg object-cover"
                   />
                 )
               ) : (
                 <>
-                  <UploadIcon className="h-6 w-6 text-gray-400" />
-                  <span className="text-xs text-gray-500">
+                  <UploadIcon className="h-6 w-6 text-gray-400 dark:text-gray-300" />
+                  <span className="text-xs text-gray-500 dark:text-gray-300">
                     Upload your photo
                   </span>
                 </>
               )}
+
               <input
                 type="file"
                 className="hidden"
@@ -173,7 +176,13 @@ const AccountSetting = () => {
                 { label: "Locality", name: "locality" },
               ].map(({ label, name, readOnly }) => (
                 <div key={name}>
-                  <Label htmlFor={name}>{label}</Label>
+                  <Label
+                    htmlFor={name}
+                    className="text-gray-700 dark:text-gray-300"
+                  >
+                    {label}
+                  </Label>
+
                   <Input
                     type="text"
                     id={name}
@@ -185,9 +194,11 @@ const AccountSetting = () => {
                     onChange={handleChange}
                     readOnly={readOnly || name === "email"}
                     disabled={!isEditing && name !== "email"}
-                    className={
-                      readOnly || name === "email" ? "bg-gray-100" : ""
-                    }
+                    className={`${
+                      readOnly || name === "email"
+                        ? "bg-gray-100 dark:bg-gray-800"
+                        : "bg-white dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+                    }`}
                     placeholder={label}
                   />
                 </div>
@@ -205,6 +216,7 @@ const AccountSetting = () => {
                     >
                       Cancel
                     </Button>
+
                     <Button type="submit" disabled={isSubmitting}>
                       {isSubmitting ? <LoadingSpinner /> : "Save"}
                     </Button>

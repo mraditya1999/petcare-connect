@@ -1,5 +1,3 @@
-// import React from "react";
-
 import { Header } from "@/components";
 import headerImg from "@/assets/images/aboutpage/Vet_header.jpg";
 import img1 from "@/assets/images/aboutpage/Vet_service.jpg";
@@ -9,7 +7,7 @@ import img2 from "@/assets/images/aboutpage/clinic_location.png";
 
 const AboutPage = () => {
   return (
-    <div>
+    <div className="bg-white text-gray-900 dark:bg-gray-900 dark:text-gray-100">
       {/* Header */}
       <Header
         headerImage={headerImg}
@@ -17,13 +15,14 @@ const AboutPage = () => {
       />
 
       {/* Services */}
-      <section className="flex items-center justify-center bg-gray-50 py-16">
+      <section className="flex items-center justify-center bg-gray-50 py-16 dark:bg-gray-800">
         <div className="section-width flex flex-col items-center justify-between gap-4">
           <article className="flex flex-col gap-4 p-4 md:flex-row md:px-16">
-            <h2 className="flex-1 text-3xl font-semibold md:text-4xl">
+            <h2 className="flex-1 text-3xl font-semibold text-gray-800 dark:text-gray-100 md:text-4xl">
               Providing best services for your pets
             </h2>
-            <p className="flex-1 text-gray-400">
+
+            <p className="flex-1 text-gray-500 dark:text-gray-300">
               At Petcare, our in-clinic consultations offer comprehensive care
               to ensure your pet's health and well-being. Our experienced
               veterinarians conduct thorough physical examinations, use advanced
@@ -31,36 +30,40 @@ const AboutPage = () => {
               to your pet’s unique needs.
             </p>
           </article>
+
           <article className="h-64 w-full md:h-96 md:px-16">
             <img
               src={img1}
               alt="Vet checking dog"
-              className="h-full w-full rounded-xl object-cover"
+              className="h-full w-full rounded-xl object-cover shadow-lg"
             />
           </article>
         </div>
       </section>
 
-      {/* Clini llocation */}
-      <section className="py-16">
+      {/* Clinic location */}
+      <section className="bg-white py-16 dark:bg-gray-900">
         <div className="section-width mx-auto">
           <div className="px-6 md:px-20">
-            <h1 className="mb-8 text-3xl font-semibold lg:text-4xl">
+            <h1 className="mb-8 text-3xl font-semibold text-gray-900 dark:text-gray-100 lg:text-4xl">
               Clinic Location
             </h1>
+
             <div className="flex flex-col gap-8 md:flex-row">
               <article className="flex">
                 <img
                   src={img2}
                   alt="Veterinarian examining a dog"
-                  className="h-80 w-full rounded-xl object-cover"
+                  className="h-80 w-full rounded-xl object-cover shadow-lg"
                 />
               </article>
+
               <article className="flex flex-1 flex-col">
-                <h1 className="mb-6 text-3xl font-semibold md:text-4xl">
+                <h1 className="mb-6 text-3xl font-semibold text-gray-900 dark:text-gray-100 md:text-4xl">
                   Petsville
                 </h1>
-                <p className="mb-6 max-w-xl text-gray-400">
+
+                <p className="mb-6 max-w-xl text-gray-500 dark:text-gray-300">
                   Located at the heart of Petsville, our clinic at 123 Pet Care
                   Lane offers a warm and welcoming environment for you and your
                   pet. With convenient access and ample parking, we’ve designed
@@ -68,7 +71,8 @@ const AboutPage = () => {
                   Drop by and let our dedicated team provide your furry friend
                   with top-notch care right in the heart of the community.
                 </p>
-                <Button className="flex gap-3 self-start rounded-full px-8 py-6">
+
+                <Button className="flex gap-3 self-start rounded-full bg-primary px-8 py-6 text-white hover:bg-primary/90 dark:bg-primary dark:text-gray-900 dark:hover:bg-gray-200">
                   Book Visit
                   <span>
                     <FaArrowRight />

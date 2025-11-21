@@ -6,11 +6,27 @@ import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { useAppDispatch, useAppSelector } from "@/app/hooks";
 import { PaginationControl } from "@/components";
 import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
+
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogFooter,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from "@/components/ui/alert-dialog";
+import {
   FaHeart,
   FaRegHeart,
   FaRegMessage,
-  FaTrash,
-  FaPenToSquare,
+  FaEllipsisVertical,
 } from "react-icons/fa6";
 import {
   fetchSingleForum,
@@ -35,6 +51,7 @@ const COMMENTS_PER_PAGE = 5;
 
 const SingleForumPage = () => {
   const { forumId } = useParams<{ forumId: string }>();
+
   const dispatch = useAppDispatch();
   const {
     forum,
@@ -55,6 +72,10 @@ const SingleForumPage = () => {
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [editText, setEditText] = useState("");
   const [showCommentBox, setShowCommentBox] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [toDeleteCommentId, setToDeleteCommentId] = useState<string | null>(
+    null,
+  );
 
   // Fetch forum and initial comments
   useEffect(() => {
@@ -172,9 +193,9 @@ const SingleForumPage = () => {
 
   return (
     <section className="py-16">
-      <div className="section-width mx-auto mt-6 space-y-6 rounded-lg p-4 shadow-lg">
+      <div className="section-width mx-auto mt-6 space-y-6 rounded-lg border p-8 shadow-lg">
         {/* Forum Header */}
-        <div className="flex items-center space-x-3 rounded-t-lg bg-gray-50 p-6">
+        <div className="flex items-center space-x-3 rounded-t-lg bg-card p-6">
           <Avatar className="h-10 w-10">
             <AvatarImage src={forum?.firstName || ""} alt="User Avatar" />
             <AvatarFallback>
@@ -182,8 +203,10 @@ const SingleForumPage = () => {
             </AvatarFallback>
           </Avatar>
           <div>
-            <p className="text-sm font-semibold">{`${forum?.firstName || ""} ${forum?.lastName || ""}`}</p>
-            <p className="text-xs text-gray-500">
+            <p className="text-sm font-semibold text-foreground">
+              {`${forum?.firstName || ""} ${forum?.lastName || ""}`}
+            </p>
+            <p className="text-xs text-muted-foreground">
               {forum?.createdAt
                 ? formatRelativeTime(forum.createdAt)
                 : "Just now"}
@@ -192,9 +215,9 @@ const SingleForumPage = () => {
         </div>
 
         {/* Forum Content */}
-        <h1 className="text-3xl font-bold">{forum?.title}</h1>
+        <h1 className="text-3xl font-bold text-foreground">{forum?.title}</h1>
         <div
-          className="text-lg text-gray-700"
+          className="prose prose-sm max-w-none text-foreground"
           dangerouslySetInnerHTML={{ __html: forum?.content || "" }}
         />
 
@@ -210,9 +233,11 @@ const SingleForumPage = () => {
             {isLiked ? (
               <FaHeart className="h-4 w-4 text-red-500 transition-colors duration-200" />
             ) : (
-              <FaRegHeart className="h-4 w-4 text-gray-500 transition-colors duration-200" />
+              <FaRegHeart className="h-4 w-4 text-muted-foreground transition-colors duration-200" />
             )}
-            <span className="ml-1">{forum?.likesCount || 0}</span>
+            <span className="ml-1 text-muted-foreground">
+              {forum?.likesCount || 0}
+            </span>
           </Button>
 
           <Button
@@ -222,7 +247,10 @@ const SingleForumPage = () => {
             disabled={!user || likeProcessing}
             title={!user ? "Log in to comment this forum" : undefined}
           >
-            {forum?.commentsCount || 0} <FaRegMessage className="h-4 w-4" />
+            <span className="text-muted-foreground">
+              {forum?.commentsCount || 0}
+            </span>
+            <FaRegMessage className="h-4 w-4 text-muted-foreground" />
           </Button>
         </div>
 
@@ -232,7 +260,7 @@ const SingleForumPage = () => {
             {forum.tags.map((tag) => (
               <span
                 key={tag}
-                className="rounded-md bg-gray-200 px-2 py-1 text-xs"
+                className="rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground"
               >
                 #{tag}
               </span>
@@ -241,13 +269,14 @@ const SingleForumPage = () => {
         ) : null}
 
         {/* Comments */}
-        <div className="mt-4 rounded-lg bg-white p-6 shadow-md">
-          <h2 className="text-lg font-semibold">Comments</h2>
+        <div className="mt-4 rounded-lg bg-card p-6 shadow-md">
+          <h2 className="text-lg font-semibold text-foreground">Comments</h2>
+          <></>
           {comments.length ? (
             comments.map((comment) => (
               <div
                 key={comment.commentId}
-                className="mb-3 flex justify-between rounded-xl border border-gray-100 bg-white p-4 shadow"
+                className="mb-3 flex justify-between rounded-xl border border-border bg-card p-4 shadow"
               >
                 <div className="flex w-full items-start space-x-3">
                   <Avatar className="h-10 w-10">
@@ -261,12 +290,14 @@ const SingleForumPage = () => {
                   </Avatar>
 
                   <div className="w-full">
-                    <p className="text-sm font-semibold">{`${comment?.firstName || ""} ${comment?.lastName || ""}`}</p>
+                    <p className="text-sm font-semibold text-foreground">
+                      {`${comment?.firstName || ""} ${comment?.lastName || ""}`}
+                    </p>
 
                     {editingCommentId === comment.commentId ? (
                       <div className="mt-2 w-full">
                         <textarea
-                          className="w-full rounded-md border p-2 text-sm focus:outline-none focus:ring focus:ring-blue-200"
+                          className="w-full rounded-md border border-border bg-background p-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring focus:ring-primary/20"
                           rows={3}
                           value={editText}
                           onChange={(e) => setEditText(e.target.value)}
@@ -290,12 +321,12 @@ const SingleForumPage = () => {
                       </div>
                     ) : (
                       <div
-                        className="prose mt-1 max-w-none text-sm"
+                        className="prose mt-1 max-w-none text-sm text-foreground"
                         dangerouslySetInnerHTML={{ __html: comment.text }}
                       />
                     )}
 
-                    <p className="mt-1 text-xs text-gray-500">
+                    <p className="mt-1 text-xs text-muted-foreground">
                       {comment?.createdAt
                         ? formatRelativeTime(comment.createdAt)
                         : "Just now"}
@@ -305,28 +336,44 @@ const SingleForumPage = () => {
 
                 {comment.userId === Number(currentUserId) &&
                   editingCommentId !== comment.commentId && (
-                    <div className="flex flex-col items-center gap-3">
-                      <button
-                        className="text-gray-600 transition hover:text-blue-600"
-                        onClick={() => {
-                          setEditingCommentId(comment.commentId);
-                          setEditText(comment.text);
-                        }}
-                      >
-                        <FaPenToSquare />
-                      </button>
-                      <button
-                        className="text-gray-600 transition hover:text-red-600"
-                        onClick={() => handleDeleteComment(comment.commentId)}
-                      >
-                        <FaTrash />
-                      </button>
+                    <div className="flex w-6 justify-end">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <button
+                            type="button"
+                            className="text-muted-foreground hover:text-foreground"
+                          >
+                            <FaEllipsisVertical size={18} />
+                          </button>
+                        </DropdownMenuTrigger>
+
+                        <DropdownMenuContent align="end" className="w-32">
+                          <DropdownMenuItem
+                            onClick={() => {
+                              setEditingCommentId(comment.commentId);
+                              setEditText(comment.text);
+                            }}
+                          >
+                            Edit
+                          </DropdownMenuItem>
+
+                          <DropdownMenuItem
+                            className="text-destructive"
+                            onClick={() => {
+                              setToDeleteCommentId(String(comment.commentId));
+                              setTimeout(() => setDeleteDialogOpen(true), 0);
+                            }}
+                          >
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                   )}
               </div>
             ))
           ) : (
-            <p className="text-gray-500">No comments yet.</p>
+            <p className="text-muted-foreground">No comments yet.</p>
           )}
 
           {totalCommentPages > 1 && (
@@ -338,12 +385,53 @@ const SingleForumPage = () => {
           )}
         </div>
 
+        <AlertDialog
+          open={deleteDialogOpen}
+          onOpenChange={(open) => {
+            setDeleteDialogOpen(open);
+            if (!open) {
+              setToDeleteCommentId(null);
+            }
+          }}
+        >
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle className="text-foreground">
+                Delete comment?
+              </AlertDialogTitle>
+              <AlertDialogDescription className="text-muted-foreground">
+                Are you sure you want to delete this comment? This action cannot
+                be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+
+              <AlertDialogAction
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                onClick={() => {
+                  if (toDeleteCommentId !== null) {
+                    handleDeleteComment(toDeleteCommentId);
+                  }
+                  setDeleteDialogOpen(false);
+                  setToDeleteCommentId(null);
+                }}
+              >
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
         {/* Add Comment */}
         {user && (
-          <div className="mt-4 rounded-lg bg-white p-6 shadow-md">
-            <h2 className="mb-2 text-lg font-semibold">Add a Comment</h2>
+          <div className="mt-4 rounded-lg bg-card p-6 shadow-md">
+            <h2 className="mb-2 text-lg font-semibold text-foreground">
+              Add a Comment
+            </h2>
             <textarea
-              className="mb-4 w-full rounded-md border p-2 text-sm"
+              className="mb-4 w-full rounded-md border border-border bg-background p-2 text-sm text-foreground placeholder:text-muted-foreground"
               rows={3}
               placeholder="Add a comment..."
               value={newComment}
