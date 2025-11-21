@@ -6,14 +6,14 @@ import { ContentCard, Header } from "@/components";
 
 const ServicePage = () => {
   return (
-    <div>
+    <div className="bg-white dark:bg-gray-900">
       {/* Header */}
       <Header
         headerImage={headerImg}
         headerText={"Online and Offline Veterinary Services"}
       />
 
-      <section className="bg-gray-50 py-16">
+      <section className="bg-gray-50 py-16 dark:bg-gray-800">
         <ContentCard
           image={image2}
           imageClass="rounded-xl"
@@ -24,7 +24,8 @@ const ServicePage = () => {
           buttonText="Your Contributions"
         />
       </section>
-      <section className="py-16">
+
+      <section className="bg-white py-16 dark:bg-gray-900">
         <ContentCard
           image={image3}
           imageClass="rounded-xl"
@@ -35,7 +36,20 @@ const ServicePage = () => {
           buttonText="About Us"
         />
       </section>
+
+      <section className="bg-gray-50 py-16 dark:bg-gray-800">
+        <ContentCard
+          image={image2}
+          imageClass="rounded-xl"
+          heading="Caring for Your Furry Friends - Join the Talk!"
+          text=" The Pet Care Connect Forum is a community hub for pet owners and enthusiasts to share knowledge, seek advice, and connect with like-minded individuals. It offers expert tips, real-life experiences, and discussions on topics like pet health, nutrition, behavior, and training."
+          isOdd={true}
+          icon={<FaArrowRight />}
+          buttonText="Your Contributions"
+        />
+      </section>
     </div>
   );
 };
+
 export default ServicePage;

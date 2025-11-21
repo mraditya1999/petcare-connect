@@ -119,3 +119,53 @@
     scrollbar-width: none; /* Firefox */
   }
 }
+
+/* DARK MODE FIX FOR REACT QUILL */
+.dark .quill-dark .ql-container {
+  background-color: #1f1f1f !important;
+  color: #e5e5e5 !important;
+  border-color: #3f3f3f !important;
+}
+
+.dark .quill-dark .ql-editor {
+  color: #e5e5e5 !important;
+}
+
+.dark .quill-dark .ql-toolbar {
+  background-color: #2a2a2a !important;
+  border-color: #3f3f3f !important;
+}
+
+.dark .quill-dark .ql-toolbar button svg {
+  filter: invert(1);
+}
+
+.dark .quill-dark .ql-editor.ql-blank::before {
+  color: #9ca3af !important; /* dark placeholder */
+}
+
+.ql-editor.ql-blank::before {
+  color: #9ca3af !important; /* Tailwind gray-400 */
+  opacity: 1 !important;
+}
+
+/* Tooltip base style */
+.ql-toolbar button:hover::after {
+  content: attr(title);
+  position: absolute;
+  background: #111;
+  color: #fff;
+  padding: 4px 8px;
+  font-size: 11px;
+  border-radius: 4px;
+  white-space: nowrap;
+  top: 120%;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+}
+
+/* Prevent overlapping issues */
+.ql-toolbar button {
+  position: relative;
+}

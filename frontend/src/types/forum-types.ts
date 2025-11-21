@@ -36,6 +36,7 @@ export interface IComment {
 export interface IForumListState {
   forums: IForum[];
   featuredForums: IForum[];
+  myForums: IForum[];
   page: number;
   size: number;
   totalPages: number;
@@ -46,6 +47,9 @@ export interface IForumListState {
   tagSearchTerm: string;
   loading: boolean;
   error: string | null;
+  myForumsPage: number;
+  myForumsTotalPages: number;
+  myForumsTotalElements: number;
 }
 
 export interface IForumDetailState {
@@ -57,4 +61,17 @@ export interface IForumDetailState {
   error: string | null;
   likeProcessing: boolean;
   isLiked: boolean;
+}
+
+export interface IFetchMyForumsResponse {
+  message: string;
+  data: {
+    content: IForum[];
+    page: {
+      size: number;
+      number: number;
+      totalElements: number;
+      totalPages: number;
+    };
+  };
 }

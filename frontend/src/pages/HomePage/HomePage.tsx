@@ -12,7 +12,7 @@ import doctor4 from "@/assets/images/homepage/doctor4.png";
 
 const HomePage = () => {
   return (
-    <div>
+    <div className="bg-white text-gray-900 dark:bg-gray-900 dark:text-gray-100">
       {/* Header */}
       <Header
         headerImage={headerImg}
@@ -20,13 +20,13 @@ const HomePage = () => {
       />
 
       {/* Introduction */}
-      <section className="flex items-center justify-center bg-gray-50 py-16">
+      <section className="flex items-center justify-center bg-gray-50 py-16 dark:bg-gray-800">
         <div className="section-width flex flex-col items-center justify-between gap-4 md:flex-row">
           <article className="flex flex-1 flex-col justify-center px-4">
-            <h2 className="mb-4 text-3xl font-medium text-gray-800 sm:text-4xl">
+            <h2 className="mb-4 text-3xl font-medium text-gray-800 dark:text-gray-100 sm:text-4xl">
               Prioritizing your pet companion
             </h2>
-            <p className="text-md max-w-xl text-gray-600">
+            <p className="text-md max-w-xl text-gray-600 dark:text-gray-300">
               At petcare, our primary goal is to ensure that every pet we care
               for leads a happy, healthy life. We are dedicated to providing the
               highest standard of veterinary care, delivered with compassion and
@@ -40,56 +40,57 @@ const HomePage = () => {
             <img
               src={catImg}
               alt="Content"
-              className={`block h-full w-full overflow-hidden rounded-lg object-cover shadow-xl`}
+              className="block h-full w-full overflow-hidden rounded-lg object-cover shadow-xl"
             />
           </article>
         </div>
       </section>
 
       {/* Benefits */}
-      <section className="bg-white py-16">
+      <section className="bg-white py-16 dark:bg-gray-900">
         <div className="section-width mx-auto flex flex-col justify-center">
           <h1 className="mb-4 text-4xl font-bold uppercase md:text-3xl">
             BENEFITS
           </h1>
+
           <div className="flex-between mx-auto w-full flex-col gap-3 md:h-96 md:flex-row">
-            <Card className="group relative h-72 w-full overflow-hidden rounded-2xl md:h-full">
+            <Card className="group relative h-72 w-full overflow-hidden rounded-2xl dark:border-gray-700 md:h-full">
               <img
                 src={doctor1}
                 alt="Professional Team"
                 className="h-full w-full object-cover"
               />
               <div className="absolute inset-0 h-full bg-black opacity-30 transition-opacity duration-300 group-hover:opacity-0"></div>
-              <CardContent className="absolute bottom-10 left-5 z-10 flex justify-center rounded-full bg-white px-5 py-2.5">
-                <CardTitle className="text-md font-bold">
+              <CardContent className="absolute bottom-10 left-5 z-10 flex justify-center rounded-full bg-white px-5 py-2.5 dark:bg-gray-800">
+                <CardTitle className="text-md font-bold dark:text-gray-100">
                   Professional Team
                 </CardTitle>
               </CardContent>
             </Card>
 
-            <Card className="group relative h-72 w-full overflow-hidden rounded-2xl md:h-full">
+            <Card className="group relative h-72 w-full overflow-hidden rounded-2xl dark:border-gray-700 md:h-full">
               <img
                 src={doctor2}
                 alt="Professional Team"
                 className="h-full w-full object-cover"
               />
               <div className="absolute inset-0 h-full bg-black opacity-30 transition-opacity duration-300 group-hover:opacity-0"></div>
-              <CardContent className="absolute bottom-10 left-5 z-10 flex justify-center rounded-full bg-white px-5 py-2.5">
-                <CardTitle className="text-md font-bold">
+              <CardContent className="absolute bottom-10 left-5 z-10 flex justify-center rounded-full bg-white px-5 py-2.5 dark:bg-gray-800">
+                <CardTitle className="text-md font-bold dark:text-gray-100">
                   Treat with <FaHeart className="inline text-red-500" />
                 </CardTitle>
               </CardContent>
             </Card>
 
-            <Card className="group relative h-72 w-full overflow-hidden rounded-2xl md:h-full">
+            <Card className="group relative h-72 w-full overflow-hidden rounded-2xl dark:border-gray-700 md:h-full">
               <img
                 src={doctor3}
                 alt="Professional Team"
                 className="h-full w-full object-cover"
               />
               <div className="absolute inset-0 h-full bg-black opacity-30 transition-opacity duration-300 group-hover:opacity-0"></div>
-              <CardContent className="absolute bottom-10 left-5 z-10 flex justify-center rounded-full bg-white px-5 py-2.5">
-                <CardTitle className="text-md font-bold">
+              <CardContent className="absolute bottom-10 left-5 z-10 flex justify-center rounded-full bg-white px-5 py-2.5 dark:bg-gray-800">
+                <CardTitle className="text-md font-bold dark:text-gray-100">
                   Emergency Care
                 </CardTitle>
               </CardContent>
@@ -98,10 +99,10 @@ const HomePage = () => {
         </div>
       </section>
 
-      {/* Contact  */}
-      <section className="bg-white py-16">
+      {/* Contact */}
+      <section className="bg-white py-16 dark:bg-gray-900">
         <div className="section-width">
-          <div className="flex flex-col items-center justify-between gap-8 rounded-3xl bg-[#182559] p-8 text-white sm:p-16 md:flex-row">
+          <div className="flex flex-col items-center justify-between gap-8 rounded-3xl bg-[#182559] p-8 text-white dark:bg-gray-800 dark:text-gray-100 sm:p-16 md:flex-row">
             <article className="flex-1 self-start">
               <h1 className="mb-8 text-2xl capitalize md:text-3xl lg:text-4xl">
                 Our experts are available for you 24/7
