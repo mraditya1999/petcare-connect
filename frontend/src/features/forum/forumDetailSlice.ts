@@ -9,6 +9,8 @@ import {
   deleteComment,
   toggleLike,
   checkLike,
+  updateForum,
+  deleteForum,
 } from "./forumDetailThunk";
 import {
   IFetchSingleForumResponse,
@@ -18,6 +20,7 @@ import {
   IDeleteCommentResponse,
   IToggleLikeResponse,
   ICheckLikeResponse,
+  IUpdateForumResponse,
 } from "@/types/forum-thunk-types";
 
 const initialState: IForumDetailState = {
@@ -157,6 +160,40 @@ const forumDetailSlice = createSlice({
         state.isLiked = !!action.payload.data?.isLiked;
       },
     );
+    builder
+      .addCase(updateForum.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(
+        updateForum.fulfilled,
+        (state, action: PayloadAction<IUpdateForumResponse>) => {
+          state.loading = false;
+          if (state.forum && action.payload.data) {
+            state.forum = { ...state.forum, ...action.payload.data };
+          }
+        },
+      )
+      .addCase(updateForum.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload || "Failed to update forum";
+      });
+
+    builder
+      .addCase(deleteForum.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(deleteForum.fulfilled, (state) => {
+        state.loading = false;
+        state.forum = null;
+        state.comments = [];
+        state.totalCommentPages = 1;
+      })
+      .addCase(deleteForum.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload || "Failed to delete forum";
+      });
   },
 });
 

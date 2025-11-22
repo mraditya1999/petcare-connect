@@ -16,6 +16,10 @@ import {
   ICheckLikeResponse,
   IToggleLikeParams,
   IToggleLikeResponse,
+  IUpdateForumResponse,
+  IUpdateForumParams,
+  IDeleteForumResponse,
+  IDeleteForumParams,
 } from "@/types/forum-thunk-types";
 
 export const fetchSingleForum = createAsyncThunk<
@@ -125,6 +129,43 @@ export const toggleLike = createAsyncThunk<
   try {
     const res = await customFetch.post<IToggleLikeResponse>(
       `/likes/forums/${forumId}`,
+    );
+    return res.data;
+  } catch (err) {
+    return rejectWithValue(handleError(err));
+  }
+});
+
+// Update forum
+// Thunk
+export const updateForum = createAsyncThunk<
+  IUpdateForumResponse,
+  IUpdateForumParams,
+  { rejectValue: string }
+>(
+  "forumDetail/updateForum",
+  async ({ forumId, title, content, tags }, { rejectWithValue }) => {
+    try {
+      const res = await customFetch.put<IUpdateForumResponse>(
+        `/forums/${forumId}`,
+        { title, content, tags },
+      );
+      return res.data;
+    } catch (err) {
+      return rejectWithValue(handleError(err));
+    }
+  },
+);
+
+// Delete forum
+export const deleteForum = createAsyncThunk<
+  IDeleteForumResponse,
+  IDeleteForumParams,
+  { rejectValue: string }
+>("forumDetail/deleteForum", async ({ forumId }, { rejectWithValue }) => {
+  try {
+    const res = await customFetch.delete<IDeleteForumResponse>(
+      `/forums/${forumId}`,
     );
     return res.data;
   } catch (err) {

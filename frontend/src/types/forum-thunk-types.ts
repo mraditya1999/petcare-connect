@@ -150,3 +150,24 @@ export interface IFetchFeaturedForumsResponse {
 export interface ICreateForumResponse {
   // no payload returned, just void
 }
+
+export interface IUpdateForumParams {
+  forumId: string;
+  title: string;
+  content: string;
+  tags: string[];
+}
+
+export interface IUpdateForumResponse {
+  message: string;
+  data: ISingleForum;
+}
+
+export interface IDeleteForumParams {
+  forumId: string;
+}
+
+export interface IDeleteForumResponse {
+  message: string;
+  data: null;
+}

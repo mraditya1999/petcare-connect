@@ -36,7 +36,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
     : "text-gray-600 dark:text-gray-400";
 
   return (
-    <div className="max-w-3xl">
+    <div className="w-full max-w-3xl">
       <div className={wrapperClasses}>
         <FaMagnifyingGlass className={iconClasses} />
 
