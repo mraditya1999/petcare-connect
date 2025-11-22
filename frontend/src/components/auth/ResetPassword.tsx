@@ -7,9 +7,10 @@ import { useAppDispatch, useAppSelector } from "@/app/hooks";
 import { resetPassword } from "@/features/auth/authThunk";
 import { LoadingSpinner } from "../ui/LoadingSpinner";
 import { IResetPasswordCredentials } from "@/types/auth-types";
-import { handleError, showToast } from "@/utils/helpers";
+import { handleError } from "@/utils/helpers";
 import GenericAlert from "../shared/GenericAlert";
 import { resetPasswordFormSchema } from "@/utils/validations";
+import ShowToast from "../shared/ShowToast";
 
 const ResetPassword = () => {
   const dispatch = useAppDispatch();
@@ -49,15 +50,20 @@ const ResetPassword = () => {
           email,
         }),
       ).unwrap();
-      showToast(
-        "Password reset successfully. Redirecting to login page shortly...",
-      );
+      ShowToast({
+        description:
+          "Password reset successfully. Redirecting to login page shortly...",
+        type: "success",
+      });
       setTimeout(() => {
         navigate("/login");
       }, 3000);
     } catch (error) {
       const errorMessage = handleError(error);
-      showToast(errorMessage, "destructive");
+      ShowToast({
+        description: errorMessage,
+        type: "error",
+      });
     }
   };
 

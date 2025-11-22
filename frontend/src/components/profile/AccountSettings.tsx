@@ -1,4 +1,4 @@
-import React, { useMemo, useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { IProfileFormData, IUserData } from "@/types/profile-types";
 import { ROUTES } from "@/utils/constants";
@@ -9,133 +9,131 @@ import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { profileFormSchema } from "@/utils/validations";
 import { Card, CardContent } from "@/components/ui/card";
 import { UploadIcon } from "lucide-react";
-import { handleError, showToast } from "@/utils/helpers";
 import { fetchProfile, updateProfile } from "@/features/user/userThunk";
 import { useAppDispatch, useAppSelector } from "@/app/hooks";
 import { ProfileShimmer } from "@/components";
+import { ZodError } from "zod";
+
+const fields = [
+  { label: "First Name", name: "firstName" },
+  { label: "Last Name", name: "lastName" },
+  { label: "Email", name: "email", readOnly: true },
+  { label: "Phone Number", name: "mobileNumber" },
+  { label: "Pincode", name: "pincode" },
+  { label: "City", name: "city" },
+  { label: "State", name: "state" },
+  { label: "Country", name: "country" },
+  { label: "Locality", name: "locality" },
+];
+
+const mapProfileToForm = (profileData: IUserData | null): IProfileFormData => ({
+  userId: profileData?.userId?.toString() || "",
+  firstName: profileData?.firstName || "",
+  lastName: profileData?.lastName || "",
+  email: profileData?.email || "",
+  pincode: profileData?.address?.pincode?.toString() || "",
+  city: profileData?.address?.city || "",
+  state: profileData?.address?.state || "",
+  country: profileData?.address?.country || "",
+  locality: profileData?.address?.locality || "",
+  avatarUrl: profileData?.avatarUrl || "",
+  avatarPublicId: profileData?.avatarPublicId || "",
+  mobileNumber: profileData?.mobileNumber?.toString() || "",
+});
 
 const AccountSetting = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const { profile } = useAppSelector((state) => state.user);
-  const initialState: IProfileFormData = useMemo(
-    () => ({
-      userId: profile?.userId?.toString() || "",
-      firstName: profile?.firstName || "",
-      lastName: profile?.lastName || "",
-      email: profile?.email || "",
-      pincode: profile?.address?.pincode?.toString() || "",
-      city: profile?.address?.city || "",
-      state: profile?.address?.state || "",
-      country: profile?.address?.country || "",
-      locality: profile?.address?.locality || "",
-      avatarUrl: profile?.avatarUrl || "",
-      avatarPublicId: profile?.avatarPublicId || "",
-      mobileNumber: profile?.mobileNumber?.toString() || "",
-    }),
-    [profile],
+
+  const [profileForm, setProfileForm] = useState<IProfileFormData>(
+    mapProfileToForm(profile),
   );
-  const [profileFormCredentials, setProfileFormCredentials] =
-    useState<IProfileFormData>(initialState);
-  const [profileImage, setProfileImage] = useState<string | File | null>(
+  const [profileImage, setProfileImage] = useState<File | string | null>(
     profile?.avatarUrl || null,
   );
   const [isEditing, setIsEditing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
   const [isLoadingImage, setIsLoadingImage] = useState(false);
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+
+  // Fetch profile
   useEffect(() => {
-    dispatch(fetchProfile())
-      .unwrap()
-      .then((fetchedProfile: IUserData) => {
-        setProfileFormCredentials({
-          userId: fetchedProfile.userId?.toString() || "",
-          firstName: fetchedProfile.firstName || "",
-          lastName: fetchedProfile.lastName || "",
-          email: fetchedProfile.email || "",
-          pincode: fetchedProfile.address?.pincode?.toString() || "",
-          city: fetchedProfile.address?.city || "",
-          state: fetchedProfile.address?.state || "",
-          country: fetchedProfile.address?.country || "",
-          locality: fetchedProfile.address?.locality || "",
-          avatarUrl: fetchedProfile.avatarUrl || "",
-          avatarPublicId: fetchedProfile.avatarPublicId || "",
-          mobileNumber: fetchedProfile.mobileNumber?.toString() || "",
-        });
+    const loadProfile = async () => {
+      try {
+        const fetchedProfile = await dispatch(fetchProfile()).unwrap();
+        setProfileForm(mapProfileToForm(fetchedProfile));
         setProfileImage(fetchedProfile.avatarUrl || null);
-      })
-      .catch((error: unknown) => {
-        const errorMessage = handleError(error);
-        showToast(errorMessage, "destructive");
-      })
-      .finally(() => {
+      } catch (error) {
+        console.error(error);
+      } finally {
         setIsLoadingProfile(false);
-      });
+      }
+    };
+    loadProfile();
   }, [dispatch]);
+
   const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setProfileFormCredentials((prevState) => ({ ...prevState, [name]: value }));
+    setProfileForm((prev) => ({ ...prev, [name]: value }));
   }, []);
+
   const handleImageChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
-      if (file) {
-        setIsLoadingImage(true);
-        setTimeout(() => {
-          setProfileImage(file);
-          setIsLoadingImage(false);
-        }, 1000); // Simulating async operation for image upload
-      }
+      if (!file) return;
+      setIsLoadingImage(true);
+      setProfileImage(file);
+      setTimeout(() => setIsLoadingImage(false), 500); 
     },
     [],
   );
 
-  const handleCancelEdit = () => {
-    if (profile) {
-      setProfileFormCredentials({
-        userId: profile.userId?.toString() || "",
-        firstName: profile.firstName || "",
-        lastName: profile.lastName || "",
-        email: profile.email || "",
-        pincode: profile.address?.pincode?.toString() || "",
-        city: profile.address?.city || "",
-        state: profile.address?.state || "",
-        country: profile.address?.country || "",
-        locality: profile.address?.locality || "",
-        avatarUrl: profile.avatarUrl || "",
-        avatarPublicId: profile.avatarPublicId || "",
-        mobileNumber: profile.mobileNumber?.toString() || "",
-      });
-      setProfileImage(profile.avatarUrl || null);
-    }
+  const handleCancel = () => {
+    setProfileForm(mapProfileToForm(profile));
+    setProfileImage(profile?.avatarUrl || null);
     setIsEditing(false);
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setFormErrors({});
+
     try {
-      const parsedData = profileFormSchema.parse(profileFormCredentials);
+      const parsedData = profileFormSchema.parse(profileForm);
       const formData = new FormData();
-
-      Object.entries(parsedData).forEach(([key, value]) => {
-        formData.append(key, String(value));
-      });
-
-      if (profileImage instanceof File) {
+      Object.entries(parsedData).forEach(([key, value]) =>
+        formData.append(key, String(value)),
+      );
+      if (profileImage instanceof File)
         formData.append("profileImage", profileImage);
-      }
 
       await dispatch(updateProfile(formData)).unwrap();
-      showToast("Profile Updated Successfully 🥳");
-      navigate(ROUTES.PROFILE);
       setIsEditing(false);
+      navigate(ROUTES.PROFILE);
     } catch (error: unknown) {
-      showToast(handleError(error), "destructive");
+      if (error instanceof ZodError) {
+        const errors: Record<string, string> = {};
+        error.issues.forEach((issue) => {
+          errors[issue.path[0] as string] = issue.message;
+        });
+        setFormErrors(errors);
+      } else {
+        console.error(error);
+      }
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  const previewSrc =
+    typeof profileImage === "string"
+      ? profileImage
+      : profileImage
+        ? URL.createObjectURL(profileImage)
+        : null;
 
   return (
     <Card className="mt-6 h-full bg-white text-gray-900 dark:bg-gray-900 dark:text-gray-100">
@@ -149,20 +147,12 @@ const AccountSetting = () => {
                 !isEditing && "cursor-not-allowed"
               }`}
             >
-              {profileImage ? (
-                typeof profileImage === "string" ? (
-                  <img
-                    src={profileImage}
-                    alt="Profile"
-                    className="h-full w-full rounded-lg object-cover"
-                  />
-                ) : (
-                  <img
-                    src={URL.createObjectURL(profileImage)}
-                    alt="Profile"
-                    className="h-full w-full rounded-lg object-cover"
-                  />
-                )
+              {previewSrc ? (
+                <img
+                  src={previewSrc}
+                  alt="Profile"
+                  className="h-full w-full rounded-lg object-cover"
+                />
               ) : (
                 <>
                   <UploadIcon className="h-6 w-6 text-gray-400 dark:text-gray-300" />
@@ -171,7 +161,6 @@ const AccountSetting = () => {
                   </span>
                 </>
               )}
-
               <input
                 type="file"
                 className="hidden"
@@ -185,17 +174,7 @@ const AccountSetting = () => {
               onSubmit={handleSubmit}
               className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2"
             >
-              {[
-                { label: "First Name", name: "firstName" },
-                { label: "Last Name", name: "lastName" },
-                { label: "Email", name: "email", readOnly: true },
-                { label: "Phone Number", name: "mobileNumber" },
-                { label: "Pincode", name: "pincode" },
-                { label: "City", name: "city" },
-                { label: "State", name: "state" },
-                { label: "Country", name: "country" },
-                { label: "Locality", name: "locality" },
-              ].map(({ label, name, readOnly }) => (
+              {fields.map(({ label, name, readOnly }) => (
                 <div key={name}>
                   <Label
                     htmlFor={name}
@@ -203,15 +182,11 @@ const AccountSetting = () => {
                   >
                     {label}
                   </Label>
-
                   <Input
                     type="text"
                     id={name}
                     name={name}
-                    value={
-                      profileFormCredentials[name as keyof IProfileFormData] ||
-                      ""
-                    }
+                    value={profileForm[name as keyof IProfileFormData] || ""}
                     onChange={handleChange}
                     readOnly={readOnly || name === "email"}
                     disabled={!isEditing && name !== "email"}
@@ -222,22 +197,24 @@ const AccountSetting = () => {
                     }`}
                     placeholder={label}
                   />
+                  {formErrors[name] && (
+                    <p className="mt-1 text-xs text-red-500">
+                      {formErrors[name]}
+                    </p>
+                  )}
                 </div>
               ))}
-
               <div></div>
-
               <div>
                 {isEditing ? (
                   <div className="space-x-2">
                     <Button
                       type="button"
                       variant="secondary"
-                      onClick={handleCancelEdit}
+                      onClick={handleCancel}
                     >
                       Cancel
                     </Button>
-
                     <Button type="submit" disabled={isSubmitting}>
                       {isSubmitting ? <LoadingSpinner /> : "Save"}
                     </Button>

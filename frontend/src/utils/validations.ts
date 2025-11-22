@@ -95,26 +95,34 @@ export const updatePasswordSchema = z
     path: ["confirmPassword"],
   });
 
-  export const profileFormSchema = z.object({
-    firstName: z.string().nonempty("First name is required"),
-    lastName: z.string().nonempty("Last name is required"),
-    email: z
-      .string()
-      .email("Invalid email address")
-      .nonempty("Please enter a valid email address"),
-    mobileNumber: z
-      .union([
-        z.string().regex(/^\d{10}$/, "Mobile number must be exactly 10 digits"),
-        z.null(),
-      ])
-      .optional(),
-    pincode: z
-      .string()
-      .regex(/^\d{6}$/, "Pincode must be exactly 6 digits")
-      .optional(),
-    city: z.string().optional(),
-    state: z.string().optional(),
-    country: z.string().optional(),
-    locality: z.string().optional(),
-  });
-  
+export const profileFormSchema = z.object({
+  firstName: z.string().nonempty("First name is required"),
+  lastName: z.string().nonempty("Last name is required"),
+  email: z
+    .string()
+    .email("Invalid email address")
+    .nonempty("Please enter a valid email address"),
+
+  mobileNumber: z
+    .string()
+    .nonempty("Mobile number is required")
+    .refine(
+      (val) => /^\d+$/.test(val),
+      "Mobile number must contain only digits",
+    )
+    .refine(
+      (val) => val.length === 10,
+      "Mobile number must be exactly 10 digits",
+    ),
+
+  pincode: z
+    .string()
+    .nonempty("Pincode is required")
+    .refine((val) => /^\d+$/.test(val), "Pincode must contain only digits")
+    .refine((val) => val.length === 6, "Pincode must be exactly 6 digits"),
+
+  city: z.string().optional(),
+  state: z.string().optional(),
+  country: z.string().optional(),
+  locality: z.string().optional(),
+});

@@ -40,17 +40,14 @@ import {
   deleteForum,
   updateForum,
 } from "@/features/forum/forumDetailThunk";
-import {
-  getUserFromStorage,
-  showToast,
-  formatRelativeTime,
-} from "@/utils/helpers";
+import { getUserFromStorage, formatRelativeTime } from "@/utils/helpers";
 import {
   setCommentPage,
   selectIsLiked,
 } from "@/features/forum/forumDetailSlice";
 import { FaRegEdit } from "react-icons/fa";
 import { ROUTES } from "@/utils/constants";
+import ShowToast from "@/components/shared/ShowToast";
 
 const COMMENTS_PER_PAGE = 5;
 
@@ -115,7 +112,7 @@ const SingleForumPage = () => {
   }, [dispatch, forumId, commentPage]);
 
   useEffect(() => {
-    if (error) showToast(error, "destructive");
+    if (error) ShowToast({ description: error, type: "error" });
   }, [error]);
 
   // Handlers
@@ -129,10 +126,13 @@ const SingleForumPage = () => {
       .unwrap()
       .then(() => {
         setEditingForum(false);
-        showToast("Forum updated successfully!", "default");
+        ShowToast({
+          description: "Forum updated successfully!",
+          type: "success",
+        });
       })
       .catch((err) => {
-        showToast("Failed to update forum", "destructive");
+        ShowToast({ description: "Failed to update forum", type: "error" });
         console.error(err);
       });
   };
@@ -141,11 +141,14 @@ const SingleForumPage = () => {
     dispatch(deleteForum({ forumId }))
       .unwrap()
       .then(() => {
-        showToast("Forum deleted successfully!", "default");
+        ShowToast({
+          description: "Forum deleted successfully!",
+          type: "success",
+        });
         navigate(`${ROUTES.FORUM}`);
       })
       .catch((err) => {
-        showToast("Failed to delete forum", "destructive");
+        ShowToast({ description: "Failed to delete forum", type: "error" });
         console.error(err);
       });
   };
@@ -158,9 +161,15 @@ const SingleForumPage = () => {
       dispatch(fetchComments({ forumId, page: 0, size: COMMENTS_PER_PAGE }));
       dispatch(fetchSingleForum(forumId));
       setNewComment("");
-      showToast("Comment added successfully!", "default");
+      ShowToast({
+        description: "Comment added successfully!",
+        type: "success",
+      });
     } catch {
-      showToast("Error adding comment. Please try again.", "destructive");
+      ShowToast({
+        description: "Error adding comment. Please try again.",
+        type: "error",
+      });
     } finally {
       setAddingComment(false);
     }
@@ -171,9 +180,12 @@ const SingleForumPage = () => {
       try {
         await dispatch(updateComment({ commentId, text: editText })).unwrap();
         setEditingCommentId(null);
-        showToast("Comment updated successfully!", "default");
+        ShowToast({
+          description: "Comment updated successfully!",
+          type: "success",
+        });
       } catch {
-        showToast("Error updating comment.", "destructive");
+        ShowToast({ description: "Error updating comment.", type: "error" });
       }
     },
     [dispatch, editText],
@@ -195,9 +207,12 @@ const SingleForumPage = () => {
           fetchComments({ forumId, page: newPage, size: COMMENTS_PER_PAGE }),
         );
         dispatch(fetchSingleForum(forumId));
-        showToast("Comment deleted successfully", "default");
+        ShowToast({
+          description: "Comment deleted successfully",
+          type: "success",
+        });
       } catch {
-        showToast("Failed to delete comment", "destructive");
+        ShowToast({ description: "Failed to delete comment", type: "error" });
       }
     },
     [dispatch, forumId, forum?.commentsCount, commentPage],
@@ -206,7 +221,11 @@ const SingleForumPage = () => {
   const handleLike = useCallback(async () => {
     if (!forumId || likeProcessing) return;
     if (!user) {
-      showToast("Please log in to like this post.", "destructive");
+      ShowToast({
+        description: "Please log in to like this post.",
+        type: "error",
+      });
+
       return;
     }
     try {
@@ -214,7 +233,10 @@ const SingleForumPage = () => {
       dispatch(fetchSingleForum(forumId));
       dispatch(checkLike({ forumId }));
     } catch {
-      showToast("Failed to like the forum. Please try again.", "destructive");
+      ShowToast({
+        description: "Failed to like the forum. Please try again.",
+        type: "error",
+      });
     }
   }, [dispatch, forumId, likeProcessing, user]);
 
@@ -237,58 +259,6 @@ const SingleForumPage = () => {
   return (
     <section className="py-16">
       <div className="section-width mx-auto mt-6 space-y-6 rounded-lg border p-8 shadow-lg">
-        {/* Forum Header */}
-        {/* <div className="flex items-center justify-between rounded-t-lg bg-card p-6">
-          <div className="flex items-center space-x-3">
-            <Avatar className="h-10 w-10">
-              <AvatarImage src={forum?.firstName || ""} alt="User Avatar" />
-              <AvatarFallback>
-                {forum?.firstName?.slice(0, 1) || "?"}
-              </AvatarFallback>
-            </Avatar>
-            <div>
-              <p className="text-sm font-semibold text-foreground">
-                {`${forum?.firstName || ""} ${forum?.lastName || ""}`}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                {forum?.createdAt
-                  ? formatRelativeTime(forum.createdAt)
-                  : "Just now"}
-              </p>
-            </div>
-          </div>
-
-          {forum?.userId === Number(currentUserId) && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button
-                  type="button"
-                  className="text-muted-foreground hover:text-foreground"
-                >
-                  <FaEllipsisVertical size={18} />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-32">
-                <DropdownMenuItem
-                  onClick={() => {
-                    setEditingForum(true);
-                    setEditForumTitle(forum?.title || "");
-                    setEditForumText(forum?.content || "");
-                  }}
-                >
-                  Edit
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  className="text-destructive"
-                  onClick={() => setDeleteForumDialogOpen(true)}
-                >
-                  Delete
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
-        </div> */}
-        {/* Forum Header */}
         <div className="flex items-center justify-between rounded-t-lg bg-card p-6">
           <div className="flex items-center space-x-3">
             <Avatar className="h-10 w-10">
@@ -310,11 +280,10 @@ const SingleForumPage = () => {
           </div>
 
           {forum?.userId === Number(currentUserId) && (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center">
               {/* Edit button */}
               <Button
                 variant="ghost"
-                size="icon"
                 onClick={() => {
                   setEditingForum(true);
                   setEditForumTitle(forum?.title || "");
@@ -322,17 +291,16 @@ const SingleForumPage = () => {
                 }}
                 title="Edit forum"
               >
-                <FaRegEdit className="h-5 w-5 text-muted-foreground hover:text-foreground" />
+                <FaRegEdit className="text-muted-foreground hover:text-foreground" />
               </Button>
 
               {/* Delete button */}
               <Button
                 variant="ghost"
-                size="icon"
                 onClick={() => setDeleteForumDialogOpen(true)}
                 title="Delete forum"
               >
-                <FaTrash className="h-5 w-5 text-destructive hover:text-destructive/80" />
+                <FaTrash className="text-destructive hover:text-destructive/80" />
               </Button>
             </div>
           )}

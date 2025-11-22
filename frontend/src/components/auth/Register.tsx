@@ -4,7 +4,7 @@ import { useAppDispatch, useAppSelector } from "@/app/hooks";
 import { registerUser } from "@/features/auth/authThunk";
 import { IRegisterCredentials } from "@/types/auth-types";
 import { registerFormSchema } from "@/utils/validations";
-import { handleError, showToast } from "@/utils/helpers";
+import { handleError } from "@/utils/helpers";
 import { ROUTES } from "@/utils/constants";
 import GenericAlert from "@/components/shared/GenericAlert";
 import GoogleSvg from "@/assets/images/GoogleSvg";
@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { PasswordInput } from "@/components/ui/PasswordInput";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
+import ShowToast from "../shared/ShowToast";
 
 const Register = () => {
   const dispatch = useAppDispatch();
@@ -42,16 +43,21 @@ const Register = () => {
       const parsedData = registerFormSchema.parse(registerFormCredentials);
       const resultAction = await dispatch(registerUser({ parsedData }));
       if (registerUser.fulfilled.match(resultAction)) {
-        showToast(
-          "Please check your email to verify your account. Redirecting to login... 🚀",
-        );
+        ShowToast({
+          description:
+            "Please check your email to verify your account. Redirecting to login... 🚀",
+          type: "success",
+        });
         setTimeout(() => {
           navigate(ROUTES.LOGIN);
         }, 5000);
       }
     } catch (error) {
       const errorMessage = handleError(error);
-      showToast(errorMessage, "destructive");
+      ShowToast({
+        description: errorMessage,
+        type: "error",
+      });
     }
   };
 

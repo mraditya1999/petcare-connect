@@ -11,7 +11,8 @@ import { Button } from "@/components/ui/button";
 import { PasswordInput } from "@/components/ui/PasswordInput";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { loginFormSchema } from "@/utils/validations";
-import { handleError, showToast } from "@/utils/helpers";
+import { handleError } from "@/utils/helpers";
+import ShowToast from "../shared/ShowToast";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -40,11 +41,17 @@ const Login = () => {
     try {
       const parsedData = loginFormSchema.parse(loginFormCredentials);
       await dispatch(loginUser({ parsedData, rememberMe })).unwrap();
-      showToast("Login Successful🥳");
+      ShowToast({
+        description: "Login Successful🥳",
+        type: "success",
+      });
       navigate(ROUTES.HOME);
     } catch (error) {
       const errorMessage = handleError(error);
-      showToast(errorMessage, "destructive");
+      ShowToast({
+        description: errorMessage,
+        type: "error",
+      });
     }
   };
 

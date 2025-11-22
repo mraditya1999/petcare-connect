@@ -8,7 +8,7 @@ import {
   resetPassword,
 } from "./authThunk";
 import { IUser, IUserState } from "@/types/auth-types";
-import { getUserFromStorage, showToast } from "@/utils/helpers";
+import { getUserFromStorage } from "@/utils/helpers";
 
 const initialState: IUserState = {
   user: getUserFromStorage(),
@@ -51,67 +51,54 @@ export const authSlice = createSlice({
       .addCase(logoutUser.pending, (state) => {
         state.loading = true;
         state.error = null;
-        showToast("Logging out...");
       })
       .addCase(logoutUser.fulfilled, (state) => {
         state.user = null;
         state.loading = false;
         localStorage.removeItem("user");
-        showToast("Logged out!🙂");
       })
       .addCase(logoutUser.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
-        showToast(state.error, "destructive");
       })
       .addCase(verifyEmail.pending, (state) => {
         state.loading = true;
         state.error = null;
-        showToast("Verifying email...");
       })
       .addCase(verifyEmail.fulfilled, (state, action) => {
         state.loading = false;
         state.success = action.payload.message;
-        showToast("Email verified successfully!");
       })
       .addCase(verifyEmail.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
         state.success = null;
-        showToast(state.error, "destructive");
       })
       .addCase(forgetPassword.pending, (state) => {
         state.loading = true;
         state.error = null;
-        showToast("Sending reset password email...");
       })
       .addCase(forgetPassword.fulfilled, (state, action) => {
         state.loading = false;
         state.success = action.payload.message;
-        showToast("Reset password email sent!");
       })
       .addCase(forgetPassword.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
-        showToast(state.error, "destructive");
       })
       .addCase(resetPassword.pending, (state) => {
         state.loading = true;
         state.error = null;
-        showToast("Resetting password...");
       })
       .addCase(resetPassword.fulfilled, (state, action) => {
         state.loading = false;
         state.success = action.payload.message;
-        showToast("Password reset successful!");
       })
       .addCase(resetPassword.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
-        showToast(state.error, "destructive");
       });
   },
 });
 
-// export const {  } = authSlice.actions;
 export default authSlice.reducer;
