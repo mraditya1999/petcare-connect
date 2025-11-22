@@ -21,9 +21,13 @@ const initialState: IForumListState = {
   tagSearchTerm: "",
   loading: false,
   error: null,
+  featuredLoading: false,
+  featuredError: null,
   myForumsPage: 0,
   myForumsTotalPages: 0,
   myForumsTotalElements: 0,
+  myForumsLoading: false,
+  myForumsError: null,
 };
 
 const forumListSlice = createSlice({
@@ -73,14 +77,25 @@ const forumListSlice = createSlice({
       .addCase(fetchForums.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload || "Failed to load forums";
-      })
+      });
 
-      // Featured Forums
+    // Featured Forums
+    builder
+      .addCase(fetchFeaturedForums.pending, (state) => {
+        state.featuredLoading = true;
+        state.featuredError = null;
+      })
       .addCase(fetchFeaturedForums.fulfilled, (state, action) => {
+        state.featuredLoading = false;
         state.featuredForums = action.payload;
       })
-
-      // Create Forum
+      .addCase(fetchFeaturedForums.rejected, (state, action) => {
+        state.featuredLoading = false;
+        state.featuredError =
+          action.error.message || "Failed to load featured forums";
+      });
+    // Create Forum
+    builder
       .addCase(createForum.pending, (state) => {
         state.loading = true;
         state.error = null;

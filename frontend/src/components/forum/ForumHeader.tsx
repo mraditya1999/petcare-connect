@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import SearchBar from "../shared/SearchBar";
+import { SearchBar } from "@/components";
 import forumHeaderImg from "@/assets/images/forumpage/forumheader.png";
 
 const ForumHeader: React.FC<{

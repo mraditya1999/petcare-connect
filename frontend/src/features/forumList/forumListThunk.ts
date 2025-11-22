@@ -87,7 +87,6 @@ export const createForum = createAsyncThunk<
 });
 
 // Fetch my forums
-// forumListThunk.ts
 export const fetchMyForums = createAsyncThunk<
   IFetchMyForumsResponse,
   { page: number; size: number },

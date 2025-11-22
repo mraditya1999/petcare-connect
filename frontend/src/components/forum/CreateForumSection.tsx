@@ -1,6 +1,6 @@
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
-import ForumEditor from "./ForumEditor";
+import { ForumEditor } from "@/components";
 
 const CreateForumSection: React.FC<{
   title: string;

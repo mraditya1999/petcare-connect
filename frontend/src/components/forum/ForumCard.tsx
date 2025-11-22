@@ -1,10 +1,10 @@
-import { Card } from "../ui/card";
-import { ROUTES } from "@/utils/constants";
 import { Link } from "react-router-dom";
 import { IForum } from "@/types/forum-types";
+import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "../ui/button";
 import { FaRegHeart, FaRegMessage } from "react-icons/fa6";
+import { ROUTES } from "@/utils/constants";
 import { formatRelativeTime, truncateContent } from "@/utils/helpers";
 
 interface ForumCardProps {
@@ -24,7 +24,7 @@ const ForumCard = ({ forums }: ForumCardProps) => {
             <div className="flex items-center gap-4">
               <Avatar className="h-10 w-10">
                 <AvatarImage
-                  src={forum.userProfile || ""}
+                  src={forum?.firstName || ""}
                   alt={forum.firstName}
                 />
                 <AvatarFallback>

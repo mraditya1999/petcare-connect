@@ -9,6 +9,7 @@ const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
   const dispatch = useAppDispatch();
   const theme = useAppSelector((state) => state.theme.theme);
 
+  // Initialize theme from localStorage
   useEffect(() => {
     const storedTheme = localStorage.getItem("theme") as Theme | null;
 
@@ -19,8 +20,21 @@ const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   }, [dispatch]);
 
+  // Apply theme class to <html>
   useEffect(() => {
     document.documentElement.className = theme;
+  }, [theme]);
+
+  // Update favicon based on theme
+  useEffect(() => {
+    const favicon = document.getElementById("favicon") as HTMLLinkElement;
+    if (!favicon) return;
+
+    if (theme === "dark") {
+      favicon.href = "/icon-dark.ico";
+    } else {
+      favicon.href = "/icon-light.ico";
+    }
   }, [theme]);
 
   return <>{children}</>;

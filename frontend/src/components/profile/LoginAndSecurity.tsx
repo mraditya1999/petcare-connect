@@ -2,12 +2,12 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { PasswordInput } from "../ui/PasswordInput";
+import { PasswordInput } from "@/components/ui/PasswordInput";
 import { useAppDispatch } from "@/app/hooks";
 import { IUpdatePasswordRequest } from "@/types/profile-thunk-types";
 import { updatePassword } from "@/features/user/userThunk";
 import { updatePasswordSchema } from "@/utils/validations";
-import ShowToast from "../shared/ShowToast";
+import { ShowToast } from "@/components";
 import { Label } from "../ui/label";
 
 const LoginAndSecurity: React.FC = () => {

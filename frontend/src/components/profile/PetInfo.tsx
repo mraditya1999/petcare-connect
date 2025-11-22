@@ -3,7 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { UploadIcon } from "lucide-react";
+import { FaUpload } from "react-icons/fa6";
 
 const PetInfo = () => {
   const [profileImage, setProfileImage] = useState<string | File | null>(null);
@@ -64,7 +64,7 @@ const PetInfo = () => {
             )
           ) : (
             <>
-              <UploadIcon className="h-6 w-6 text-gray-400" />
+              <FaUpload className="h-6 w-6 text-gray-400" />
               <span className="text-xs text-gray-500">Upload pet photo</span>
             </>
           )}

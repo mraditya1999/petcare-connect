@@ -1,9 +1,7 @@
-import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
-import ForumCard from "@/components/forum/ForumCard";
-import { IForum } from "@/types/forum-types";
-import SortDropdown from "./SortDropdown";
 import React from "react";
-import SearchBar from "../shared/SearchBar";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
+import { IForum } from "@/types/forum-types";
+import { ForumCard, SearchBar, SortDropdown } from "@/components";
 
 interface ForumSectionProps {
   title: string;
@@ -51,6 +49,14 @@ const ForumSection = ({
             sortDir={sortDir}
             onSortByChange={onSortByChange}
             onSortDirChange={onSortDirChange}
+            sortByOptions={[
+              { label: "Newest", value: "createdAt" },
+              { label: "Top Rated", value: "rating" },
+            ]}
+            sortDirOptions={[
+              { label: "Ascending", value: "asc" },
+              { label: "Descending", value: "desc" },
+            ]}
           />
         )}
 

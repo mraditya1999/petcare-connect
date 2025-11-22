@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { useAppDispatch, useAppSelector } from "@/app/hooks";
 import { fetchMyForums } from "@/features/forumList/forumListThunk";
 import { setMyForumsPage } from "@/features/forumList/forumListSlice";
-import { ForumListContainer } from "../forum/ForumListContainer";
+import { ForumListContainer } from "@/components";
 
 const ForumsTab: React.FC = () => {
   const dispatch = useAppDispatch();

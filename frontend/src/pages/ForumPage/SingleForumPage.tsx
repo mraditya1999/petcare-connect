@@ -4,30 +4,14 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { useAppDispatch, useAppSelector } from "@/app/hooks";
-import { ForumEditor, PaginationControl } from "@/components";
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-} from "@/components/ui/dropdown-menu";
-
-import {
-  AlertDialog,
-  AlertDialogContent,
-  AlertDialogHeader,
-  AlertDialogFooter,
-  AlertDialogTitle,
-  AlertDialogDescription,
-  AlertDialogCancel,
-  AlertDialogAction,
-} from "@/components/ui/alert-dialog";
+import { getUserFromStorage, formatRelativeTime } from "@/utils/helpers";
+import { ROUTES } from "@/utils/constants";
 import {
   FaHeart,
   FaRegHeart,
   FaRegMessage,
-  FaEllipsisVertical,
   FaTrash,
+  FaPenToSquare,
 } from "react-icons/fa6";
 import {
   fetchSingleForum,
@@ -40,14 +24,17 @@ import {
   deleteForum,
   updateForum,
 } from "@/features/forum/forumDetailThunk";
-import { getUserFromStorage, formatRelativeTime } from "@/utils/helpers";
 import {
   setCommentPage,
   selectIsLiked,
 } from "@/features/forum/forumDetailSlice";
-import { FaRegEdit } from "react-icons/fa";
-import { ROUTES } from "@/utils/constants";
-import ShowToast from "@/components/shared/ShowToast";
+import {
+  ShowToast,
+  ConfirmDialog,
+  EllipsisDropdown,
+  ForumEditor,
+  PaginationControl,
+} from "@/components";
 
 const COMMENTS_PER_PAGE = 5;
 
@@ -291,7 +278,7 @@ const SingleForumPage = () => {
                 }}
                 title="Edit forum"
               >
-                <FaRegEdit className="text-muted-foreground hover:text-foreground" />
+                <FaPenToSquare className="text-muted-foreground hover:text-foreground" />
               </Button>
 
               {/* Delete button */}
@@ -383,29 +370,17 @@ const SingleForumPage = () => {
           </Button>
         </div>
 
-        <AlertDialog
+        <ConfirmDialog
           open={deleteForumDialogOpen}
-          onOpenChange={setDeleteForumDialogOpen}
-        >
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Delete forum?</AlertDialogTitle>
-              <AlertDialogDescription>
-                Are you sure you want to delete this forum? This action cannot
-                be undone.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction
-                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                onClick={() => handleDeleteForum(forum!.forumId)}
-              >
-                Delete
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+          onClose={setDeleteForumDialogOpen}
+          onConfirm={() => handleDeleteForum(forum!.forumId)}
+          title="Delete forum?"
+          description="Are you sure you want to delete this forum? This action cannot be undone."
+          confirmText="Delete"
+          cancelText="Cancel"
+          confirmVariant="destructive"
+        />
+
         {/* Tags */}
         {forum?.tags?.length ? (
           <div className="mt-4 flex flex-wrap gap-2">
@@ -489,37 +464,25 @@ const SingleForumPage = () => {
                 {comment.userId === Number(currentUserId) &&
                   editingCommentId !== comment.commentId && (
                     <div className="flex w-6 justify-end">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <button
-                            type="button"
-                            className="text-muted-foreground hover:text-foreground"
-                          >
-                            <FaEllipsisVertical size={18} />
-                          </button>
-                        </DropdownMenuTrigger>
-
-                        <DropdownMenuContent align="end" className="w-32">
-                          <DropdownMenuItem
-                            onClick={() => {
+                      <EllipsisDropdown
+                        items={[
+                          {
+                            label: "Edit",
+                            onClick: () => {
                               setEditingCommentId(comment.commentId);
                               setEditText(comment.text);
-                            }}
-                          >
-                            Edit
-                          </DropdownMenuItem>
-
-                          <DropdownMenuItem
-                            className="text-destructive"
-                            onClick={() => {
+                            },
+                          },
+                          {
+                            label: "Delete",
+                            onClick: () => {
                               setToDeleteCommentId(String(comment.commentId));
-                              setTimeout(() => setDeleteDialogOpen(true), 0);
-                            }}
-                          >
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                              setDeleteDialogOpen(true);
+                            },
+                            variant: "destructive",
+                          },
+                        ]}
+                      />
                     </div>
                   )}
               </div>
@@ -537,44 +500,25 @@ const SingleForumPage = () => {
           )}
         </div>
 
-        <AlertDialog
+        <ConfirmDialog
           open={deleteDialogOpen}
-          onOpenChange={(open) => {
+          onClose={(open) => {
             setDeleteDialogOpen(open);
-            if (!open) {
-              setToDeleteCommentId(null);
-            }
+            if (!open) setToDeleteCommentId(null);
           }}
-        >
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle className="text-foreground">
-                Delete comment?
-              </AlertDialogTitle>
-              <AlertDialogDescription className="text-muted-foreground">
-                Are you sure you want to delete this comment? This action cannot
-                be undone.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-
-              <AlertDialogAction
-                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                onClick={() => {
-                  if (toDeleteCommentId !== null) {
-                    handleDeleteComment(toDeleteCommentId);
-                  }
-                  setDeleteDialogOpen(false);
-                  setToDeleteCommentId(null);
-                }}
-              >
-                Delete
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+          onConfirm={() => {
+            if (toDeleteCommentId !== null) {
+              handleDeleteComment(toDeleteCommentId);
+            }
+            setDeleteDialogOpen(false);
+            setToDeleteCommentId(null);
+          }}
+          title="Delete comment?"
+          description="Are you sure you want to delete this comment? This action cannot be undone."
+          confirmText="Delete"
+          cancelText="Cancel"
+          confirmVariant="destructive"
+        />
 
         {/* Add Comment */}
         {user && (

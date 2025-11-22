@@ -2,7 +2,6 @@ import "react-quill/dist/quill.snow.css";
 import { useCallback, useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "@/app/hooks";
 import { getUserFromStorage } from "@/utils/helpers";
-import { SolvedTopics, Categories } from "@/components";
 import { useDebounce } from "@/hooks/useDebounce";
 import {
   fetchForums,
@@ -16,10 +15,14 @@ import {
   setSearchTerm,
   setTagSearchTerm,
 } from "@/features/forumList/forumListSlice";
-import { ForumListContainer } from "@/components/forum/ForumListContainer";
-import CreateForumSection from "@/components/forum/CreateForumSection";
-import ForumHeader from "@/components/forum/ForumHeader";
-import ShowToast from "@/components/shared/ShowToast";
+import {
+  ForumListContainer,
+  CreateForumSection,
+  ForumHeader,
+  ShowToast,
+  SolvedTopics,
+  Categories,
+} from "@/components";
 
 const ForumPage: React.FC = () => {
   const dispatch = useAppDispatch();
