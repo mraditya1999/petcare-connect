@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "@/app/hooks";
-import { loginUser } from "@/features/auth/authThunk";
+import { googleLoginUser, loginUser } from "@/features/auth/authThunk";
 import { ILoginCredentials } from "@/types/auth-types";
 import { ROUTES } from "@/utils/constants";
 import { Label } from "@/components/ui/label";
@@ -13,6 +13,8 @@ import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { loginFormSchema } from "@/utils/validations";
 import { handleError } from "@/utils/helpers";
 import ShowToast from "../shared/ShowToast";
+import GoogleSvg from "@/assets/images/GoogleSvg";
+import { useGoogleLogin } from "@react-oauth/google";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -54,6 +56,20 @@ const Login = () => {
       });
     }
   };
+
+  const googleLogin = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      dispatch(
+        googleLoginUser({ token: tokenResponse.access_token, navigate }),
+      );
+    },
+    onError: () => {
+      ShowToast({
+        description: "Google login failed. Try again! ❌",
+        type: "error",
+      });
+    },
+  });
 
   return (
     <article className="fixed-width rounded-lg border bg-card px-8 py-8 shadow-md transition-all duration-300 hover:shadow-lg">
@@ -110,19 +126,30 @@ const Login = () => {
           </Link>
         </div>
 
-        <Button type="submit" className="px-4 py-2" variant={"default"}>
-          {loading ? <LoadingSpinner /> : "Login now"}
-        </Button>
-
-        <p className="text-center text-sm">
-          Don't have an account?{" "}
-          <Link
-            to={ROUTES.REGISTER}
-            className="text-sm text-blue-500 transition-all duration-100 hover:text-blue-700"
+        <div className="flex flex-col gap-3">
+          <Button type="submit" className="px-4 py-2" variant={"default"}>
+            {loading ? <LoadingSpinner /> : "Login now"}
+          </Button>
+          <Button
+            variant={"secondary"}
+            type="button"
+            className="mb-3 px-4 py-2"
+            onClick={() => googleLogin()}
           >
-            Register
-          </Link>
-        </p>
+            <span className="flex items-center justify-center gap-2">
+              <GoogleSvg /> <span>Login with Google</span>
+            </span>
+          </Button>
+          <p className="text-center text-sm">
+            Don't have an account?{" "}
+            <Link
+              to={ROUTES.REGISTER}
+              className="text-sm text-blue-500 transition-all duration-100 hover:text-blue-700"
+            >
+              Register
+            </Link>
+          </p>
+        </div>
       </form>
     </article>
   );

@@ -1,14 +1,14 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "@/app/hooks";
-import { registerUser } from "@/features/auth/authThunk";
+import { googleLoginUser, registerUser } from "@/features/auth/authThunk";
 import { IRegisterCredentials } from "@/types/auth-types";
 import { registerFormSchema } from "@/utils/validations";
 import { handleError } from "@/utils/helpers";
 import { ROUTES } from "@/utils/constants";
 import GenericAlert from "@/components/shared/GenericAlert";
 import GoogleSvg from "@/assets/images/GoogleSvg";
-
+import { useGoogleLogin } from "@react-oauth/google";
 // ui components
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -60,6 +60,20 @@ const Register = () => {
       });
     }
   };
+
+  const googleLogin = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      dispatch(
+        googleLoginUser({ token: tokenResponse.access_token, navigate }),
+      );
+    },
+    onError: () => {
+      ShowToast({
+        description: "Google login failed. Try again!",
+        type: "error",
+      });
+    },
+  });
 
   return (
     <>
@@ -142,6 +156,7 @@ const Register = () => {
                 variant={"secondary"}
                 type="button"
                 className="mb-3 px-4 py-2"
+                onClick={() => googleLogin()}
               >
                 <span className="flex items-center justify-center gap-2">
                   <GoogleSvg /> <span>Login with Google</span>

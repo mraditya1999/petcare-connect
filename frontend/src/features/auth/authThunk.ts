@@ -286,3 +286,28 @@ export const resetPassword = createAsyncThunk<
     }
   },
 );
+
+export const googleLoginUser = createAsyncThunk<
+  IUser,
+  { token: string; navigate: (path: string) => void },
+  { rejectValue: string }
+>("auth/googleLoginUser", async ({ token, navigate }, { rejectWithValue }) => {
+  try {
+    const response = await customFetch.post<IUser>("/auth/google", { token });
+    const user = response.data; // same as login/register
+
+    saveUserToStorage(user, true);
+
+    ShowToast({
+      description: "Logged in successfully!", // same toast as login
+      type: "success",
+    });
+
+    navigate(ROUTES.HOME);
+    return user;
+  } catch (error) {
+    const errMsg = handleError(error);
+    ShowToast({ description: errMsg, type: "error" });
+    return rejectWithValue(errMsg);
+  }
+});

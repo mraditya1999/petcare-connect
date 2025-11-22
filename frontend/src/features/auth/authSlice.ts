@@ -6,6 +6,7 @@ import {
   verifyEmail,
   forgetPassword,
   resetPassword,
+  googleLoginUser,
 } from "./authThunk";
 import { IUser, IUserState } from "@/types/auth-types";
 import { getUserFromStorage } from "@/utils/helpers";
@@ -32,6 +33,22 @@ export const authSlice = createSlice({
         state.loading = false;
       })
       .addCase(loginUser.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+
+      .addCase(googleLoginUser.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(
+        googleLoginUser.fulfilled,
+        (state, action: PayloadAction<IUser>) => {
+          state.user = action.payload;
+          state.loading = false;
+        },
+      )
+      .addCase(googleLoginUser.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       })

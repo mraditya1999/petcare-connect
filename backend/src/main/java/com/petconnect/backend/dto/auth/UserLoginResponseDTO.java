@@ -8,14 +8,16 @@ public class UserLoginResponseDTO {
     private String email;
     private List<String> roles;
     private String token;
+    private String oauthProvider;
 
     public UserLoginResponseDTO() {}
 
-    public UserLoginResponseDTO(String email, List<String> roles, String token, Long userId) {
+    public UserLoginResponseDTO(String email, List<String> roles, String token, Long userId, String oauthProvider) {
         this.email = email;
         this.roles = roles;
         this.token = token;
         this.userId = userId;
+        this.oauthProvider = oauthProvider;
     }
 
     public Long getUserId() {
@@ -48,5 +50,13 @@ public class UserLoginResponseDTO {
 
     public void setToken(String token) {
         this.token = token;
+    }
+
+    public String getOauthProvider() {
+        return oauthProvider;
+    }
+
+    public void setOauthProvider(String oauthProvider) {
+        this.oauthProvider = oauthProvider;
     }
 }

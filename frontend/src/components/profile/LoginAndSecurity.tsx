@@ -3,35 +3,48 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PasswordInput } from "@/components/ui/PasswordInput";
-import { useAppDispatch } from "@/app/hooks";
+import { useAppDispatch, useAppSelector } from "@/app/hooks";
 import { IUpdatePasswordRequest } from "@/types/profile-thunk-types";
 import { updatePassword } from "@/features/user/userThunk";
-import { updatePasswordSchema } from "@/utils/validations";
+import {
+  updatePasswordSchema,
+  updatePasswordSchemaGoogle,
+} from "@/utils/validations";
 import { ShowToast } from "@/components";
 import { Label } from "../ui/label";
 
 const LoginAndSecurity: React.FC = () => {
   const dispatch = useAppDispatch();
+  const user = useAppSelector((state) => state.auth.user);
+
+  const isGoogleUser = user?.data.oauthProvider === "GOOGLE";
 
   const {
     register,
     handleSubmit,
     formState: { errors },
   } = useForm<IUpdatePasswordRequest>({
-    resolver: zodResolver(updatePasswordSchema),
+    resolver: zodResolver(
+      isGoogleUser ? updatePasswordSchemaGoogle : updatePasswordSchema,
+    ),
   });
 
-  const fields = [
-    { label: "Current Password", name: "currentPassword" },
-    { label: "New Password", name: "newPassword" },
-    { label: "Re-enter New Password", name: "confirmPassword" },
-  ] as const;
+  // Build fields dynamically based on provider
+  const fields = isGoogleUser
+    ? ([
+        { label: "New Password", name: "newPassword" },
+        { label: "Re-enter New Password", name: "confirmPassword" },
+      ] as const)
+    : ([
+        { label: "Current Password", name: "currentPassword" },
+        { label: "New Password", name: "newPassword" },
+        { label: "Re-enter New Password", name: "confirmPassword" },
+      ] as const);
 
   const onSubmit = async (data: IUpdatePasswordRequest) => {
     try {
       await dispatch(updatePassword(data)).unwrap();
     } catch (error: unknown) {
-      // Handle unexpected API errors only
       ShowToast({ description: String(error), type: "error" });
     }
   };
@@ -39,7 +52,9 @@ const LoginAndSecurity: React.FC = () => {
   return (
     <Card className="mx-auto mt-6 h-full">
       <CardHeader>
-        <CardTitle className="text-lg">Change Password</CardTitle>
+        <CardTitle className="text-lg">
+          {isGoogleUser ? "Set Password" : "Change Password"}
+        </CardTitle>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -58,7 +73,7 @@ const LoginAndSecurity: React.FC = () => {
             </div>
           ))}
           <Button type="submit" className="w-full">
-            Change Password
+            {isGoogleUser ? "Set Password" : "Change Password"}
           </Button>
         </form>
       </CardContent>
