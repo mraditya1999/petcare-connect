@@ -98,7 +98,7 @@ public class LikeController {
         Optional<User> user = userRepository.findByEmail(username);
 
         // Check if the user exists
-        if (!user.isPresent()) {
+        if (user.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(new ApiResponseDTO<>("User not found", null));
         }

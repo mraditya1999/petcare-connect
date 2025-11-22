@@ -2,7 +2,6 @@ package com.petconnect.backend.controllers;
 
 import com.petconnect.backend.dto.*;
 import com.petconnect.backend.exceptions.ResourceNotFoundException;
-import com.petconnect.backend.services.CommentService;
 import com.petconnect.backend.services.ForumService;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
@@ -25,12 +24,10 @@ public class ForumController {
     private static final Logger logger = LoggerFactory.getLogger(ForumController.class);
 
     private final ForumService forumService;
-    private final CommentService commentService;
 
     @Autowired
-    public ForumController(ForumService forumService, CommentService commentService) {
+    public ForumController(ForumService forumService) {
         this.forumService = forumService;
-        this.commentService = commentService;
     }
 
     /**
@@ -237,75 +234,4 @@ public class ForumController {
         ApiResponseDTO<Page<ForumDTO>> apiResponseDTO = new ApiResponseDTO<>("My forums fetched successfully", forums);
         return ResponseEntity.ok(apiResponseDTO);
     }
-
-
-//    /**
-//     * Toggle like on a forum.
-//     *
-//     * @param forumId     the forum ID
-//     * @param userDetails the authenticated user details
-//     * @return a response indicating whether the forum was liked or unliked
-//     */
-//    @PostMapping("/{forumId}/like")
-//    public ResponseEntity<ApiResponse<String>> toggleLikeOnForum(@PathVariable String forumId, @AuthenticationPrincipal UserDetails userDetails) {
-//        Map<String, String> result = forumService.toggleLikeOnForum(forumId, userDetails.getUsername());
-//        ApiResponse<String> apiResponse = new ApiResponse<>(result.get("message"));
-//        return ResponseEntity.ok(apiResponse);
-//    }
-//
-//    /**
-//     * Add a comment to a forum.
-//     *
-//     * @param forumId     the forum ID
-//     * @param userDetails the authenticated user details
-//     * @param commentDTO  the comment data
-//     * @return the added comment details
-//     */
-//    @PostMapping("/{forumId}/comment")
-//    public ResponseEntity<ApiResponse<CommentDTO>> commentOnForum(@PathVariable String forumId, @AuthenticationPrincipal UserDetails userDetails, @Valid @RequestBody CommentDTO commentDTO) {
-//        CommentDTO comment = forumService.commentOnForum(forumId, userDetails.getUsername(), commentDTO);
-//        ApiResponse<CommentDTO> apiResponse = new ApiResponse<>("Comment added successfully", comment);
-//        return ResponseEntity.ok(apiResponse);
-//    }
-//
-//    /**
-//     * Delete a comment from a forum.
-//     *
-//     * @param forumId     the forum ID
-//     * @param commentId   the comment ID
-//     * @param userDetails the authenticated user details
-//     * @return a response indicating the result of the deletion
-//     */
-//    @DeleteMapping("/{forumId}/comment/{commentId}")
-//    public ResponseEntity<ApiResponse<Void>> deleteComment(@PathVariable String forumId, @PathVariable String commentId, @AuthenticationPrincipal UserDetails userDetails) {
-//        try {
-//            forumService.deleteComment(forumId, commentId, userDetails.getUsername());
-//            ApiResponse<Void> apiResponse = new ApiResponse<>("Comment deleted successfully", null);
-//            return ResponseEntity.ok(apiResponse);
-//        } catch (ResourceNotFoundException e) {
-//            logger.error("Error deleting comment: {}", e.getMessage());
-//            ApiResponse<Void> response = new ApiResponse<>(e.getMessage(), null);
-//            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
-//        } catch (IllegalArgumentException e) {
-//            logger.error("Error deleting comment: {}", e.getMessage());
-//            ApiResponse<Void> response = new ApiResponse<>(e.getMessage(), null);
-//            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
-//        } catch (Exception e) {
-//            logger.error("Unexpected error deleting comment", e);
-//            ApiResponse<Void> errorResponse = new ApiResponse<>("An error occurred: " + e.getMessage(), null);
-//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
-//        }
-//    }
-//
-//        @PostMapping("/{forumId}/reply/{parentId}")
-//        public ResponseEntity<ApiResponse<CommentDTO>> replyToComment(
-//                @PathVariable String forumId,
-//                @PathVariable String parentId,
-//                @AuthenticationPrincipal UserDetails userDetails,
-//                @Valid @RequestBody CommentDTO commentDTO) {
-//            CommentDTO reply = commentService.replyToComment(forumId, userDetails.getUsername(), commentDTO, parentId);
-//            ApiResponse<CommentDTO> apiResponse = new ApiResponse<>("Reply added successfully", reply);
-//            return ResponseEntity.ok(apiResponse);
-//        }
-
 }
