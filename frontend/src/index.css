@@ -169,3 +169,7 @@
 .ql-toolbar button {
   position: relative;
 }
+
+.ql-editor {
+  min-height: 25rem;
+}

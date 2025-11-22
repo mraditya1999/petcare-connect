@@ -38,9 +38,9 @@ const ForumEditor: React.FC<ForumEditorProps> = ({
   }, []);
 
   return (
-    <div className="dark:quill-dark min-h-[13rem]">
+    <div className="dark:quill-dark min-h-[25rem]">
       <ReactQuill
-        className="h-full"
+        className="h-full [&_.ql-editor]:min-h-[25rem]"
         value={value}
         onChange={onChange}
         modules={{

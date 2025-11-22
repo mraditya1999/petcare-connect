@@ -35,7 +35,6 @@ const ForumSection = ({
   // show shimmer even during error
   const showShimmer = loading || !!error;
 
-  // Handle undefined/no response gracefully
   const safeForums = Array.isArray(forums) ? forums : [];
 
   return (
@@ -45,7 +44,7 @@ const ForumSection = ({
       </h2>
 
       {/* SORT + TAG SEARCH */}
-      <div className="mb-4 flex items-center justify-between">
+      <div className="mb-4 flex items-center justify-between gap-4">
         {sortBy && sortDir && onSortByChange && onSortDirChange && (
           <SortDropdown
             sortBy={sortBy}

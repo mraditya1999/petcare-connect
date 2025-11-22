@@ -90,6 +90,27 @@ const AccountSetting = () => {
     [],
   );
 
+  const handleCancelEdit = () => {
+    if (profile) {
+      setProfileFormCredentials({
+        userId: profile.userId?.toString() || "",
+        firstName: profile.firstName || "",
+        lastName: profile.lastName || "",
+        email: profile.email || "",
+        pincode: profile.address?.pincode?.toString() || "",
+        city: profile.address?.city || "",
+        state: profile.address?.state || "",
+        country: profile.address?.country || "",
+        locality: profile.address?.locality || "",
+        avatarUrl: profile.avatarUrl || "",
+        avatarPublicId: profile.avatarPublicId || "",
+        mobileNumber: profile.mobileNumber?.toString() || "",
+      });
+      setProfileImage(profile.avatarUrl || null);
+    }
+    setIsEditing(false);
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -212,7 +233,7 @@ const AccountSetting = () => {
                     <Button
                       type="button"
                       variant="secondary"
-                      onClick={() => setIsEditing(false)}
+                      onClick={handleCancelEdit}
                     >
                       Cancel
                     </Button>

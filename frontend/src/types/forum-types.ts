@@ -10,6 +10,7 @@ export interface IForum {
   commentsCount: number;
   createdAt: string;
   updatedAt: string;
+  userId: number;
 }
 
 export interface IPaginationInfo {
