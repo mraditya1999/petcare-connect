@@ -7,7 +7,9 @@ import {
   IUpdatePasswordRequest,
   IUpdatePasswordResponse,
 } from "@/types/profile-thunk-types";
+import ShowToast from "@/components/shared/ShowToast";
 
+// Fetch Profile
 export const fetchProfile = createAsyncThunk<
   IProfileData,
   void,
@@ -15,34 +17,35 @@ export const fetchProfile = createAsyncThunk<
 >("user/fetchProfile", async (_, { rejectWithValue }) => {
   try {
     const response = await customFetch.get("/profile");
-    const data = response.data.data;
-    console.log(data);
-    return data;
+    return response.data.data;
   } catch (error) {
-    return rejectWithValue(handleError(error));
+    const errMsg = handleError(error);
+    ShowToast({ description: errMsg, type: "error" });
+    return rejectWithValue(errMsg);
   }
 });
 
+// Update Profile
 export const updateProfile = createAsyncThunk<
   IProfileData,
   FormData,
   { rejectValue: string }
 >("user/updateProfile", async (formData: FormData, { rejectWithValue }) => {
   try {
-    // Log FormData entries
-    for (const [key, value] of formData.entries()) {
-      console.log(`${key}:`, value instanceof File ? value.name : value);
-    }
-
     const response = await customFetch.put<IProfileData>("/profile", formData);
-    console.log(response);
+    ShowToast({
+      description: "Profile updated successfully!",
+      type: "success",
+    });
     return response.data;
   } catch (error) {
-    console.log(error);
-    return rejectWithValue(handleError(error));
+    const errMsg = handleError(error);
+    ShowToast({ description: errMsg, type: "error" });
+    return rejectWithValue(errMsg);
   }
 });
 
+// Delete Profile
 export const deleteProfile = createAsyncThunk<
   IDeleteProfileResponse,
   void,
@@ -51,12 +54,16 @@ export const deleteProfile = createAsyncThunk<
   try {
     const response =
       await customFetch.delete<IDeleteProfileResponse>("/profile");
+    ShowToast({ description: response.data.message, type: "success" });
     return response.data;
   } catch (error) {
-    return rejectWithValue(handleError(error));
+    const errMsg = handleError(error);
+    ShowToast({ description: errMsg, type: "error" });
+    return rejectWithValue(errMsg);
   }
 });
 
+// Update Password
 export const updatePassword = createAsyncThunk<
   IUpdatePasswordResponse,
   IUpdatePasswordRequest,
@@ -67,8 +74,14 @@ export const updatePassword = createAsyncThunk<
       "/profile/update-password",
       updatePasswordRequest,
     );
+    ShowToast({
+      description: "Password updated successfully!",
+      type: "success",
+    });
     return response.data;
   } catch (error) {
-    return rejectWithValue(handleError(error));
+    const errMsg = handleError(error);
+    ShowToast({ description: errMsg, type: "error" });
+    return rejectWithValue(errMsg);
   }
 });

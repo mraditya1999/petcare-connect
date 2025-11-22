@@ -1,84 +1,79 @@
-import React, { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useToast } from "@/components/ui/use-toast";
-import { Label } from "@/components/ui/label";
-import { updatePasswordSchema } from "@/utils/validations";
-import { updatePassword } from "@/features/user/userThunk";
-import { PasswordInput } from "../ui/PasswordInput";
-import { useAppDispatch } from "@/app/hooks";
+import { PasswordInput } from "@/components/ui/PasswordInput";
+import { useAppDispatch, useAppSelector } from "@/app/hooks";
 import { IUpdatePasswordRequest } from "@/types/profile-thunk-types";
-import { handleError, showToast } from "@/utils/helpers";
+import { updatePassword } from "@/features/user/userThunk";
+import {
+  updatePasswordSchema,
+  updatePasswordSchemaGoogle,
+} from "@/utils/validations";
+import { ShowToast } from "@/components";
+import { Label } from "../ui/label";
 
 const LoginAndSecurity: React.FC = () => {
   const dispatch = useAppDispatch();
+  const user = useAppSelector((state) => state.auth.user);
+
+  const isGoogleUser = user?.data.oauthProvider === "GOOGLE";
+
   const {
     register,
     handleSubmit,
     formState: { errors },
   } = useForm<IUpdatePasswordRequest>({
-    resolver: zodResolver(updatePasswordSchema),
+    resolver: zodResolver(
+      isGoogleUser ? updatePasswordSchemaGoogle : updatePasswordSchema,
+    ),
   });
 
-  const { toast } = useToast();
+  // Build fields dynamically based on provider
+  const fields = isGoogleUser
+    ? ([
+        { label: "New Password", name: "newPassword" },
+        { label: "Re-enter New Password", name: "confirmPassword" },
+      ] as const)
+    : ([
+        { label: "Current Password", name: "currentPassword" },
+        { label: "New Password", name: "newPassword" },
+        { label: "Re-enter New Password", name: "confirmPassword" },
+      ] as const);
 
   const onSubmit = async (data: IUpdatePasswordRequest) => {
     try {
       await dispatch(updatePassword(data)).unwrap();
-      toast({
-        title: "Success",
-        description: "Password changed successfully",
-      });
-    } catch (error) {
-      const errorMessage = handleError(error);
-      showToast(errorMessage, "destructive");
+    } catch (error: unknown) {
+      ShowToast({ description: String(error), type: "error" });
     }
   };
-
-  useEffect(() => {
-    if (errors.currentPassword) {
-      showToast(errors.currentPassword.message || "", "destructive");
-    }
-    if (errors.newPassword) {
-      showToast(errors.newPassword.message || "", "destructive");
-    }
-    if (errors.confirmPassword) {
-      showToast(errors.confirmPassword.message || "", "destructive");
-    }
-  }, [errors, toast]);
 
   return (
     <Card className="mx-auto mt-6 h-full">
       <CardHeader>
-        <CardTitle className="text-lg">Change Password</CardTitle>
+        <CardTitle className="text-lg">
+          {isGoogleUser ? "Set Password" : "Change Password"}
+        </CardTitle>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div>
-            <Label>Current Password</Label>
-            <PasswordInput
-              {...register("currentPassword")}
-              placeholder="Enter current password"
-            />
-          </div>
-          <div>
-            <Label>New Password</Label>
-            <PasswordInput
-              {...register("newPassword")}
-              placeholder="Enter new password"
-            />
-          </div>
-          <div>
-            <Label>Re-enter New Password</Label>
-            <PasswordInput
-              {...register("confirmPassword")}
-              placeholder="Re-enter new password"
-            />
-          </div>
+          {fields.map(({ label, name }) => (
+            <div key={name}>
+              <Label>{label}</Label>
+              <PasswordInput
+                {...register(name)}
+                placeholder={`Enter ${label.toLowerCase()}`}
+              />
+              {errors[name] && (
+                <p className="mt-1 text-sm text-red-500">
+                  {errors[name]?.message}
+                </p>
+              )}
+            </div>
+          ))}
           <Button type="submit" className="w-full">
-            Change Password
+            {isGoogleUser ? "Set Password" : "Change Password"}
           </Button>
         </form>
       </CardContent>

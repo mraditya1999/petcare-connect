@@ -48,9 +48,13 @@ export interface IForumListState {
   tagSearchTerm: string;
   loading: boolean;
   error: string | null;
+  featuredLoading: boolean;
+  featuredError: string | null;
   myForumsPage: number;
   myForumsTotalPages: number;
   myForumsTotalElements: number;
+  myForumsLoading: boolean;
+  myForumsError: string | null;
 }
 
 export interface IForumDetailState {

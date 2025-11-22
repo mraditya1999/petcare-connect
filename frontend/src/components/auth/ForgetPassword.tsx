@@ -8,7 +8,8 @@ import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import GenericAlert from "@/components/shared/GenericAlert";
 import { IForgetPasswordCredentials } from "@/types/auth-types";
 import { forgetPasswordFormSchema } from "@/utils/validations";
-import { handleError, showToast } from "@/utils/helpers";
+import { handleError } from "@/utils/helpers";
+import ShowToast from "../shared/ShowToast";
 
 const ForgetPassword = () => {
   const dispatch = useAppDispatch();
@@ -30,10 +31,16 @@ const ForgetPassword = () => {
         forgetPasswordCredentials,
       );
       await dispatch(forgetPassword({ parsedData })).unwrap();
-      showToast("Please check your email to reset your password.");
+      ShowToast({
+        description: "Please check your email to reset your password.",
+        type: "success",
+      });
     } catch (error) {
       const errorMessage = handleError(error);
-      showToast(errorMessage, "destructive");
+      ShowToast({
+        description: errorMessage,
+        type: "error",
+      });
     }
   };
 

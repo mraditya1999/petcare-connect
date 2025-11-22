@@ -45,12 +45,6 @@ public class CommentController {
         return ResponseEntity.ok(new ApiResponseDTO<>("Comments fetched successfully", comments));
     }
 
-    @GetMapping("/{commentId}")
-    public ResponseEntity<CommentDTO> getCommentByIdWithSubcomments(@PathVariable String commentId) {
-        CommentDTO comment = commentService.getCommentByIdWithSubcomments(commentId);
-        return new ResponseEntity<>(comment, HttpStatus.OK);
-    }
-
     /**
      * Create a comment on a forum post.
      *
@@ -110,6 +104,12 @@ public class CommentController {
             ApiResponseDTO<Void> apiResponseDTO = new ApiResponseDTO<>("Comment not found or you are not authorized to delete it", null);
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(apiResponseDTO);
         }
+    }
+
+    @GetMapping("/{commentId}")
+    public ResponseEntity<CommentDTO> getCommentByIdWithSubcomments(@PathVariable String commentId) {
+        CommentDTO comment = commentService.getCommentByIdWithSubcomments(commentId);
+        return new ResponseEntity<>(comment, HttpStatus.OK);
     }
 
     /**

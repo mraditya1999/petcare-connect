@@ -1,5 +1,6 @@
 package com.petconnect.backend.services;
 
+import com.petconnect.backend.dto.user.GoogleUserDTO;
 import com.petconnect.backend.entity.Role;
 import com.petconnect.backend.entity.User;
 import com.petconnect.backend.exceptions.AuthenticationException;
@@ -13,6 +14,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -21,6 +26,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestTemplate;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -83,6 +89,9 @@ public class AuthService implements UserDetailsService {
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         user.setVerificationToken(UUID.randomUUID().toString());
         user.setVerified(false);
+
+        user.setOauthProvider(User.AuthProvider.LOCAL);
+        user.setOauthProviderId(null);
 
         // Assign roles to User
         boolean isFirstVerifiedUser = userRepository.countByIsVerified(true) == 0;
@@ -153,4 +162,68 @@ public class AuthService implements UserDetailsService {
     public boolean resetPassword(String resetToken, String newPassword) {
         return verificationService.resetPassword(resetToken, newPassword);
     }
+
+    public GoogleUserDTO fetchGoogleProfile(String accessToken) {
+        String url = "https://www.googleapis.com/oauth2/v3/userinfo";
+
+        RestTemplate restTemplate = new RestTemplate();
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Authorization", "Bearer " + accessToken);
+
+        HttpEntity<String> entity = new HttpEntity<>(headers);
+
+        ResponseEntity<GoogleUserDTO> response =
+                restTemplate.exchange(url, HttpMethod.GET, entity, GoogleUserDTO.class);
+
+        return response.getBody();
+    }
+
+
+    public User processGoogleLogin(GoogleUserDTO profile) {
+        if (profile.getSub() == null || profile.getEmail() == null) {
+            throw new IllegalArgumentException("Invalid Google profile: missing sub or email");
+        }
+        User user = userRepository.findByOauthProviderId(profile.getSub()).orElse(null);
+
+        if (user == null) {
+            user = userRepository.findByEmail(profile.getEmail()).orElse(null);
+            if (user != null && user.getOauthProviderId() == null) {
+                user.setOauthProvider(User.AuthProvider.GOOGLE);
+                user.setOauthProviderId(profile.getSub());
+            }
+        }
+
+        if (user == null) {
+            user = new User();
+            user.setEmail(profile.getEmail());
+            user.setFirstName(profile.getGiven_name() != null ? profile.getGiven_name() : "Google");
+            user.setLastName(profile.getFamily_name() != null ? profile.getFamily_name() : "User");
+            user.setAvatarUrl(profile.getPicture());
+            user.setOauthProvider(User.AuthProvider.GOOGLE);
+            user.setOauthProviderId(profile.getSub());
+            user.setEmailVerified(true);
+
+            String randomPassword = generateSecureRandomPassword();
+            user.setPassword(passwordEncoder.encode(randomPassword));
+
+            boolean isFirstVerifiedUser = userRepository.countByIsVerified(true) == 0;
+            Set<Role.RoleName> roles = roleAssignmentUtil.determineRolesForUser(isFirstVerifiedUser);
+            roleAssignmentUtil.assignRoles(user, roles);
+        } else {
+            // Refresh profile info for existing user
+            user.setFirstName(profile.getGiven_name() != null ? profile.getGiven_name() : user.getFirstName());
+            user.setLastName(profile.getFamily_name() != null ? profile.getFamily_name() : user.getLastName());
+            user.setAvatarUrl(profile.getPicture() != null ? profile.getPicture() : user.getAvatarUrl());
+            user.setEmailVerified(true);
+        }
+
+        return userRepository.save(user);
+    }
+
+    private String generateSecureRandomPassword() {
+        return Base64.getEncoder().encodeToString(UUID.randomUUID().toString().getBytes());
+    }
+
+
 }

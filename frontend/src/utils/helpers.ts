@@ -1,5 +1,4 @@
 import { AxiosError } from "axios";
-import { toast } from "@/components/ui/use-toast";
 import { IUser } from "@/types/auth-types";
 import { ZodError } from "zod";
 import { formatDistanceToNow } from "date-fns";
@@ -23,13 +22,6 @@ export const getUserFromStorage = (): IUser | null => {
     }
   }
   return null;
-};
-
-export const showToast = (
-  description: string,
-  variant?: "default" | "destructive",
-) => {
-  toast({ description, variant });
 };
 
 export const getInitialTheme = (): Theme => {

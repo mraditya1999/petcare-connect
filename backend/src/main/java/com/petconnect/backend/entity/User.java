@@ -83,11 +83,15 @@ public class User {
     @Column(nullable = false)
     private Date updatedAt;
 
-//    @Column
-//    private String oauthProvider;
-//
-//    @Column
-//    private String oauthProviderId;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "auth_provider", length = 20)
+    private AuthProvider oauthProvider = AuthProvider.LOCAL;
+
+    @Column(name = "auth_provider_id", unique = true)
+    private String oauthProviderId;
+
+    @Column(name = "email_verified")
+    private boolean emailVerified = false;
 
     @OneToMany(mappedBy = "petOwner", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     @JsonManagedReference
@@ -117,11 +121,15 @@ public class User {
         return isAdmin() || isSpecialist();
     }
 
+    public enum AuthProvider {
+        GOOGLE,
+        LOCAL
+    }
 
     public User() {
     }
 
-    public User(Long userId, String firstName, String lastName, String email, Address address, String avatarUrl, String avatarPublicId, String mobileNumber, String password, String verificationToken, String resetToken, Set<Role> roles, boolean isVerified, Date createdAt, Date updatedAt, List<Pet> pets) {
+    public User(Long userId, String firstName, String lastName, String email, Address address, String avatarUrl, String avatarPublicId, String mobileNumber, String password, String verificationToken, String resetToken, Set<Role> roles, boolean isVerified, Date createdAt, Date updatedAt, AuthProvider oauthProvider, String oauthProviderId, boolean emailVerified, List<Pet> pets) {
         this.userId = userId;
         this.firstName = firstName;
         this.lastName = lastName;
@@ -137,6 +145,9 @@ public class User {
         this.isVerified = isVerified;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
+        this.oauthProvider = oauthProvider;
+        this.oauthProviderId = oauthProviderId;
+        this.emailVerified = emailVerified;
         this.pets = pets;
     }
 
@@ -268,6 +279,31 @@ public class User {
         this.pets = pets;
     }
 
+
+    public AuthProvider getOauthProvider() {
+        return oauthProvider;
+    }
+
+    public void setOauthProvider(AuthProvider oauthProvider) {
+        this.oauthProvider = oauthProvider;
+    }
+
+    public String getOauthProviderId() {
+        return oauthProviderId;
+    }
+
+    public void setOauthProviderId(String oauthProviderId) {
+        this.oauthProviderId = oauthProviderId;
+    }
+
+    public boolean isEmailVerified() {
+        return emailVerified;
+    }
+
+    public void setEmailVerified(boolean emailVerified) {
+        this.emailVerified = emailVerified;
+    }
+
     @Override
     public String toString() {
         return "User{" +
@@ -286,7 +322,11 @@ public class User {
                 ", isVerified=" + isVerified +
                 ", createdAt=" + createdAt +
                 ", updatedAt=" + updatedAt +
+                ", oauthProvider='" + oauthProvider + '\'' +
+                ", oauthProviderId='" + oauthProviderId + '\'' +
+                ", emailVerified=" + emailVerified +
                 ", pets=" + pets +
+                ", appointments=" + appointments +
                 '}';
     }
 }

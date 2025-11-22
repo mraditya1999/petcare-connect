@@ -1,7 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { ForumSection, PaginationControl } from "@/components";
-import SkeletonList from "../shared/SkeletonList";
-import ErrorFallback from "../shared/ErrorFallback";
+import {
+  ForumSection,
+  PaginationControl,
+  SkeletonList,
+  ErrorFallback,
+} from "@/components";
 
 interface ForumListContainerProps {
   title: string;
@@ -21,7 +24,7 @@ interface ForumListContainerProps {
   onTagSearchChange?: (val: string) => void;
 }
 
-export const ForumListContainer: React.FC<ForumListContainerProps> = ({
+const ForumListContainer: React.FC<ForumListContainerProps> = ({
   title,
   forums,
   loading,
@@ -74,3 +77,5 @@ export const ForumListContainer: React.FC<ForumListContainerProps> = ({
     </div>
   );
 };
+
+export default ForumListContainer;

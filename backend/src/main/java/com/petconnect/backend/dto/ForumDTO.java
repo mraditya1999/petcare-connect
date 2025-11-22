@@ -1,5 +1,8 @@
 package com.petconnect.backend.dto;
 
+import jakarta.validation.constraints.NotNull;
+import org.springframework.data.mongodb.core.index.Indexed;
+
 import java.util.Date;
 import java.util.List;
 
@@ -15,11 +18,12 @@ public class ForumDTO {
     private Long commentsCount = 0L;
     private Date createdAt;
     private Date updatedAt;
+    private Long userId;
 
     public ForumDTO() {
     }
 
-    public ForumDTO(String forumId, String title, String content, List<String> tags, String firstName, String lastName, String email, Long likesCount, Long commentsCount, Date createdAt, Date updatedAt) {
+    public ForumDTO(String forumId, String title, String content, List<String> tags, String firstName, String lastName, String email, Long likesCount, Long commentsCount, Date createdAt, Date updatedAt, Long userId) {
         this.forumId = forumId;
         this.title = title;
         this.content = content;
@@ -31,6 +35,7 @@ public class ForumDTO {
         this.commentsCount = commentsCount;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
+        this.userId = userId;
     }
 
     public String getForumId() {
@@ -119,5 +124,13 @@ public class ForumDTO {
 
     public void setUpdatedAt(Date updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public Long getUserId() {
+        return userId;
+    }
+
+    public void setUserId(Long userId) {
+        this.userId = userId;
     }
 }
