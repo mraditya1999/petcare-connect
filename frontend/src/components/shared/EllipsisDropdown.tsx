@@ -1,4 +1,4 @@
-import { FC } from "react";
+import { FC, useState } from "react";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -22,8 +22,10 @@ const EllipsisDropdown: FC<EllipsisDropdownProps> = ({
   items,
   buttonClassName,
 }) => {
+  const [open, setOpen] = useState(false);
+
   return (
-    <DropdownMenu>
+    <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>
         <button
           type="button"
@@ -39,8 +41,17 @@ const EllipsisDropdown: FC<EllipsisDropdownProps> = ({
         {items.map((item, index) => (
           <DropdownMenuItem
             key={index}
-            onClick={item.onClick}
-            className={item.variant === "destructive" ? "text-destructive" : ""}
+            onSelect={(e) => {
+              if (item.variant === "destructive") {
+                e.preventDefault();
+              }
+              item.onClick();
+            }}
+            className={
+              item.variant === "destructive"
+                ? "text-destructive focus:bg-destructive/10"
+                : ""
+            }
           >
             {item.label}
           </DropdownMenuItem>

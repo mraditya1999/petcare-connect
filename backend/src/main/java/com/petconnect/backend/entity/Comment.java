@@ -1,10 +1,10 @@
 package com.petconnect.backend.entity;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.*;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.DBRef;
@@ -23,25 +23,33 @@ public class Comment {
     @Id
     private String commentId;
 
-    @NotNull
+    @NotBlank(message = "Forum ID is required")
     @Indexed
     private String forumId;
 
-    @NotNull
-    @Indexed
+    @NotNull(message = "User ID is required")
+    @Positive(message = "User ID must be positive")
     private Long userId;
 
-    @NotBlank
+
+    @NotBlank(message = "Comment text is required")
+    @Pattern(regexp = "^(?!\\s*$).+", message = "Comment cannot be only whitespace")
+    @Size(min = 2, max = 1000, message = "Comment must be between 2 and 1000 characters")
     private String text;
 
     @CreatedDate
     @Field("created_at")
     private Date createdAt;
 
+    @LastModifiedDate
+    @Field("updated_at")
+    private Date updatedAt;
+
     @ElementCollection
     private Set<Long> likedByUsers = new HashSet<>();
 
-    @Field("parent_id") // Add parent_id field for DB
+    @Pattern(regexp = "^[a-fA-F0-9]{24}$", message = "Parent ID must be a valid ObjectId")
+    @Field("parent_id")
     private String parentId;
 
     @ManyToOne
@@ -143,8 +151,7 @@ public class Comment {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof Comment)) return false;
-        Comment comment = (Comment) o;
+        if (!(o instanceof Comment comment)) return false;
         return Objects.equals(commentId, comment.commentId);
     }
 
