@@ -164,7 +164,7 @@ public class ForumController {
      * @return the updated forum details
      */
     @PutMapping("/{forumId}")
-    public ResponseEntity<ApiResponseDTO<ForumDTO>> updateForum(@AuthenticationPrincipal UserDetails userDetails, @PathVariable String forumId, @RequestBody UpdateForumDTO forumDTO) {
+    public ResponseEntity<ApiResponseDTO<ForumDTO>> updateForum(@AuthenticationPrincipal UserDetails userDetails, @PathVariable String forumId,@Valid @RequestBody UpdateForumDTO forumDTO) {
         try {
             String username = userDetails.getUsername();
             ForumDTO updatedForumDTO = forumService.updateForum(username,forumId , forumDTO);

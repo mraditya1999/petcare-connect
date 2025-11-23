@@ -14,8 +14,8 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
 import org.springframework.data.mongodb.core.mapping.DBRef;
 
-import java.util.Date;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @EntityListeners(AuditingEntityListener.class)
 @Document(collection = "forums")
@@ -49,18 +49,23 @@ public class Forum {
     @DBRef
     private List<Like> likes;
 
+
     @Field("tags")
     @Size(min = 1, max = 5, message = "You must provide between 1 and 5 tags")
-    private List<
+    private Set<
             @NotBlank(message = "Tag cannot be blank")
             @Pattern(regexp = "^[a-zA-Z0-9_-]+$", message = "Tags may only contain letters, numbers, hyphens, or underscores")
                     String
             > tags;
 
+
     public Forum() {
     }
 
-    public Forum(String forumId, Long userId, String title, String content, Date createdAt, Date updatedAt, List<Comment> comments, List<Like> likes, List<String> tags) {
+    public Forum(String forumId, Long userId, String title, String content,
+                 Date createdAt, Date updatedAt,
+                 List<Comment> comments, List<Like> likes,
+                 Set<String> tags) {
         this.forumId = forumId;
         this.userId = userId;
         this.title = title;
@@ -69,16 +74,20 @@ public class Forum {
         this.updatedAt = updatedAt;
         this.comments = comments;
         this.likes = likes;
-        this.tags = tags;
+        setTags(tags); // normalize + enforce uniqueness
     }
 
-    public List<String> getTags() {
+    public Set<String> getTags() {
         return tags;
     }
 
-    public void setTags(List<String> tags) {
-        this.tags = tags;
+    public void setTags(Collection<String> tags) {
+        this.tags = tags.stream()
+                .filter(Objects::nonNull)
+                .map(tag -> tag.toLowerCase(Locale.ROOT))
+                .collect(Collectors.toSet());
     }
+
 
     public String getForumId() {
         return forumId;
