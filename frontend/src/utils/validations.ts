@@ -184,12 +184,16 @@ export const createCommentSchema = z.object({
   text: z
     .string()
     .nonempty("Comment text is required")
-    .min(2, "Comment must be at least 2 characters long")
+    .min(5, "Comment must be at least 5 characters long")
     .max(1000, "Comment must be at most 1000 characters long"),
   parentId: z.string().optional(),
 });
 
+export const updateCommentSchema = createCommentSchema.pick({
+  text: true,
+});
 
+export type UpdateCommentInput = z.infer<typeof updateCommentSchema>;
 export type CreateCommentInput = z.infer<typeof createCommentSchema>;
 export type UpdateForumInput = z.infer<typeof updateForumSchema>;
 export type CreateForumInput = z.infer<typeof createForumSchema>;
