@@ -55,10 +55,8 @@ const AccountSetting = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
-  const [isLoadingImage, setIsLoadingImage] = useState(false);
+  const [isLoadingImage, setIsLoadingImage] = useState(false); // Used only during image selection/preview
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
-
-  // Fetch profile
   useEffect(() => {
     const loadProfile = async () => {
       try {
@@ -66,7 +64,7 @@ const AccountSetting = () => {
         setProfileForm(mapProfileToForm(fetchedProfile));
         setProfileImage(fetchedProfile.avatarUrl || null);
       } catch (error) {
-        console.error(error);
+        console.error("Failed to load profile:", error);
       } finally {
         setIsLoadingProfile(false);
       }
@@ -74,18 +72,30 @@ const AccountSetting = () => {
     loadProfile();
   }, [dispatch]);
 
-  const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setProfileForm((prev) => ({ ...prev, [name]: value }));
-  }, []);
+  const handleChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const { name, value } = e.target;
+      setProfileForm((prev) => ({ ...prev, [name]: value }));
+      if (formErrors[name]) {
+        setFormErrors((prev) => {
+          const newErrors = { ...prev };
+          delete newErrors[name];
+          return newErrors;
+        });
+      }
+    },
+    [formErrors],
+  );
 
   const handleImageChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
       if (!file) return;
+
       setIsLoadingImage(true);
       setProfileImage(file);
-      setTimeout(() => setIsLoadingImage(false), 500); 
+
+      setTimeout(() => setIsLoadingImage(false), 300);
     },
     [],
   );
@@ -94,6 +104,7 @@ const AccountSetting = () => {
     setProfileForm(mapProfileToForm(profile));
     setProfileImage(profile?.avatarUrl || null);
     setIsEditing(false);
+    setFormErrors({});
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -102,13 +113,21 @@ const AccountSetting = () => {
     setFormErrors({});
 
     try {
+      // 1. Zod Validation
       const parsedData = profileFormSchema.parse(profileForm);
+
+      // 2. FormData Construction (for file upload)
       const formData = new FormData();
+
+      // Append form fields
       Object.entries(parsedData).forEach(([key, value]) =>
         formData.append(key, String(value)),
       );
-      if (profileImage instanceof File)
+
+      // Append new image file if it's a File object
+      if (profileImage instanceof File) {
         formData.append("profileImage", profileImage);
+      }
 
       await dispatch(updateProfile(formData)).unwrap();
       setIsEditing(false);
@@ -121,13 +140,14 @@ const AccountSetting = () => {
         });
         setFormErrors(errors);
       } else {
-        console.error(error);
+        console.error("Profile update failed:", error);
       }
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  // Create local URL for file preview
   const previewSrc =
     typeof profileImage === "string"
       ? profileImage
@@ -147,11 +167,13 @@ const AccountSetting = () => {
                 !isEditing && "cursor-not-allowed"
               }`}
             >
-              {previewSrc ? (
+              {isLoadingImage && isEditing ? (
+                <LoadingSpinner />
+              ) : previewSrc ? (
                 <img
                   src={previewSrc}
                   alt="Profile"
-                  className="h-full w-full rounded-lg object-cover"
+                  className="h-full w-full rounded-full object-cover" // Changed to rounded-full for the image tag itself
                 />
               ) : (
                 <>
@@ -164,10 +186,10 @@ const AccountSetting = () => {
               <input
                 type="file"
                 className="hidden"
+                accept="image/*" // Added accept attribute for usability
                 onChange={handleImageChange}
                 disabled={!isEditing || isLoadingImage}
               />
-              {isLoadingImage && <LoadingSpinner />}
             </label>
 
             <form
@@ -186,13 +208,14 @@ const AccountSetting = () => {
                     type="text"
                     id={name}
                     name={name}
+                    // Handle potential null/undefined by converting to empty string
                     value={profileForm[name as keyof IProfileFormData] || ""}
                     onChange={handleChange}
                     readOnly={readOnly || name === "email"}
                     disabled={!isEditing && name !== "email"}
                     className={`${
                       readOnly || name === "email"
-                        ? "bg-gray-100 dark:bg-gray-800"
+                        ? "bg-gray-100 opacity-80 dark:bg-gray-800" // Added opacity for readOnly clarity
                         : "bg-white dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
                     }`}
                     placeholder={label}

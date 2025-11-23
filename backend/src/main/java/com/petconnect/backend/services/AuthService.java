@@ -63,8 +63,12 @@ public class AuthService implements UserDetailsService {
      */
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+        //  Normalize email
+        email = email.toLowerCase(Locale.ROOT);
+
+        String finalEmail = email;
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
+                .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + finalEmail));
 
         Set<GrantedAuthority> authorities = user.getRoles().stream()
                 .map(role -> new SimpleGrantedAuthority("ROLE_" + role.getRoleName().name()))
@@ -81,6 +85,9 @@ public class AuthService implements UserDetailsService {
      */
     @Transactional
     public void registerUser(User user) {
+        //  Normalize email
+        user.setEmail(user.getEmail().toLowerCase(Locale.ROOT));
+
         if (userRepository.existsByEmail(user.getEmail())) {
             logger.warn("User already exists with email: {}", user.getEmail());
             throw new UserAlreadyExistsException("User already exists with this email.");
@@ -93,12 +100,10 @@ public class AuthService implements UserDetailsService {
         user.setOauthProvider(User.AuthProvider.LOCAL);
         user.setOauthProviderId(null);
 
-        // Assign roles to User
         boolean isFirstVerifiedUser = userRepository.countByIsVerified(true) == 0;
         Set<Role.RoleName> roles = roleAssignmentUtil.determineRolesForUser(isFirstVerifiedUser);
         roleAssignmentUtil.assignRoles(user, roles);
 
-        // Save the user temporarily
         tempUserStore.saveTemporaryUser(user.getVerificationToken(), user);
         verificationService.sendVerificationEmail(user);
         logger.info("User registered with email: {}", user.getEmail());
@@ -113,6 +118,9 @@ public class AuthService implements UserDetailsService {
      * @throws AuthenticationException if authentication fails
      */
     public Optional<User> authenticateUser(String email, String password) {
+        //  Normalize email
+        email = email.toLowerCase(Locale.ROOT);
+
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new AuthenticationException("Invalid email or password."));
 
@@ -184,10 +192,15 @@ public class AuthService implements UserDetailsService {
         if (profile.getSub() == null || profile.getEmail() == null) {
             throw new IllegalArgumentException("Invalid Google profile: missing sub or email");
         }
+
+        //  Normalize Google email
+        String normalizedEmail = profile.getEmail().toLowerCase(Locale.ROOT);
+        profile.setEmail(normalizedEmail);
+
         User user = userRepository.findByOauthProviderId(profile.getSub()).orElse(null);
 
         if (user == null) {
-            user = userRepository.findByEmail(profile.getEmail()).orElse(null);
+            user = userRepository.findByEmail(normalizedEmail).orElse(null);
             if (user != null && user.getOauthProviderId() == null) {
                 user.setOauthProvider(User.AuthProvider.GOOGLE);
                 user.setOauthProviderId(profile.getSub());
@@ -196,7 +209,7 @@ public class AuthService implements UserDetailsService {
 
         if (user == null) {
             user = new User();
-            user.setEmail(profile.getEmail());
+            user.setEmail(normalizedEmail);
             user.setFirstName(profile.getGiven_name() != null ? profile.getGiven_name() : "Google");
             user.setLastName(profile.getFamily_name() != null ? profile.getFamily_name() : "User");
             user.setAvatarUrl(profile.getPicture());
@@ -211,7 +224,6 @@ public class AuthService implements UserDetailsService {
             Set<Role.RoleName> roles = roleAssignmentUtil.determineRolesForUser(isFirstVerifiedUser);
             roleAssignmentUtil.assignRoles(user, roles);
         } else {
-            // Refresh profile info for existing user
             user.setFirstName(profile.getGiven_name() != null ? profile.getGiven_name() : user.getFirstName());
             user.setLastName(profile.getFamily_name() != null ? profile.getFamily_name() : user.getLastName());
             user.setAvatarUrl(profile.getPicture() != null ? profile.getPicture() : user.getAvatarUrl());

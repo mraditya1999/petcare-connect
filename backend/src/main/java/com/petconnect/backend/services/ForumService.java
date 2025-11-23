@@ -91,12 +91,15 @@ public class ForumService {
 
     @Transactional(readOnly = true)
     public Page<ForumDTO> searchForumsByTags(List<String> tags, Pageable pageable) {
-        // Build case-insensitive regex criteria for each tag
-        List<Criteria> criteria = tags.stream()
-                .map(tag -> Criteria.where("tags").regex(tag, "i"))
+        // Normalize incoming tags to lowercase
+        List<String> normalizedTags = tags.stream()
+                .filter(Objects::nonNull)
+                .map(tag -> tag.toLowerCase(Locale.ROOT))
                 .toList();
 
-        Query query = new Query(new Criteria().orOperator(criteria.toArray(new Criteria[0])));
+        // Use exact match with $in instead of regex
+        Query query = new Query(Criteria.where("tags").in(normalizedTags));
+
         long count = mongoTemplate.count(query, Forum.class);
         List<Forum> forums = mongoTemplate.find(query.with(pageable), Forum.class);
 
