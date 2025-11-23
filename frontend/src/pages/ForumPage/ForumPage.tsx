@@ -23,6 +23,7 @@ import {
   SolvedTopics,
   Categories,
 } from "@/components";
+import { createForumSchema } from "@/utils/validations";
 
 const ForumPage: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -46,6 +47,11 @@ const ForumPage: React.FC = () => {
   const [newForumTitle, setNewForumTitle] = useState("");
   const [newForumTags, setNewForumTags] = useState<string[]>(["community"]);
   const [newForumContent, setNewForumContent] = useState("");
+  const [errors, setErrors] = useState<{
+    title?: string;
+    tags?: string;
+    content?: string;
+  }>({});
 
   // Fetch forums debounced
   const fetchDebouncedForums = useCallback(() => {
@@ -81,18 +87,25 @@ const ForumPage: React.FC = () => {
   };
 
   const handleCreateForum = async () => {
-    if (!newForumContent.trim()) return;
+    const result = createForumSchema.safeParse({
+      title: newForumTitle,
+      tags: newForumTags,
+      content: newForumContent,
+    });
+
+    if (!result.success) {
+      const fieldErrors = result.error.flatten().fieldErrors;
+      setErrors({
+        title: fieldErrors.title?.[0],
+        tags: fieldErrors.tags?.[0],
+        content: fieldErrors.content?.[0],
+      });
+      return;
+    }
 
     try {
-      await dispatch(
-        createForum({
-          title: newForumTitle || "New Forum",
-          content: newForumContent,
-          tags: newForumTags,
-        }),
-      ).unwrap();
+      await dispatch(createForum(result.data)).unwrap();
 
-      // Fetch forums again
       dispatch(
         fetchForums({
           page: 0,
@@ -105,6 +118,7 @@ const ForumPage: React.FC = () => {
       );
 
       resetEditor();
+      setErrors({});
       ShowToast({ description: "Forum created!", type: "success" });
     } catch (err) {
       ShowToast({ description: "Failed to create forum", type: "error" });
@@ -190,6 +204,8 @@ const ForumPage: React.FC = () => {
           setContent={setNewForumContent}
           onCreate={handleCreateForum}
           loading={loading}
+          errors={errors}
+          setErrors={setErrors}
         />
       )}
     </div>

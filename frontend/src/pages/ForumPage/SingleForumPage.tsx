@@ -35,6 +35,8 @@ import {
   ForumEditor,
   PaginationControl,
 } from "@/components";
+import { updateForumSchema } from "@/utils/validations";
+import { Input } from "@/components/ui/input";
 
 const COMMENTS_PER_PAGE = 5;
 
@@ -72,6 +74,15 @@ const SingleForumPage = () => {
   const [editForumText, setEditForumText] = useState(forum?.content || "");
   const [editForumTitle, setEditForumTitle] = useState(forum?.title || "");
   const [deleteForumDialogOpen, setDeleteForumDialogOpen] = useState(false);
+  const [updateErrors, setUpdateErrors] = useState<{
+    title?: string;
+    content?: string;
+    tags?: string;
+  }>({});
+  const [editForumTags, setEditForumTags] = useState<string[]>(
+    forum?.tags || [],
+  );
+  const [commentError, setCommentError] = useState<string | null>(null);
 
   useEffect(() => {
     if (forum) {
@@ -102,26 +113,44 @@ const SingleForumPage = () => {
     if (error) ShowToast({ description: error, type: "error" });
   }, [error]);
 
-  // Handlers
-  const handleUpdateForum = (
+  const handleUpdateForum = async (
     forumId: string,
     title: string,
     content: string,
     tags: string[] = [],
   ) => {
-    dispatch(updateForum({ forumId, title, content, tags }))
-      .unwrap()
-      .then(() => {
-        setEditingForum(false);
-        ShowToast({
-          description: "Forum updated successfully!",
-          type: "success",
-        });
-      })
-      .catch((err) => {
-        ShowToast({ description: "Failed to update forum", type: "error" });
-        console.error(err);
+    const cleanTags = tags
+      .map((tag) => tag.trim())
+      .filter((tag) => tag.length > 0);
+
+    const result = updateForumSchema.safeParse({
+      title,
+      content,
+      tags: cleanTags,
+    });
+
+    if (!result.success) {
+      const fieldErrors = result.error.flatten().fieldErrors;
+      setUpdateErrors({
+        title: fieldErrors.title?.[0],
+        content: fieldErrors.content?.[0],
+        tags: fieldErrors.tags?.[0],
       });
+      return;
+    }
+
+    try {
+      await dispatch(updateForum({ forumId, ...result.data })).unwrap();
+      setEditingForum(false);
+      setUpdateErrors({});
+      ShowToast({
+        description: "Forum updated successfully!",
+        type: "success",
+      });
+    } catch (err) {
+      ShowToast({ description: "Failed to update forum", type: "error" });
+      console.error(err);
+    }
   };
 
   const handleDeleteForum = (forumId: string) => {
@@ -140,14 +169,43 @@ const SingleForumPage = () => {
       });
   };
 
+  // const handleAddComment = useCallback(async () => {
+  //   if (!forumId || !newComment.trim()) return;
+  //   setAddingComment(true);
+  //   try {
+  //     await dispatch(createComment({ forumId, text: newComment })).unwrap();
+  //     dispatch(fetchComments({ forumId, page: 0, size: COMMENTS_PER_PAGE }));
+  //     dispatch(fetchSingleForum(forumId));
+  //     setNewComment("");
+  //     ShowToast({
+  //       description: "Comment added successfully!",
+  //       type: "success",
+  //     });
+  //   } catch {
+  //     ShowToast({
+  //       description: "Error adding comment. Please try again.",
+  //       type: "error",
+  //     });
+  //   } finally {
+  //     setAddingComment(false);
+  //   }
+  // }, [dispatch, forumId, newComment]);
   const handleAddComment = useCallback(async () => {
-    if (!forumId || !newComment.trim()) return;
+    const result = createCommentSchema.safeParse({ forumId, text: newComment });
+
+    if (!result.success) {
+      const errors = result.error.flatten().fieldErrors;
+      setCommentError(errors.text?.[0] || "Invalid comment");
+      return;
+    }
+
     setAddingComment(true);
     try {
-      await dispatch(createComment({ forumId, text: newComment })).unwrap();
+      await dispatch(createComment(result.data)).unwrap();
       dispatch(fetchComments({ forumId, page: 0, size: COMMENTS_PER_PAGE }));
       dispatch(fetchSingleForum(forumId));
       setNewComment("");
+      setCommentError(null);
       ShowToast({
         description: "Comment added successfully!",
         type: "success",
@@ -296,18 +354,53 @@ const SingleForumPage = () => {
         {/* Forum Content */}
         {editingForum ? (
           <div className="space-y-4">
-            <input
-              type="text"
-              className="w-full rounded-md border border-border bg-background p-2 text-lg font-semibold text-foreground"
+            <Input
               value={editForumTitle}
-              onChange={(e) => setEditForumTitle(e.target.value)}
+              onChange={(e) => {
+                setEditForumTitle(e.target.value);
+                if (updateErrors.title)
+                  setUpdateErrors((prev) => ({ ...prev, title: undefined }));
+              }}
               placeholder="Forum title"
             />
+            {updateErrors.title && (
+              <p className="text-sm text-red-500">{updateErrors.title}</p>
+            )}
+
+            <Input
+              placeholder="Tags (comma-separated)"
+              value={editForumTags.join(",")}
+              onChange={(e) => {
+                const newTags = e.target.value
+                  .split(",")
+                  .map((tag) => tag.trim())
+                  .filter((tag) => tag.length > 0);
+
+                setEditForumTags(newTags);
+
+                if (updateErrors.tags) {
+                  setUpdateErrors((prev) => ({ ...prev, tags: undefined }));
+                }
+              }}
+            />
+
+            {updateErrors.tags && (
+              <p className="text-sm text-red-500">{updateErrors.tags}</p>
+            )}
+
             <ForumEditor
               value={editForumText}
-              onChange={setEditForumText}
+              onChange={(val) => {
+                setEditForumText(val);
+                if (updateErrors.content)
+                  setUpdateErrors((prev) => ({ ...prev, content: undefined }));
+              }}
               placeholder="Update your forum content..."
             />
+            {updateErrors.content && (
+              <p className="text-sm text-red-500">{updateErrors.content}</p>
+            )}
+
             <div className="flex gap-2">
               <Button
                 onClick={() =>
@@ -315,11 +408,13 @@ const SingleForumPage = () => {
                     forum!.forumId,
                     editForumTitle,
                     editForumText,
+                    editForumTags,
                   )
                 }
               >
                 Save
               </Button>
+
               <Button variant="outline" onClick={() => setEditingForum(false)}>
                 Cancel
               </Button>
@@ -327,11 +422,11 @@ const SingleForumPage = () => {
           </div>
         ) : (
           <>
-            <h1 className="text-3xl font-bold text-foreground">
+            <h1 className="word-break-all break-words text-3xl font-bold text-foreground">
               {forum?.title}
             </h1>
             <div
-              className="prose prose-sm max-w-none text-foreground"
+              className="prose prose-sm max-w-full overflow-x-auto break-words text-foreground"
               dangerouslySetInnerHTML={{ __html: forum?.content || "" }}
             />
           </>

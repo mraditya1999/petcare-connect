@@ -140,3 +140,56 @@ export const profileFormSchema = z.object({
   country: z.string().optional(),
   locality: z.string().optional(),
 });
+
+export const createForumSchema = z.object({
+  title: z
+    .string()
+    .nonempty("Forum title is required")
+    .min(5, "Title must be at least 5 characters long")
+    .max(100, "Title must be at most 100 characters long"),
+
+  tags: z
+    .array(z.string().nonempty("Tag cannot be empty"))
+    .min(1, "At least one tag is required")
+    .max(5, "You can add up to 5 tags"),
+
+  content: z
+    .string()
+    .nonempty("Content is required")
+    .min(100, "Content must be at least 100 characters long"),
+});
+
+export const updateForumSchema = z.object({
+  title: z
+    .string()
+    .nonempty("Title is required")
+    .min(5, "Title must be at least 5 characters long")
+    .max(100, "Title must be at most 100 characters"),
+
+  content: z
+    .string()
+    .nonempty("Content is required")
+    .min(200, "Content must be at least 200 characters long")
+    .max(5000, "Content must be at most 5000 characters"),
+
+  tags: z
+    .array(z.string().nonempty("Tag cannot be blank"))
+    .min(1, "At least one tag is required")
+    .max(5, "You can add up to 5 tags"),
+});
+
+export const createCommentSchema = z.object({
+  forumId: z.string().nonempty("Forum ID is required"),
+  userId: z.number().int().positive("User ID must be a positive integer"),
+  text: z
+    .string()
+    .nonempty("Comment text is required")
+    .min(2, "Comment must be at least 2 characters long")
+    .max(1000, "Comment must be at most 1000 characters long"),
+  parentId: z.string().optional(),
+});
+
+
+export type CreateCommentInput = z.infer<typeof createCommentSchema>;
+export type UpdateForumInput = z.infer<typeof updateForumSchema>;
+export type CreateForumInput = z.infer<typeof createForumSchema>;
