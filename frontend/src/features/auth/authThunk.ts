@@ -159,12 +159,12 @@ export const googleLoginUser = createAsyncThunk<
 >("auth/googleLoginUser", async ({ token, navigate }, { rejectWithValue }) => {
   try {
     const response = await customFetch.post<IUser>("/auth/google", { token });
-    const user = response.data; // same as login/register
+    const user = response.data;
 
     saveUserToStorage(user, true);
 
     ShowToast({
-      description: "Logged in successfully!", // same toast as login
+      description: "Logged in successfully!", 
       type: "success",
     });
 

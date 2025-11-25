@@ -1,6 +1,7 @@
 package com.petconnect.backend.entity;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+import lombok.Data;
 import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -16,7 +17,6 @@ import java.util.*;
 @Table(name = "users")
 @Inheritance(strategy = InheritanceType.JOINED)
 public class User {
-
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -38,7 +38,7 @@ public class User {
     @Column(nullable = false, unique = true, length = 100)
     private String email;
 
-    @OneToOne(cascade = CascadeType.ALL,orphanRemoval = true)
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "address_id", referencedColumnName = "addressId")
     @JsonManagedReference
     private Address address;
@@ -71,7 +71,6 @@ public class User {
     @JsonManagedReference
     private Set<Role> roles = new HashSet<>();
 
-
     @Column(nullable = false)
     private boolean isVerified = false;
 
@@ -83,16 +82,6 @@ public class User {
     @Column(nullable = false)
     private Date updatedAt;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "auth_provider", length = 20)
-    private AuthProvider oauthProvider = AuthProvider.LOCAL;
-
-    @Column(name = "auth_provider_id", unique = true)
-    private String oauthProviderId;
-
-    @Column(name = "email_verified")
-    private boolean emailVerified = false;
-
     @OneToMany(mappedBy = "petOwner", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     @JsonManagedReference
     private List<Pet> pets;
@@ -101,35 +90,17 @@ public class User {
     @JsonManagedReference
     private List<Appointment> appointments;
 
-    public boolean hasRole(Role.RoleName roleName) {
-        return roles.stream().anyMatch(role -> role.getAuthority().equals(roleName));
-    }
-
-    public boolean isAdmin() {
-        return hasRole(Role.RoleName.ADMIN);
-    }
-
-    public boolean isSpecialist() {
-        return hasRole(Role.RoleName.SPECIALIST);
-    }
-
-    public boolean isRegularUser() {
-        return hasRole(Role.RoleName.USER);
-    }
-
-    public boolean canAccessSpecialistFeatures() {
-        return isAdmin() || isSpecialist();
-    }
-
-    public enum AuthProvider {
-        GOOGLE,
-        LOCAL
-    }
+    @OneToMany(mappedBy = "user",fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<OAuthAccount> oauthAccounts = new ArrayList<>();
 
     public User() {
     }
 
-    public User(Long userId, String firstName, String lastName, String email, Address address, String avatarUrl, String avatarPublicId, String mobileNumber, String password, String verificationToken, String resetToken, Set<Role> roles, boolean isVerified, Date createdAt, Date updatedAt, AuthProvider oauthProvider, String oauthProviderId, boolean emailVerified, List<Pet> pets) {
+    public User(Long userId, String firstName, String lastName, String email, Address address,
+                String avatarUrl, String avatarPublicId, String mobileNumber, String password,
+                String verificationToken, String resetToken, Set<Role> roles, boolean isVerified,
+                Date createdAt, Date updatedAt, List<Pet> pets) {
+
         this.userId = userId;
         this.firstName = firstName;
         this.lastName = lastName;
@@ -145,164 +116,64 @@ public class User {
         this.isVerified = isVerified;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
-        this.oauthProvider = oauthProvider;
-        this.oauthProviderId = oauthProviderId;
-        this.emailVerified = emailVerified;
         this.pets = pets;
     }
 
-    public Long getUserId() {
-        return userId;
-    }
+    public Long getUserId() { return userId; }
+    public void setUserId(Long userId) { this.userId = userId; }
 
-    public void setUserId(Long userId) {
-        this.userId = userId;
-    }
+    public String getFirstName() { return firstName; }
+    public void setFirstName(String firstName) { this.firstName = firstName; }
 
-    public String getFirstName() {
-        return firstName;
-    }
+    public String getLastName() { return lastName; }
+    public void setLastName(String lastName) { this.lastName = lastName; }
 
-    public void setFirstName(String firstName) {
-        this.firstName = firstName;
-    }
-
-    public String getLastName() {
-        return lastName;
-    }
-
-    public void setLastName(String lastName) {
-        this.lastName = lastName;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
+    public String getEmail() { return email; }
     public void setEmail(String email) {
         this.email = email.toLowerCase(Locale.ROOT);
     }
 
-    public Address getAddress() {
-        return address;
-    }
+    public Address getAddress() { return address; }
+    public void setAddress(Address address) { this.address = address; }
 
-    public void setAddress(Address address) {
-        this.address = address;
-    }
+    public String getAvatarUrl() { return avatarUrl; }
+    public void setAvatarUrl(String avatarUrl) { this.avatarUrl = avatarUrl; }
 
-    public String getAvatarUrl() {
-        return avatarUrl;
-    }
+    public String getAvatarPublicId() { return avatarPublicId; }
+    public void setAvatarPublicId(String avatarPublicId) { this.avatarPublicId = avatarPublicId; }
 
-    public void setAvatarUrl(String avatarUrl) {
-        this.avatarUrl = avatarUrl;
-    }
+    public String getMobileNumber() { return mobileNumber; }
+    public void setMobileNumber(String mobileNumber) { this.mobileNumber = mobileNumber; }
 
-    public String getAvatarPublicId() {
-        return avatarPublicId;
-    }
+    public String getPassword() { return password; }
+    public void setPassword(String password) { this.password = password; }
 
-    public void setAvatarPublicId(String avatarPublicId) {
-        this.avatarPublicId = avatarPublicId;
-    }
+    public String getVerificationToken() { return verificationToken; }
+    public void setVerificationToken(String verificationToken) { this.verificationToken = verificationToken; }
 
-    public String getMobileNumber() {
-        return mobileNumber;
-    }
+    public String getResetToken() { return resetToken; }
+    public void setResetToken(String resetToken) { this.resetToken = resetToken; }
 
-    public void setMobileNumber(String mobileNumber) {
-        this.mobileNumber = mobileNumber;
-    }
+    public Set<Role> getRoles() { return roles; }
+    public void setRoles(Set<Role> roles) { this.roles = roles; }
 
-    public String getPassword() {
-        return password;
-    }
+    public boolean isVerified() { return isVerified; }
+    public void setVerified(boolean verified) { isVerified = verified; }
 
-    public void setPassword(String password) {
-        this.password = password;
-    }
+    public Date getCreatedAt() { return createdAt; }
+    public void setCreatedAt(Date createdAt) { this.createdAt = createdAt; }
 
-    public String getVerificationToken() {
-        return verificationToken;
-    }
+    public Date getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(Date updatedAt) { this.updatedAt = updatedAt; }
 
-    public void setVerificationToken(String verificationToken) {
-        this.verificationToken = verificationToken;
-    }
+    public List<Pet> getPets() { return pets; }
+    public void setPets(List<Pet> pets) { this.pets = pets; }
 
-    public String getResetToken() {
-        return resetToken;
-    }
+    public List<Appointment> getAppointments() { return appointments; }
+    public void setAppointments(List<Appointment> appointments) { this.appointments = appointments; }
 
-    public void setResetToken(String resetToken) {
-        this.resetToken = resetToken;
-    }
-
-    public Set<Role> getRoles() {
-        return roles;
-    }
-
-    public void setRoles(Set<Role> roles) {
-        this.roles = roles;
-    }
-
-    public boolean isVerified() {
-        return isVerified;
-    }
-
-    public void setVerified(boolean verified) {
-        isVerified = verified;
-    }
-
-    public Date getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(Date createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public Date getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(Date updatedAt) {
-        this.updatedAt = updatedAt;
-    }
-
-    public List<Pet> getPets() {
-        return pets;
-    }
-
-    public void setPets(List<Pet> pets) {
-        this.pets = pets;
-    }
-
-
-    public AuthProvider getOauthProvider() {
-        return oauthProvider;
-    }
-
-    public void setOauthProvider(AuthProvider oauthProvider) {
-        this.oauthProvider = oauthProvider;
-    }
-
-    public String getOauthProviderId() {
-        return oauthProviderId;
-    }
-
-    public void setOauthProviderId(String oauthProviderId) {
-        this.oauthProviderId = oauthProviderId;
-    }
-
-    public boolean isEmailVerified() {
-        return emailVerified;
-    }
-
-    public void setEmailVerified(boolean emailVerified) {
-        this.emailVerified = emailVerified;
-    }
+    public List<OAuthAccount> getOauthAccounts() { return oauthAccounts; }
+    public void setOauthAccounts(List<OAuthAccount> oauthAccounts) { this.oauthAccounts = oauthAccounts; }
 
     @Override
     public String toString() {
@@ -315,19 +186,10 @@ public class User {
                 ", avatarUrl='" + avatarUrl + '\'' +
                 ", avatarPublicId='" + avatarPublicId + '\'' +
                 ", mobileNumber='" + mobileNumber + '\'' +
-                ", password='" + password + '\'' +
-                ", verificationToken='" + verificationToken + '\'' +
-                ", resetToken='" + resetToken + '\'' +
                 ", roles=" + roles +
                 ", isVerified=" + isVerified +
                 ", createdAt=" + createdAt +
                 ", updatedAt=" + updatedAt +
-                ", oauthProvider='" + oauthProvider + '\'' +
-                ", oauthProviderId='" + oauthProviderId + '\'' +
-                ", emailVerified=" + emailVerified +
-                ", pets=" + pets +
-                ", appointments=" + appointments +
                 '}';
     }
 }
-

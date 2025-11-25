@@ -46,19 +46,19 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private void initializeDefaultUsers() {
-        if (!userRepository.existsByEmail("ay5480620@gmail.com")) {
-            createUser("Aditya", "Yadav", "ay5480620@gmail.com", "@mrAditya1999", Role.RoleName.ADMIN, true, createAddress());
-        }
-
-        if (!userRepository.existsByEmail("dbadaditya@gmail.com")) {
-            createUser("Honey", "Singh", "dbadaditya@gmail.com", "@mrAditya1999", Role.RoleName.USER, true ,createAddress());
-        }
+//        if (!userRepository.existsByEmail("ay5480620@gmail.com")) {
+//            createUser("Aditya", "Yadav", "ay5480620@gmail.com", "@mrAditya1999", Role.RoleName.ADMIN, true, createAddress());
+//        }
+//
+//        if (!userRepository.existsByEmail("dbadaditya@gmail.com")) {
+//            createUser("Honey", "Singh", "dbadaditya@gmail.com", "@mrAditya1999", Role.RoleName.USER, true ,createAddress());
+//        }
     }
 
     private void initializeSpecialist() {
-        if (!userRepository.existsByEmail("specialist@example.com")) {
-            createSpecialist("Jane", "Doe", "specialist@example.com", "@mrAditya1999", createAddress(), "Experienced veterinarian with a focus on canine health.", "Veterinary Medicine");
-        }
+//        if (!userRepository.existsByEmail("specialist@example.com")) {
+//            createSpecialist("Jane", "Doe", "specialist@example.com", "@mrAditya1999", createAddress(), "Experienced veterinarian with a focus on canine health.", "Veterinary Medicine");
+//        }
     }
 
     private void createUser(String firstName, String lastName, String email, String password, Role.RoleName role, boolean isVerified, Address address) {

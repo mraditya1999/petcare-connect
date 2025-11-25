@@ -1,5 +1,6 @@
 package com.petconnect.backend.repositories;
 
+import com.petconnect.backend.entity.OAuthAccount;
 import com.petconnect.backend.entity.Role;
 import com.petconnect.backend.entity.User;
 import org.springframework.data.domain.Page;
@@ -29,5 +30,4 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     @Query("SELECT u FROM User u JOIN u.roles r WHERE LOWER(r.roleName) = LOWER(:roleName)")
     Page<User> findAllByRole(@Param("roleName") String roleName, Pageable pageable);
-    Optional<User> findByOauthProviderId(String oauthProviderId);
 }

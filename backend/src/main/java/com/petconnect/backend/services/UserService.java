@@ -204,7 +204,11 @@ public class UserService {
             User user = userRepository.findByEmail(email)
                     .orElseThrow(() -> new ResourceNotFoundException("User not found with email " + email));
 
-            if (user.getOauthProvider() == User.AuthProvider.LOCAL) {
+            boolean isLocalUser = user.getOauthAccounts()
+                    .stream()
+                    .anyMatch(acc -> acc.getProvider() == OAuthAccount.AuthProvider.LOCAL);
+
+            if (isLocalUser) {
                 if (!passwordEncoder.matches(updatePasswordRequestDTO.getCurrentPassword(), user.getPassword())) {
                     throw new IllegalArgumentException("Current password is incorrect.");
                 }

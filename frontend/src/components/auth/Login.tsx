@@ -23,8 +23,8 @@ const Login = () => {
   const [rememberMe, setRememberMe] = useState(false);
   const [loginFormCredentials, setLoginFormCredentials] =
     useState<ILoginCredentials>({
-      email: "dbadaditya@gmail.com",
-      password: "@mrAditya1999",
+      email: import.meta.env.VITE_USERNAME || "",
+      password: import.meta.env.VITE_PASSWORD || "",
     });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {

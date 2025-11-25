@@ -1,10 +1,12 @@
 package com.petconnect.backend.services;
 
 import com.petconnect.backend.dto.user.GoogleUserDTO;
+import com.petconnect.backend.entity.OAuthAccount;
 import com.petconnect.backend.entity.Role;
 import com.petconnect.backend.entity.User;
 import com.petconnect.backend.exceptions.AuthenticationException;
 import com.petconnect.backend.exceptions.UserAlreadyExistsException;
+import com.petconnect.backend.repositories.OAuthAccountRepository;
 import com.petconnect.backend.utils.RoleAssignmentUtil;
 import com.petconnect.backend.repositories.UserRepository;
 import com.petconnect.backend.security.JwtUtil;
@@ -28,6 +30,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 
+import java.security.SecureRandom;
+import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -42,16 +46,23 @@ public class AuthService implements UserDetailsService {
     private final VerificationService verificationService;
     private final JwtUtil jwtUtil;
     private final TempUserStore tempUserStore;
+    private final OAuthAccountRepository oauthAccountRepository;
 
     @Autowired
-    public AuthService(UserRepository userRepository, RoleAssignmentUtil roleAssignmentUtil,  @Lazy PasswordEncoder passwordEncoder,
-                       @Lazy VerificationService verificationService, JwtUtil jwtUtil, TempUserStore tempUserStore) {
+    public AuthService(UserRepository userRepository,
+                       RoleAssignmentUtil roleAssignmentUtil,
+                       @Lazy PasswordEncoder passwordEncoder,
+                       @Lazy VerificationService verificationService,
+                       JwtUtil jwtUtil,
+                       TempUserStore tempUserStore,
+                       OAuthAccountRepository oauthAccountRepository) {
         this.userRepository = userRepository;
         this.roleAssignmentUtil = roleAssignmentUtil;
         this.passwordEncoder = passwordEncoder;
         this.verificationService = verificationService;
         this.jwtUtil = jwtUtil;
         this.tempUserStore = tempUserStore;
+        this.oauthAccountRepository = oauthAccountRepository;
     }
 
     /**
@@ -63,9 +74,7 @@ public class AuthService implements UserDetailsService {
      */
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        //  Normalize email
         email = email.toLowerCase(Locale.ROOT);
-
         String finalEmail = email;
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + finalEmail));
@@ -74,7 +83,9 @@ public class AuthService implements UserDetailsService {
                 .map(role -> new SimpleGrantedAuthority("ROLE_" + role.getRoleName().name()))
                 .collect(Collectors.toSet());
 
-        return new org.springframework.security.core.userdetails.User(user.getEmail(), user.getPassword(), authorities);
+        // If password is null (OAuth-only account), supply empty string to avoid NPE in Spring User constructor.
+        String pwd = user.getPassword() == null ? "" : user.getPassword();
+        return new org.springframework.security.core.userdetails.User(user.getEmail(), pwd, authorities);
     }
 
     /**
@@ -85,7 +96,6 @@ public class AuthService implements UserDetailsService {
      */
     @Transactional
     public void registerUser(User user) {
-        //  Normalize email
         user.setEmail(user.getEmail().toLowerCase(Locale.ROOT));
 
         if (userRepository.existsByEmail(user.getEmail())) {
@@ -93,12 +103,14 @@ public class AuthService implements UserDetailsService {
             throw new UserAlreadyExistsException("User already exists with this email.");
         }
 
+        // password expected for local registration
+        if (user.getPassword() == null) {
+            throw new IllegalArgumentException("Password is required for local registration");
+        }
+
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         user.setVerificationToken(UUID.randomUUID().toString());
         user.setVerified(false);
-
-        user.setOauthProvider(User.AuthProvider.LOCAL);
-        user.setOauthProviderId(null);
 
         boolean isFirstVerifiedUser = userRepository.countByIsVerified(true) == 0;
         Set<Role.RoleName> roles = roleAssignmentUtil.determineRolesForUser(isFirstVerifiedUser);
@@ -118,11 +130,15 @@ public class AuthService implements UserDetailsService {
      * @throws AuthenticationException if authentication fails
      */
     public Optional<User> authenticateUser(String email, String password) {
-        //  Normalize email
         email = email.toLowerCase(Locale.ROOT);
-
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new AuthenticationException("Invalid email or password."));
+
+        if (user.getPassword() == null) {
+            // This account does not have a password (likely OAuth-only)
+            logger.warn("Attempt to password-authenticate OAuth-only account: {}", email);
+            throw new AuthenticationException("Invalid email or password.");
+        }
 
         if (passwordEncoder.matches(password, user.getPassword())) {
             logger.info("User authenticated with email: {}", email);
@@ -173,68 +189,163 @@ public class AuthService implements UserDetailsService {
 
     public GoogleUserDTO fetchGoogleProfile(String accessToken) {
         String url = "https://www.googleapis.com/oauth2/v3/userinfo";
-
         RestTemplate restTemplate = new RestTemplate();
-
         HttpHeaders headers = new HttpHeaders();
         headers.set("Authorization", "Bearer " + accessToken);
-
         HttpEntity<String> entity = new HttpEntity<>(headers);
-
         ResponseEntity<GoogleUserDTO> response =
                 restTemplate.exchange(url, HttpMethod.GET, entity, GoogleUserDTO.class);
-
         return response.getBody();
     }
 
+    /**
+     * Scalable, robust Google login handler:
+     *  - prefer provider lookup (provider + providerUserId)
+     *  - fallback to email matching (linking) if provider record not found
+     *  - create user if not exist
+     *  - create OAuthAccount only when missing
+     */
+    @Transactional
+    public User processGoogleLogin(GoogleUserDTO profile, String rawAccessToken) {
 
-    public User processGoogleLogin(GoogleUserDTO profile) {
         if (profile.getSub() == null || profile.getEmail() == null) {
             throw new IllegalArgumentException("Invalid Google profile: missing sub or email");
         }
 
-        //  Normalize Google email
-        String normalizedEmail = profile.getEmail().toLowerCase(Locale.ROOT);
-        profile.setEmail(normalizedEmail);
+        String googleId = profile.getSub();
+        String email = profile.getEmail().toLowerCase(Locale.ROOT);
 
-        User user = userRepository.findByOauthProviderId(profile.getSub()).orElse(null);
+        // ---------------------------------------------------------
+        // 1) Check if this exact Google account already exists
+        // ---------------------------------------------------------
+        Optional<OAuthAccount> existingAccountOpt =
+                oauthAccountRepository.findByProviderAndProviderUserId(
+                        OAuthAccount.AuthProvider.GOOGLE,
+                        googleId
+                );
 
-        if (user == null) {
-            user = userRepository.findByEmail(normalizedEmail).orElse(null);
-            if (user != null && user.getOauthProviderId() == null) {
-                user.setOauthProvider(User.AuthProvider.GOOGLE);
-                user.setOauthProviderId(profile.getSub());
+        if (existingAccountOpt.isPresent()) {
+            OAuthAccount existingAccount = existingAccountOpt.get();
+            User existingUser = existingAccount.getUser();
+
+            boolean changed = false;
+
+            if (rawAccessToken != null && !rawAccessToken.isBlank()) {
+                existingAccount.setAccessToken(rawAccessToken);
+                existingAccount.setTokenExpiry(Instant.now().plusSeconds(3600));
+                changed = true;
             }
+
+            changed |= updateGoogleUserInfoIfNeeded(existingUser, profile);
+
+            if (changed) {
+                oauthAccountRepository.save(existingAccount);
+                userRepository.save(existingUser);
+            }
+            return existingUser;
         }
 
-        if (user == null) {
+        // ---------------------------------------------------------
+        // 2) No Google OAuth record found → maybe email exists
+        // ---------------------------------------------------------
+        User user = userRepository.findByEmail(email).orElse(null);
+
+        if (user != null) {
+
+            // SECURITY CHECK → Prevent linking different Google IDs
+            oauthAccountRepository.findByUser(user).forEach(acc -> {
+                if (acc.getProvider() == OAuthAccount.AuthProvider.GOOGLE &&
+                        !acc.getProviderUserId().equals(googleId)) {
+                    throw new IllegalStateException(
+                            "Email already linked with another Google account."
+                    );
+                }
+            });
+
+            boolean changed = updateGoogleUserInfoIfNeeded(user, profile);
+
+            if (!user.isVerified()) {
+                user.setVerified(true);
+            }
+
+            if (changed) userRepository.save(user);
+
+        } else {
+            // ---------------------------------------------------------
+            // 3) New Google user → create user
+            // ---------------------------------------------------------
             user = new User();
-            user.setEmail(normalizedEmail);
+            user.setEmail(email);
             user.setFirstName(profile.getGiven_name() != null ? profile.getGiven_name() : "Google");
             user.setLastName(profile.getFamily_name() != null ? profile.getFamily_name() : "User");
             user.setAvatarUrl(profile.getPicture());
-            user.setOauthProvider(User.AuthProvider.GOOGLE);
-            user.setOauthProviderId(profile.getSub());
-            user.setEmailVerified(true);
+            user.setVerified(true);
 
+            // FIX: Prevent validation failure → password MUST NOT be null or empty
             String randomPassword = generateSecureRandomPassword();
             user.setPassword(passwordEncoder.encode(randomPassword));
 
+            // Assign roles normally
             boolean isFirstVerifiedUser = userRepository.countByIsVerified(true) == 0;
             Set<Role.RoleName> roles = roleAssignmentUtil.determineRolesForUser(isFirstVerifiedUser);
             roleAssignmentUtil.assignRoles(user, roles);
-        } else {
-            user.setFirstName(profile.getGiven_name() != null ? profile.getGiven_name() : user.getFirstName());
-            user.setLastName(profile.getFamily_name() != null ? profile.getFamily_name() : user.getLastName());
-            user.setAvatarUrl(profile.getPicture() != null ? profile.getPicture() : user.getAvatarUrl());
-            user.setEmailVerified(true);
+
+            user = userRepository.save(user);
         }
 
-        return userRepository.save(user);
+        // ---------------------------------------------------------
+        // 4) Create OAuthAccount entry for Google
+        // ---------------------------------------------------------
+        OAuthAccount oauthAccount = new OAuthAccount();
+        oauthAccount.setUser(user);
+        oauthAccount.setProvider(OAuthAccount.AuthProvider.GOOGLE);
+        oauthAccount.setProviderUserId(googleId);
+
+        if (rawAccessToken != null && !rawAccessToken.isBlank()) {
+            oauthAccount.setAccessToken(rawAccessToken);
+            oauthAccount.setTokenExpiry(Instant.now().plusSeconds(3600));
+        }
+
+        oauthAccountRepository.save(oauthAccount);
+        user.getOauthAccounts().add(oauthAccount);
+        return user;
     }
 
+
+    private boolean updateGoogleUserInfoIfNeeded(User user, GoogleUserDTO profile) {
+        boolean changed = false;
+
+        if (profile.getGiven_name() != null && !profile.getGiven_name().equals(user.getFirstName())) {
+            user.setFirstName(profile.getGiven_name());
+            changed = true;
+        }
+
+        if (profile.getFamily_name() != null && !profile.getFamily_name().equals(user.getLastName())) {
+            user.setLastName(profile.getFamily_name());
+            changed = true;
+        }
+
+        if (profile.getPicture() != null && !profile.getPicture().equals(user.getAvatarUrl())) {
+            user.setAvatarUrl(profile.getPicture());
+            changed = true;
+        }
+
+        //  FIX: Google login MUST have non-empty password or validation fails
+        if (user.getPassword() == null || user.getPassword().isBlank()) {
+            String randomPassword = generateSecureRandomPassword();
+            user.setPassword(passwordEncoder.encode(randomPassword));
+            changed = true;
+        }
+
+        return changed;
+    }
+
+
     private String generateSecureRandomPassword() {
-        return Base64.getEncoder().encodeToString(UUID.randomUUID().toString().getBytes());
+        SecureRandom random = new SecureRandom();
+        byte[] bytes = new byte[32];
+        random.nextBytes(bytes);
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
     }
 
 

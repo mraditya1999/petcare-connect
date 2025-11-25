@@ -29,11 +29,10 @@ public class Specialist extends User {
     public Specialist() {
     }
 
-    public Specialist(Long userId, String firstName, String lastName, String email, Address address, String avatarUrl, String avatarPublicId, String mobileNumber, String password, String verificationToken, String resetToken, Set<Role> roles, boolean isVerified, Date createdAt, Date updatedAt, AuthProvider oauthProvider, String oauthProviderId, boolean emailVerified, List<Pet> pets) {
-        super(userId, firstName, lastName, email, address, avatarUrl, avatarPublicId, mobileNumber, password, verificationToken, resetToken, roles, isVerified, createdAt, updatedAt,oauthProvider,oauthProviderId,emailVerified, pets);
+    public Specialist(Long userId, String firstName, String lastName, String email, Address address, String avatarUrl, String avatarPublicId, String mobileNumber, String password, String verificationToken, String resetToken, Set<Role> roles, boolean isVerified, Date createdAt, Date updatedAt, List<Pet> pets) {
+        super(userId, firstName, lastName, email, address, avatarUrl, avatarPublicId, mobileNumber, password, verificationToken, resetToken, roles, isVerified, createdAt, updatedAt, pets);
         this.about = about;
         this.speciality = speciality;
-        this.appointments = appointments;
     }
 
     public Long getSpecialistId() {

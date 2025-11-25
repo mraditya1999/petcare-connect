@@ -8,6 +8,8 @@ import com.petconnect.backend.entity.User;
 import com.petconnect.backend.exceptions.AuthenticationException;
 import com.petconnect.backend.exceptions.ResourceNotFoundException;
 import com.petconnect.backend.exceptions.UserAlreadyExistsException;
+import com.petconnect.backend.entity.OAuthAccount;
+import com.petconnect.backend.repositories.OAuthAccountRepository;
 import com.petconnect.backend.repositories.UserRepository;
 import com.petconnect.backend.services.AuthService;
 import com.petconnect.backend.services.EmailService;
@@ -33,22 +35,24 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/auth")
 public class AuthController {
+    private static final Logger logger = LoggerFactory.getLogger(AuthController.class);
 
     private final AuthService authService;
     private final UserService userService;
     private final EmailService emailService;
     private final UserMapper userMapper;
     private final UserRepository userRepository;
+    private final OAuthAccountRepository oauthAccountRepository;
 
-    private static final Logger logger = LoggerFactory.getLogger(AuthController.class);
 
     @Autowired
-    public AuthController(AuthService authService, UserService userService, EmailService emailService, UserMapper userMapper, UserRepository userRepository) {
+    public AuthController(AuthService authService, UserService userService, EmailService emailService, UserMapper userMapper, UserRepository userRepository, OAuthAccountRepository oauthAccountRepository) {
         this.authService = authService;
         this.userService = userService;
         this.emailService = emailService;
         this.userMapper = userMapper;
         this.userRepository = userRepository;
+        this.oauthAccountRepository = oauthAccountRepository;
     }
 
     /**
@@ -63,7 +67,7 @@ public class AuthController {
             User user = userMapper.toEntity(userRequest);
             authService.registerUser(user);
             UserRegistrationResponseDTO response = new UserRegistrationResponseDTO("User registered successfully. Please check your email for the verification link.");
-            return ResponseEntity.status(HttpStatus.CREATED).body(new ApiResponseDTO<>("User registered successfully.",response));
+            return ResponseEntity.status(HttpStatus.CREATED).body(new ApiResponseDTO<>("User registered successfully.", response));
         } catch (UserAlreadyExistsException e) {
             logger.error("User registration failed: ", e);
             return ResponseEntity.status(HttpStatus.CONFLICT).body(new ApiResponseDTO<>(e.getMessage()));
@@ -88,7 +92,21 @@ public class AuthController {
                 User user = authenticatedUser.get();
                 String token = authService.generateJwtToken(user);
                 List<String> roles = user.getRoles().stream().map(Role::getAuthority).collect(Collectors.toList());
-                UserLoginResponseDTO userLoginResponseDTO = new UserLoginResponseDTO(user.getEmail(), roles, token, user.getUserId(),user.getOauthProvider().name());
+
+                String oauthProvider =
+                        user.getOauthAccounts().stream()
+                                .anyMatch(acc -> acc.getProvider() == OAuthAccount.AuthProvider.GOOGLE)
+                                ? OAuthAccount.AuthProvider.GOOGLE.name()
+                                : OAuthAccount.AuthProvider.LOCAL.name();
+
+                UserLoginResponseDTO userLoginResponseDTO = new UserLoginResponseDTO(
+                        user.getEmail(),
+                        roles,
+                        token,
+                        user.getUserId(),
+                        oauthProvider
+                );
+
                 return ResponseEntity.ok(new ApiResponseDTO<>("User logged in successfully.", userLoginResponseDTO));
             } else {
                 logger.warn("Failed login attempt for email: {}", loginRequest.getEmail());
@@ -224,32 +242,54 @@ public class AuthController {
         }
     }
 
-    @PostMapping("/google")
-    public ResponseEntity<ApiResponseDTO<UserLoginResponseDTO>> googleLogin(@RequestBody Map<String, String> body) {
-        String accessToken = body.get("token");
+        @PostMapping("/google")
+        public ResponseEntity<ApiResponseDTO<UserLoginResponseDTO>> googleLogin(@RequestBody Map<String, String> body) {
 
-        try {
-            GoogleUserDTO googleUser = authService.fetchGoogleProfile(accessToken);
-            User user = authService.processGoogleLogin(googleUser);
+            String accessToken = body.get("token");
 
-            String token = authService.generateJwtToken(user);
-            List<String> roles = user.getRoles().stream()
-                    .map(Role::getAuthority)
-                    .collect(Collectors.toList());
+            try {
+                GoogleUserDTO googleUser = authService.fetchGoogleProfile(accessToken);
 
-            UserLoginResponseDTO userLoginResponseDTO =
-                    new UserLoginResponseDTO(user.getEmail(), roles, token, user.getUserId(),user.getOauthProvider().name());
+                // Create / update user
+                User user = authService.processGoogleLogin(googleUser, accessToken);
 
-            return ResponseEntity.ok(new ApiResponseDTO<>("User logged in successfully.", userLoginResponseDTO));
-        } catch (AuthenticationException e) {
-            logger.warn("Google authentication failed: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(new ApiResponseDTO<>("Invalid Google token"));
-        } catch (Exception e) {
-            logger.error("Internal server error during Google login: ", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ApiResponseDTO<>("An error occurred: " + e.getMessage()));
+                // Mark Google users as verified
+                if (!user.isVerified()) {
+                    user.setVerified(true);
+                    userRepository.save(user);
+                }
+
+                String jwtToken = authService.generateJwtToken(user);
+
+                List<String> roles = user.getRoles().stream()
+                        .map(Role::getAuthority)
+                        .collect(Collectors.toList());
+
+                String oauthProvider =
+                        user.getOauthAccounts().stream()
+                                .anyMatch(acc -> acc.getProvider() == OAuthAccount.AuthProvider.GOOGLE)
+                                ? OAuthAccount.AuthProvider.GOOGLE.name()
+                                : OAuthAccount.AuthProvider.LOCAL.name();
+
+                UserLoginResponseDTO response = new UserLoginResponseDTO(
+                        user.getEmail(),
+                        roles,
+                        jwtToken,
+                        user.getUserId(),
+                        oauthProvider
+                );
+
+                return ResponseEntity.ok(new ApiResponseDTO<>("User logged in successfully.", response));
+
+            } catch (AuthenticationException e) {
+                logger.warn("Google login failed: {}", e.getMessage());
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(new ApiResponseDTO<>("Invalid Google token"));
+            } catch (Exception e) {
+                logger.error("Google login error: ", e);
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                        .body(new ApiResponseDTO<>("An error occurred: " + e.getMessage()));
+            }
         }
-    }
 
 }
