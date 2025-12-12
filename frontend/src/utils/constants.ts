@@ -1,0 +1,15 @@
+export enum ROUTES {
+  LOGIN = "/login",
+  REGISTER = "/register",
+  VERIFY_EMAIL = "/user/verify-email",
+  FORGET_PASSWORD = "/forget-password",
+  RESET_PASSWORD = "/user/reset-password",
+  HOME = "/",
+  ABOUT = "/about",
+  SERVICE = "/service",
+  FORUM = "/forum",
+  PROFILE = "/profile",
+  GITHUB_CALLBACK = "/oauth/github/callback",
+  SEND_OTP = "/send-otp",
+  VERIFY_OTP = "/verify-otp",
+}
