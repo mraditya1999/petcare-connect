@@ -38,4 +38,5 @@ COPY --from=build /app/target/backend-0.0.1-SNAPSHOT.jar app.jar
 EXPOSE 8080
 
 # Run the JAR file, waiting for MySQL first
-ENTRYPOINT ["./wait-for-it.sh", "mysql", "3306", "java", "-jar", "app.jar"]
+# ENTRYPOINT ["./wait-for-it.sh", "mysql", "3306", "java", "-jar", "app.jar"]
+ENTRYPOINT ["java", "-jar", "app.jar"]
