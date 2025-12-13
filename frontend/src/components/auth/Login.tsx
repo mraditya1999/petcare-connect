@@ -26,7 +26,7 @@ const Login = () => {
   const [rememberMe, setRememberMe] = useState(false);
   const [loginFormCredentials, setLoginFormCredentials] =
     useState<ILoginCredentials>({
-      email: import.meta.env.VITE_USERNAME || "",
+      email:  "",
       password: import.meta.env.VITE_PASSWORD || "",
     });
 
