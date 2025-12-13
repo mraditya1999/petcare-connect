@@ -8,8 +8,10 @@ services:
     env_file:
       - .env
     depends_on:
-      - mysql
-      - mongodb
+      mysql:
+        condition: service_healthy
+      mongodb:
+        condition: service_started
 
   frontend:
     build:
@@ -22,21 +24,31 @@ services:
     image: mysql:5.7
     environment:
       MYSQL_DATABASE: ${DB_NAME}
-      MYSQL_USER: ${DB_USERNAME}
-      MYSQL_PASSWORD: ${DB_PASSWORD}
       MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
     ports:
       - '3306:3306'
     healthcheck:
-      test: ['CMD', 'mysqladmin', 'ping', '-h', 'localhost']
+      test:
+        [
+          'CMD',
+          'mysqladmin',
+          'ping',
+          '-h',
+          'localhost',
+          '-uroot',
+          '-p${DB_PASSWORD}',
+        ]
       interval: 30s
       timeout: 10s
       retries: 5
 
   mongodb:
     image: mongo:latest
+    container_name: petcare-connect-mongodb-1
+    restart: always
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_USERNAME}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
+      MONGO_INITDB_DATABASE: petcare-connect-db
     ports:
       - '27017:27017'

@@ -18,6 +18,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -39,10 +40,10 @@ public class AuthController {
     private final EmailService emailService;
     private final UserRepository userRepository;
     private final com.petconnect.backend.services.RedisStorageService redisStorageService;
-    @org.springframework.beans.factory.annotation.Value("${github.client.id}")
+    @Value("${github.client.id}")
     private String githubClientIdProp;
 
-    @org.springframework.beans.factory.annotation.Value("${github.redirect.uri}")
+    @Value("${github.redirect.uri}")
     private String githubRedirectUriProp;
 
     @Autowired
