@@ -48,7 +48,7 @@ public class ForumController {
         Sort sort = Sort.by(sortDir.equalsIgnoreCase("asc") ? Sort.Direction.ASC : Sort.Direction.DESC, sortBy);
         PageRequest pageRequest = PageRequest.of(page, size, sort);
         Page<ForumDTO> forums = forumService.getAllForums(pageRequest);
-
+        ForumPageDTO response = new ForumPageDTO(forums);
         return ResponseEntity.ok(forums);
     }
 
