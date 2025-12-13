@@ -4,8 +4,8 @@ import com.petconnect.backend.entity.Role;
 import com.petconnect.backend.entity.User;
 import com.petconnect.backend.exceptions.ResourceNotFoundException;
 import com.petconnect.backend.repositories.UserRepository;
+import com.petconnect.backend.utils.CommonUtils;
 import com.petconnect.backend.utils.RoleAssignmentUtil;
-import com.petconnect.backend.utils.TempUserStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,7 +14,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.Set;
-import java.util.UUID;
 
 @Service
 public class VerificationService {
@@ -24,97 +23,87 @@ public class VerificationService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
-    private final TempUserStore tempUserStore;
     private final RoleAssignmentUtil roleAssignmentUtil;
+    private final RedisStorageService redisStorageService;
+    private final CommonUtils commonUtils;
 
     @Autowired
-    public VerificationService(UserRepository userRepository, @Lazy PasswordEncoder passwordEncoder, EmailService emailService, TempUserStore tempUserStore, RoleAssignmentUtil roleAssignmentUtil) {
+    public VerificationService(UserRepository userRepository,
+                               @Lazy PasswordEncoder passwordEncoder,
+                               EmailService emailService,
+                               RoleAssignmentUtil roleAssignmentUtil,
+                               RedisStorageService redisStorageService, CommonUtils commonUtils) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.emailService = emailService;
-        this.tempUserStore = tempUserStore;
         this.roleAssignmentUtil = roleAssignmentUtil;
+        this.redisStorageService = redisStorageService;
+        this.commonUtils = commonUtils;
     }
 
     /**
      * Verifies a user using the provided verification token.
-     *
-     * @param verificationToken the verification token
-     * @return true if the user is successfully verified, false otherwise
      */
     @Transactional
     public boolean verifyUser(String verificationToken) {
-        User tempUser = tempUserStore.getTemporaryUser(verificationToken);
-        if (tempUser != null) {
-            logger.info("Verifying user with token: {}", verificationToken);
-
-            tempUser.setVerified(true);
-            tempUser.setVerificationToken(null);
-
-            // Fetch existing roles
-            Set<Role> currentRoles = tempUser.getRoles();
-
-            // Determine and assign roles based on user type
-            if (currentRoles.stream().anyMatch(role -> role.getRoleName() == Role.RoleName.SPECIALIST)) {
-                // If the user is a specialist, retain their roles
-                roleAssignmentUtil.assignRoles(tempUser, Set.of(Role.RoleName.USER, Role.RoleName.SPECIALIST));
-            } else {
-                // Assign roles to regular user
-                boolean isFirstVerifiedUser = userRepository.countByIsVerified(true) == 0;
-                Set<Role.RoleName> roles = roleAssignmentUtil.determineRolesForUser(isFirstVerifiedUser);
-                roleAssignmentUtil.assignRoles(tempUser, roles);
-            }
-
-            userRepository.save(tempUser);
-            logger.info("User verified and saved with token: {}", verificationToken);
-            return true;
-        } else {
-            logger.warn("Verification token invalid or expired: {}", verificationToken);
+        String email = redisStorageService.getVerificationEmail(verificationToken);
+        if (email == null) {
+            logger.warn("Invalid or expired verification token.");
             throw new ResourceNotFoundException("Invalid or expired verification token.");
         }
+
+        User user = userRepository.findByEmail(email).orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        user.setVerified(true);
+
+        boolean isFirstVerifiedUser = userRepository.countByIsVerified(true) == 0;
+        Set<Role.RoleName> roles;
+        if (user.getRoles().stream().anyMatch(role -> role.getRoleName() == Role.RoleName.SPECIALIST)) {
+            roles = Set.of(Role.RoleName.USER, Role.RoleName.SPECIALIST);
+        } else {
+            roles = roleAssignmentUtil.determineRolesForUser(isFirstVerifiedUser);
+        }
+        roleAssignmentUtil.assignRoles(user, roles);
+
+        userRepository.save(user);
+        redisStorageService.deleteVerificationToken(verificationToken);
+        logger.info("User verified successfully: {}", user.getEmail());
+        return true;
     }
 
     /**
      * Resets the user's password using the provided reset token and new password.
-     *
-     * @param resetToken  the reset token
-     * @param newPassword the new password
-     * @return true if the password is successfully reset, false otherwise
      */
     @Transactional
     public boolean resetPassword(String resetToken, String newPassword) {
-        logger.info("Reset token received: {}", resetToken);
-
-        User user = userRepository.findByResetToken(resetToken).orElse(null);
-
-        if (user == null) {
-            logger.warn("Invalid reset token: {}", resetToken);
-            throw new ResourceNotFoundException("Invalid reset token.");
+        String email = redisStorageService.getResetEmail(resetToken);
+        if (email == null) {
+            logger.warn("Reset token invalid or expired");
+            throw new ResourceNotFoundException("Invalid or expired reset token.");
         }
 
-        logger.info("User found for reset token: {}", user.getEmail());
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         if (passwordEncoder.matches(newPassword, user.getPassword())) {
-            logger.warn("New password cannot be the same as the old password.");
+            logger.warn("New password cannot be the same as the old password for user {}", user.getEmail());
             return false;
         }
 
         user.setPassword(passwordEncoder.encode(newPassword));
-        user.setResetToken(null); // Nullify only after successful reset
         userRepository.save(user);
-
+        redisStorageService.deleteResetToken(resetToken); // single-use
         logger.info("Password reset successful for user: {}", user.getEmail());
         return true;
     }
 
     /**
      * Sends a verification email to the user.
-     *
-     * @param user the user to send the email to
      */
     public void sendVerificationEmail(User user) {
-        user.setVerificationToken(UUID.randomUUID().toString());
-        tempUserStore.saveTemporaryUser(user.getVerificationToken(), user);
+        String token = user.getVerificationToken();
+        redisStorageService.saveVerificationToken(token, user.getEmail(), java.time.Duration.ofHours(24));
         emailService.sendVerificationEmail(user);
     }
+
 }

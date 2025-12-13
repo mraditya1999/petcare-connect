@@ -82,9 +82,6 @@ public class PetController {
         } catch (IOException e) {
             logger.error("IO Error: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponseDTO<>("Error creating pet", null));
-        } catch (Exception e) {
-            logger.error("Unexpected error: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponseDTO<>("Error creating pet", null));
         }
     }
 
@@ -96,13 +93,8 @@ public class PetController {
      */
     @GetMapping
     public ResponseEntity<ApiResponseDTO<List<PetResponseDTO>>> getAllPetsForUser(@AuthenticationPrincipal UserDetails userDetails) {
-        try {
-            List<PetResponseDTO> pets = petService.getAllPetsForUser(userDetails.getUsername());
-            return ResponseEntity.ok(new ApiResponseDTO<>("Fetched all pets", pets));
-        } catch (Exception e) {
-            logger.error("Error fetching pets for user: {}", userDetails.getUsername(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponseDTO<>("Error fetching pets", null));
-        }
+        List<PetResponseDTO> pets = petService.getAllPetsForUser(userDetails.getUsername());
+        return ResponseEntity.ok(new ApiResponseDTO<>("Fetched all pets", pets));
     }
 
     /**
@@ -123,9 +115,6 @@ public class PetController {
         } catch (ResourceNotFoundException e) {
             logger.error("Pet not found with ID: {} for user: {}", id, userDetails.getUsername(), e);
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiResponseDTO<>(e.getMessage(), null));
-        } catch (Exception e) {
-            logger.error("Error fetching pet with ID: {} for user: {}", id, userDetails.getUsername(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponseDTO<>("Error fetching pet", null));
         }
     }
 
@@ -143,7 +132,7 @@ public class PetController {
             @PathVariable Long id,
             @AuthenticationPrincipal UserDetails userDetails,
             @Valid @ModelAttribute PetRequestDTO petRequestDTO,
-            @RequestParam(value = "avatarFile", required = false) List<MultipartFile> avatarFiles){
+            @RequestParam(value = "avatarFile", required = false) List<MultipartFile> avatarFiles) throws IOException {
 
         logger.info("Received request to update pet for user: {}", userDetails.getUsername());
 
@@ -165,9 +154,6 @@ public class PetController {
         } catch (ResourceNotFoundException e) {
             logger.error("Pet not found with ID: {} for user: {}", id, userDetails.getUsername(), e);
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiResponseDTO<>(e.getMessage(), null));
-        } catch (Exception e) {
-            logger.error("Unexpected error: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponseDTO<>("Error updating pet", null));
         }
     }
 
@@ -182,19 +168,8 @@ public class PetController {
     public ResponseEntity<ApiResponseDTO<String>> deletePetForUser(@PathVariable Long id, @AuthenticationPrincipal UserDetails userDetails) {
         logger.info("Received request to delete pet with ID: {} for user: {}", id, userDetails.getUsername());
 
-        try {
-            petService.deletePetForUser(id, userDetails);
-            logger.info("Pet deleted with ID: {}", id);
-            return ResponseEntity.ok(new ApiResponseDTO<>("Pet deleted successfully"));
-        } catch (UnauthorizedAccessException e) {
-            logger.error("Unauthorized access to pet with ID: {} for user: {}", id, userDetails.getUsername(), e);
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new ApiResponseDTO<>(e.getMessage(), null));
-        } catch (ResourceNotFoundException e) {
-            logger.error("Pet not found with ID: {} for user: {}", id, userDetails.getUsername(), e);
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiResponseDTO<>(e.getMessage(), null));
-        } catch (Exception e) {
-            logger.error("Error deleting pet with ID: {} for user: {}", id, userDetails.getUsername(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponseDTO<>("Error deleting pet", null));
-        }
+        petService.deletePetForUser(id, userDetails);
+        logger.info("Pet deleted with ID: {}", id);
+        return ResponseEntity.ok(new ApiResponseDTO<>("Pet deleted successfully"));
     }
 }

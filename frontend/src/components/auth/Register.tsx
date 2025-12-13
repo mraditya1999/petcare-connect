@@ -1,14 +1,12 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "@/app/hooks";
-import { googleLoginUser, registerUser } from "@/features/auth/authThunk";
+import { registerUser } from "@/features/auth/authThunk";
 import { IRegisterCredentials } from "@/types/auth-types";
 import { registerFormSchema } from "@/utils/validations";
 import { handleError } from "@/utils/helpers";
 import { ROUTES } from "@/utils/constants";
 import GenericAlert from "@/components/shared/GenericAlert";
-import GoogleSvg from "@/assets/images/GoogleSvg";
-import { useGoogleLogin } from "@react-oauth/google";
 // ui components
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -24,10 +22,10 @@ const Register = () => {
 
   const [registerFormCredentials, setRegisterFormCredentials] =
     useState<IRegisterCredentials>({
-      firstName: "Honey",
-      lastName: "Singh",
-      email: "dbadaditya@gmail.com",
-      password: "@mrAditya1999",
+      firstName: import.meta.env.VITE_FIRSTNAME || "",
+      lastName: import.meta.env.VITE_LASTNAME || "",
+      email: import.meta.env.VITE_USERNAME || "",
+      password: import.meta.env.VITE_PASSWORD || "",
     });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -60,20 +58,6 @@ const Register = () => {
       });
     }
   };
-
-  const googleLogin = useGoogleLogin({
-    onSuccess: async (tokenResponse) => {
-      dispatch(
-        googleLoginUser({ token: tokenResponse.access_token, navigate }),
-      );
-    },
-    onError: () => {
-      ShowToast({
-        description: "Google login failed. Try again!",
-        type: "error",
-      });
-    },
-  });
 
   return (
     <>
@@ -150,17 +134,6 @@ const Register = () => {
             <div className="flex flex-col gap-3">
               <Button type="submit" className="px-4 py-2" disabled={loading}>
                 {loading ? <LoadingSpinner /> : "Create account"}
-              </Button>
-
-              <Button
-                variant={"secondary"}
-                type="button"
-                className="mb-3 px-4 py-2"
-                onClick={() => googleLogin()}
-              >
-                <span className="flex items-center justify-center gap-2">
-                  <GoogleSvg /> <span>Login with Google</span>
-                </span>
               </Button>
             </div>
 

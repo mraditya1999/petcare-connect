@@ -28,15 +28,15 @@ public class Appointment {
     private Date updatedAt;
 
     @ManyToOne
-    @JoinColumn(name = "petId", nullable = false)
+    @JoinColumn(name = "pet_id", nullable = false)
     private Pet pet;
 
     @ManyToOne
-    @JoinColumn(name = "specialistId", nullable = false)
+    @JoinColumn(name = "specialist_id", nullable = false)
     private Specialist specialist;
 
     @ManyToOne
-    @JoinColumn(name = "petOwnerId", referencedColumnName = "userId", nullable = false)
+    @JoinColumn(name = "user_id", referencedColumnName = "userId", nullable = false)
     @JsonBackReference
     private User petOwner;
 
@@ -48,7 +48,7 @@ public class Appointment {
     private String notes;
 
     @Column(nullable = false)
-    private int duration; // Duration in minutes
+    private Integer duration; // Duration in minutes
 
     // New fields for feedback and rating
     @Column(length = 1000)
@@ -144,10 +144,10 @@ public class Appointment {
     }
 
     public int getDuration() {
-        return duration;
+        return duration != null ? duration : 0;
     }
 
-    public void setDuration(int duration) {
+    public void setDuration(Integer duration) {
         this.duration = duration;
     }
 
@@ -159,11 +159,11 @@ public class Appointment {
         this.feedback = feedback;
     }
 
-    public int getRating() {
+    public Integer getRating() {
         return rating;
     }
 
-    public void setRating(int rating) {
+    public void setRating(Integer rating) {
         this.rating = rating;
     }
 

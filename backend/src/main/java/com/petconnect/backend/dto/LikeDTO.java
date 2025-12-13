@@ -8,7 +8,6 @@ public class LikeDTO {
     private String userId;
     private Date createdAt;
 
-    // Getters and Setters
     public String getLikeId() {
         return likeId;
     }

@@ -1,8 +1,5 @@
 package com.petconnect.backend.dto;
 
-import jakarta.validation.constraints.NotNull;
-import org.springframework.data.mongodb.core.index.Indexed;
-
 import java.util.Date;
 import java.util.List;
 

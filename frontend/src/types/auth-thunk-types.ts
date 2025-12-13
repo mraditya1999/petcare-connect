@@ -18,7 +18,6 @@ export interface RegisterUserParams {
 
 export interface VerifyEmailParams {
   token: string;
-  email: string;
   navigate: NavigateFunction;
 }
 
@@ -54,4 +53,48 @@ export interface ForgetPasswordResponse {
 
 export interface ResetPasswordResponse {
   message: string;
+}
+
+// ======================================================
+// ⬇️ OTP LOGIN TYPES (🔔 FIXED & PROPERLY NAMED)
+// ======================================================
+
+// SEND OTP
+export interface SendOtpParams {
+  phone: string;
+}
+
+export interface SendOtpResponse {
+  message: string;
+  success: boolean;
+}
+
+// VERIFY OTP
+export interface VerifyOtpParams {
+  phone: string;
+  otp: string;
+  navigate: NavigateFunction;
+}
+
+export interface UserLoginResponseDTO {
+  message: string;
+  token: string;
+  refreshToken?: string;
+  data: IUser["data"];
+}
+
+export interface VerifyOtpResponse {
+  message: string;
+  data: UserLoginResponseDTO;
+}
+
+export interface IOtpLoginResponse {
+  userId: string;
+  email: string;
+  roles: Array<"USER" | "ADMIN" | "SPECIALIST">;
+  token: string;
+  oauthProvider: "GOOGLE" | "LOCAL" | "GITHUB" | "MOBILE";
+  isNewUser: boolean;
+  isProfileComplete: boolean;
+  tempToken?: string | null;
 }

@@ -17,7 +17,9 @@ const LoginAndSecurity: React.FC = () => {
   const dispatch = useAppDispatch();
   const user = useAppSelector((state) => state.auth.user);
 
-  const isGoogleUser = user?.data.oauthProvider === "GOOGLE";
+  const isOAuthUser = ["GOOGLE", "GITHUB", "MOBILE"].includes(
+    user?.data.oauthProvider ?? "",
+  );
 
   const {
     register,
@@ -25,12 +27,11 @@ const LoginAndSecurity: React.FC = () => {
     formState: { errors },
   } = useForm<IUpdatePasswordRequest>({
     resolver: zodResolver(
-      isGoogleUser ? updatePasswordSchemaGoogle : updatePasswordSchema,
+      isOAuthUser ? updatePasswordSchemaGoogle : updatePasswordSchema,
     ),
   });
 
-  // Build fields dynamically based on provider
-  const fields = isGoogleUser
+  const fields = isOAuthUser
     ? ([
         { label: "New Password", name: "newPassword" },
         { label: "Re-enter New Password", name: "confirmPassword" },
@@ -53,7 +54,7 @@ const LoginAndSecurity: React.FC = () => {
     <Card className="mx-auto mt-6 h-full">
       <CardHeader>
         <CardTitle className="text-lg">
-          {isGoogleUser ? "Set Password" : "Change Password"}
+          {isOAuthUser ? "Set Password" : "Change Password"}
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -73,7 +74,7 @@ const LoginAndSecurity: React.FC = () => {
             </div>
           ))}
           <Button type="submit" className="w-full">
-            {isGoogleUser ? "Set Password" : "Change Password"}
+            {isOAuthUser ? "Set Password" : "Change Password"}
           </Button>
         </form>
       </CardContent>

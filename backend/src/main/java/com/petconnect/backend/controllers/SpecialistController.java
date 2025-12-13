@@ -93,9 +93,6 @@ public class SpecialistController {
         } catch (IOException e) {
             logger.error("IO Error: {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponseDTO<>("Error updating specialist profile", null));
-        } catch (Exception e) {
-            logger.error("Unexpected error: {}", e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponseDTO<>("Error updating specialist profile", null));
         }
     }
 
@@ -125,9 +122,6 @@ public class SpecialistController {
         } catch (IllegalArgumentException e) {
             logger.error("Invalid sort direction: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponseDTO<>("Invalid sort direction", null));
-        } catch (Exception e) {
-            logger.error("Error fetching specialists: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponseDTO<>("Error fetching specialists", null));
         }
     }
 
@@ -146,9 +140,6 @@ public class SpecialistController {
         } catch (ResourceNotFoundException e) {
             logger.error("Specialist not found with ID: {}", id, e);
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiResponseDTO<>("Specialist not found", null));
-        } catch (Exception e) {
-            logger.error("Error fetching specialist with ID {}: {}", id, e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponseDTO<>("Error fetching specialist", null));
         }
     }
 }

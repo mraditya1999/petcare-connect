@@ -17,16 +17,16 @@ public class Role implements GrantedAuthority {
     private Integer roleId;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, unique = true)
+    @Column(name = "role_name", nullable = false, unique = true, length = 50)
     private RoleName roleName;
-
-    public enum RoleName {
-        ADMIN, SPECIALIST, USER
-    }
 
     @ManyToMany(mappedBy = "roles")
     @JsonBackReference
     private Set<User> users = new HashSet<>();
+
+    public enum RoleName {
+        ADMIN, SPECIALIST, USER
+    }
 
     public Role() {
     }

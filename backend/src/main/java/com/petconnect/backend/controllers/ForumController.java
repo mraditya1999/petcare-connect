@@ -1,7 +1,6 @@
 package com.petconnect.backend.controllers;
 
 import com.petconnect.backend.dto.*;
-import com.petconnect.backend.exceptions.ResourceNotFoundException;
 import com.petconnect.backend.services.ForumService;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
@@ -165,24 +164,10 @@ public class ForumController {
      */
     @PutMapping("/{forumId}")
     public ResponseEntity<ApiResponseDTO<ForumDTO>> updateForum(@AuthenticationPrincipal UserDetails userDetails, @PathVariable String forumId,@Valid @RequestBody UpdateForumDTO forumDTO) {
-        try {
-            String username = userDetails.getUsername();
-            ForumDTO updatedForumDTO = forumService.updateForum(username,forumId , forumDTO);
-            ApiResponseDTO<ForumDTO> apiResponseDTO = new ApiResponseDTO<>("Forum updated successfully", updatedForumDTO);
-            return ResponseEntity.ok(apiResponseDTO);
-        } catch (ResourceNotFoundException e) {
-            logger.error("Error updating forum: {}", e.getMessage());
-            ApiResponseDTO<ForumDTO> response = new ApiResponseDTO<>(e.getMessage(), null);
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
-        } catch (IllegalArgumentException e) {
-            logger.error("Error updating forum: {}", e.getMessage());
-            ApiResponseDTO<ForumDTO> response = new ApiResponseDTO<>(e.getMessage(), null);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
-        } catch (Exception e) {
-            logger.error("Unexpected error updating forum", e);
-            ApiResponseDTO<ForumDTO> errorResponse = new ApiResponseDTO<>("An error occurred: " + e.getMessage(), null);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
-        }
+        String username = userDetails.getUsername();
+        ForumDTO updatedForumDTO = forumService.updateForum(username,forumId , forumDTO);
+        ApiResponseDTO<ForumDTO> apiResponseDTO = new ApiResponseDTO<>("Forum updated successfully", updatedForumDTO);
+        return ResponseEntity.ok(apiResponseDTO);
     }
 
     /**
@@ -194,24 +179,10 @@ public class ForumController {
      */
     @DeleteMapping("/{forumId}")
     public ResponseEntity<ApiResponseDTO<Void>> deleteForum(@AuthenticationPrincipal UserDetails userDetails, @PathVariable String forumId) {
-        try {
-            String username = userDetails.getUsername();
-            forumService.deleteForum(username,forumId);
-            ApiResponseDTO<Void> apiResponseDTO = new ApiResponseDTO<>("Forum deleted successfully", null);
-            return ResponseEntity.ok(apiResponseDTO);
-        } catch (ResourceNotFoundException e) {
-            logger.error("Error deleting forum: {}", e.getMessage());
-            ApiResponseDTO<Void> response = new ApiResponseDTO<>(e.getMessage(), null);
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
-        } catch (IllegalArgumentException e) {
-            logger.error("Error deleting forum: {}", e.getMessage());
-            ApiResponseDTO<Void> response = new ApiResponseDTO<>(e.getMessage(), null);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
-        } catch (Exception e) {
-            logger.error("Unexpected error deleting forum", e);
-            ApiResponseDTO<Void> errorResponse = new ApiResponseDTO<>("An error occurred: " + e.getMessage(), null);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
-        }
+        String username = userDetails.getUsername();
+        forumService.deleteForum(username,forumId);
+        ApiResponseDTO<Void> apiResponseDTO = new ApiResponseDTO<>("Forum deleted successfully", null);
+        return ResponseEntity.ok(apiResponseDTO);
     }
 
     /**

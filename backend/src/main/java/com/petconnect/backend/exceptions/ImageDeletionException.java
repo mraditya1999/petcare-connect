@@ -1,6 +1,6 @@
 package com.petconnect.backend.exceptions;
 
-public class ImageDeletionException extends RuntimeException {
+public class ImageDeletionException extends ApiException {
 
     public ImageDeletionException(String message) {
         super(message);

@@ -1,121 +1,63 @@
-# Frontend Project Setup
+# 🐾 PetCareConnect (Pet Forum Application)
 
-## Table of Contents
+[![PetCareConnect Screenshot 1](./design/petcareconnect-01-home.jpeg)](YOUR_DEPLOYED_LINK)
 
-- [Prerequisites](#prerequisites)
-- [Installation](#installation)
-- [Development](#development)
-- [Build](#build)
-- [Docker](#docker)
-- [Contributing](#contributing)
-- [License](#license)
+[![PetCareConnect Screenshot 2](./design/petcareconnect-02-about.jpeg)](YOUR_DEPLOYED_LINK)
 
-## Prerequisites
+[![PetCareConnect Screenshot 3](./design/petcareconnect-03-forum.jpeg)](YOUR_DEPLOYED_LINK)
 
-- Node.js (>=14.x)
-- npm (>=6.x)
-- Docker (if planning to use Docker for containerization)
+[![PetCareConnect Screenshot 5](./design/petcareconnect-05-authentication.jpeg)](YOUR_DEPLOYED_LINK)
 
-## Installation
+This project, **PetCareConnect**, is a modern forum application where pet owners connect, share thoughts, suggestions, and advice regarding their pets. It is built with a scalable **Microservices** architecture.
 
-First, clone the repository and navigate to the project directory:
+The frontend uses **React**, **TypeScript**, **Tailwind CSS**, and **shadcn/ui**. The backend utilizes **Spring Boot**, **Spring Security**, with **MySQL** (for user data), **MongoDB** (for posts/comments), and **Redis** (for caching). The future scope includes an appointment system for pets.
 
-# Frontend Project Setup
+## Features
 
-## Table of Contents
+- **Forum Posting**: Users can create, view, and comment on discussion posts.
+- **Secure Auth**: Robust security implemented using **Spring Security** and JWTs.
+- **Microservices**: Decoupled architecture for high availability and independent scaling.
+- **Search & Filter**: Allows users to find relevant topics by keywords or categories.
 
-- [Prerequisites](#prerequisites)
-- [Installation](#installation)
-- [Development](#development)
-- [Build](#build)
-- [Docker](#docker)
-- [Contributing](#contributing)
-- [License](#license)
+## Technologies Used
 
-## Prerequisites
+- **React, TypeScript**: Frontend libraries for building user interfaces with type safety.
+- **Tailwind CSS & shadcn/ui**: Used for highly customizable and accessible styling.
+- **Redux**: State Management for global application state.
+- **Spring Boot & Microservices**: Framework for building scalable, independent backend services.
+- **Spring Security**: Provides authentication and authorization across services.
+- **MySQL & MongoDB**: Dual database strategy for relational data (MySQL) and flexible content (MongoDB).
+- **Redis**: In-memory data store for caching and session management.
 
-- Node.js (>=14.x)
-- npm (>=6.x)
-- Docker (if planning to use Docker for containerization)
+## Getting Started
 
-## Installation
+These instructions will get you a copy of the project up and running on your local machine for development and testing purposes.
 
-First, clone the repository and navigate to the project directory:
+## How to Run Locally
 
-\`\`\`bash
-git clone https://github.com/yourusername/yourproject.git
-cd yourproject
-\`\`\`
+1.  Clone the repository to your local machine.
+    ```bash
+    git clone [YOUR_REPOSITORY_URL]
+    ```
+2.  Start the infrastructure services (MySQL, MongoDB, Redis) using Docker Compose.
+    ```bash
+    docker-compose up -d
+    ```
+3.  Navigate to each **Spring Boot Microservice** directory and run them.
+    ```bash
+    # Example for one service
+    cd user-service
+    mvn spring-boot:run
+    ```
+4.  Navigate to the **Frontend** directory.
+5.  Install the required dependencies with `npm install`.
+6.  Start the development server with `npm run dev` (or `npm start`).
+7.  Open [http://localhost:5173](http://localhost:5173) to view the app in your browser.
 
-Next, install the dependencies:
+## Author
 
-\`\`\`bash
-npm install
-\`\`\`
-
-## Development
-
-To start the development server, run:
-
-\`\`\`bash
-npm start
-\`\`\`
-
-This will run the app in development mode. Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
-
-## Build
-
-To create a production build of the app, run:
-
-\`\`\`bash
-npm run build
-\`\`\`
-
-The build will be located in the `build` directory.
-
-## Docker
-
-You can also use Docker to containerize your application.
-
-### Build Docker Image
-
-To build the Docker image, use the following command:
-
-\`\`\`bash
-docker build -t yourproject:latest .
-\`\`\`
-
-### Run Docker Container
-
-To run the Docker container, use the following command:
-
-\`\`\`bash
-docker run -p 3000:3000 yourproject:latest
-\`\`\`
-
-### Docker Compose
-
-Alternatively, you can use Docker Compose. Create a `docker-compose.yml` file in the root directory of your project:
-
-\`\`\`yaml
-version: '3'
-services:
-frontend:
-build: .
-ports: - "3000:3000"
-environment: - NODE_ENV=development
-\`\`\`
-
-To start the services defined in your `docker-compose.yml`, run:
-
-\`\`\`bash
-docker-compose up
-\`\`\`
-
-## Contributing
-
-We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for more details.
-
-## License
-
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for more details.
+- Portfolio - [@mraditya1999](https://adityayadav-dev.netlify.app)
+- Twitter - [@mraditya1999](https://twitter.com/mraditya1999)
+- Linkedin - [@mraditya1999](https://www.linkedin.com/in/mraditya1999/)
+- Medium - [@mraditya1999](https://medium.com/@mraditya1999)
+- Frontend Mentor - [@mraditya1999](https://www.frontendmentor.io/profile/Aditya-oss-creator)

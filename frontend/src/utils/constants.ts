@@ -9,4 +9,7 @@ export enum ROUTES {
   SERVICE = "/service",
   FORUM = "/forum",
   PROFILE = "/profile",
+  GITHUB_CALLBACK = "/oauth/github/callback",
+  SEND_OTP = "/send-otp",
+  VERIFY_OTP = "/verify-otp",
 }

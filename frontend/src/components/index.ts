@@ -5,6 +5,9 @@ export { default as VerifyEmailPage } from "./auth/VerifyEmailPage";
 export { default as ForgetPassword } from "./auth/ForgetPassword";
 export { default as ResetPassword } from "./auth/ResetPassword";
 export { default as ProtectedRoute } from "./auth/ProtectedRoute";
+export { default as GitHubCallback } from "./auth/GitHubCallback";
+export { default as SendOtp } from "./auth/SendOtp";
+export { default as VerifyOtp } from "./auth/VerifyOtp";
 
 // SHARED
 export { default as Header } from "./shared/Header";

@@ -12,9 +12,10 @@ public class PetRequestDTO {
     @Size(min = 1, max = 50, message = "Breed must be between 1 and 50 characters")
     private String breed;
 
+    @NotNull(message = "Age cannot be null")
     @Min(value = 0, message = "Age cannot be less than 0")
     @Max(value = 30, message = "Age cannot exceed 30 years")
-    private int age;
+    private Integer age;
 
     @DecimalMin(value = "0.1", message = "Weight must be at least 0.1 kg")
     @DecimalMax(value = "300", message = "Weight cannot exceed 300 kg")
@@ -34,7 +35,7 @@ public class PetRequestDTO {
     public PetRequestDTO() {
     }
 
-    public PetRequestDTO(String petName, String breed, int age, Double weight, String gender, String species) {
+    public PetRequestDTO(String petName, String breed, Integer age, Double weight, String gender, String species) {
         this.petName = petName;
         this.breed = breed;
         this.age = age;

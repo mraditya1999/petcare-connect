@@ -3,7 +3,6 @@ package com.petconnect.backend.services;
 import com.petconnect.backend.dto.*;
 import com.petconnect.backend.entity.Comment;
 import com.petconnect.backend.entity.Forum;
-import com.petconnect.backend.entity.Like;
 import com.petconnect.backend.entity.User;
 import com.petconnect.backend.exceptions.ResourceNotFoundException;
 import com.petconnect.backend.mappers.CommentMapper;
@@ -22,7 +21,6 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.support.PageableExecutionUtils;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

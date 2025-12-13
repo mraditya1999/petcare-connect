@@ -22,5 +22,9 @@ public interface AppointmentMapper {
     @Mapping(source = "petOwner.firstName", target = "petOwnerName")
     @Mapping(source = "specialist.firstName", target = "specialistName")
     @Mapping(source = "pet.petName", target = "petName")
+    @Mapping(target = "appointmentId", ignore = true)
+    @Mapping(target = "status", ignore = true)
+    @Mapping(target = "feedback", ignore = true)
+    @Mapping(target = "rating", ignore = true)
     AppointmentResponseDTO toAppointmentResponseDTO(Appointment appointment);
 }

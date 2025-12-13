@@ -18,9 +18,8 @@ const VerifyEmailPage = () => {
   useEffect(() => {
     if (!loading && !success) {
       const token = query.get("token");
-      const email = query.get("email");
-      if (token && email) {
-        dispatch(verifyEmail({ token, email, navigate })).unwrap();
+      if (token) {
+        dispatch(verifyEmail({ token, navigate })).unwrap();
       } else {
         navigate(ROUTES.REGISTER);
       }

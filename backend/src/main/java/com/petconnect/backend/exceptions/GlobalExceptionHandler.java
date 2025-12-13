@@ -208,6 +208,16 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * Handles ApiException (base for custom API errors).
+     */
+    @ExceptionHandler(ApiException.class)
+    public ResponseEntity<ApiResponseDTO<Object>> handleApiException(ApiException ex, WebRequest request) {
+        logger.error("ApiException: {}", ex.getMessage(), ex);
+        HttpStatus status = ex.getStatus() != null ? ex.getStatus() : HttpStatus.BAD_REQUEST;
+        return createErrorResponse(ex.getMessage(), null, status);
+    }
+
+    /**
      * Handles global Exception.
      *
      * @param ex the exception
@@ -216,8 +226,9 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponseDTO<Object>> handleGlobalException(Exception ex, WebRequest request) {
-        logger.error("Exception: {}", ex.getMessage(), ex);
-        return createErrorResponse("An error occurred: " + ex.getMessage(), null, HttpStatus.INTERNAL_SERVER_ERROR);
+        logger.error("Unhandled exception: {}", ex.getMessage(), ex);
+        // Return a generic message to avoid leaking internal details to clients
+        return createErrorResponse("An internal server error occurred. Please contact support.", null, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     /**
@@ -228,8 +239,9 @@ public class GlobalExceptionHandler {
      * @return the ResponseEntity containing the exception message
      */
     @ExceptionHandler(DuplicatePetNameException.class)
-    public ResponseEntity<String> handleDuplicatePetNameException(DuplicatePetNameException ex, WebRequest request) {
-        return new ResponseEntity<>(ex.getMessage(), HttpStatus.BAD_REQUEST);
+    public ResponseEntity<ApiResponseDTO<String>> handleDuplicatePetNameException(DuplicatePetNameException ex, WebRequest request) {
+        logger.error("DuplicatePetNameException: {}", ex.getMessage(), ex);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponseDTO<>(ex.getMessage(), null));
     }
 
      /**
@@ -242,6 +254,15 @@ public class GlobalExceptionHandler {
      public ResponseEntity<ApiResponseDTO<String>> handleFileValidationException(FileValidationException ex) {
          return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponseDTO<>(ex.getMessage(), null));
      }
+
+    /**
+     * Handles general ValidationException thrown from custom validators.
+     */
+    @ExceptionHandler(ValidationException.class)
+    public ResponseEntity<ApiResponseDTO<String>> handleValidationException(ValidationException ex) {
+        logger.error("ValidationException: {}", ex.getMessage(), ex);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponseDTO<>(ex.getMessage(), null));
+    }
 
      /**
       * Handles UnauthorizedAccessException and returns a user-friendly error response.
@@ -280,5 +301,21 @@ public class GlobalExceptionHandler {
         errorData.put("message", ex.getMessage());
         ApiResponseDTO<Map<String, String>> response = new ApiResponseDTO<>("Invalid input", errorData);
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+
+    @ExceptionHandler(InvalidOtpException.class)
+    public ResponseEntity<ApiResponseDTO<Map<String, String>>> handleInvalidOtp(InvalidOtpException ex) {
+        Map<String, String> errorData = new HashMap<>();
+        errorData.put("message", ex.getMessage());
+        ApiResponseDTO<Map<String, String>> response = new ApiResponseDTO<>("Invalid OTP", errorData);
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+    }
+
+    @ExceptionHandler(OtpExpiredException.class)
+    public ResponseEntity<ApiResponseDTO<Map<String, String>>> handleOtpExpired(OtpExpiredException ex) {
+        Map<String, String> errorData = new HashMap<>();
+        errorData.put("message", ex.getMessage());
+        ApiResponseDTO<Map<String, String>> response = new ApiResponseDTO<>("OTP expired", errorData);
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
     }
 }

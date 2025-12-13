@@ -9,15 +9,17 @@ public class UserLoginResponseDTO {
     private List<String> roles;
     private String token;
     private String oauthProvider;
+    private boolean isProfileComplete;
 
     public UserLoginResponseDTO() {}
 
-    public UserLoginResponseDTO(String email, List<String> roles, String token, Long userId, String oauthProvider) {
+    public UserLoginResponseDTO(String email, List<String> roles, String token, Long userId, String oauthProvider, boolean isProfileComplete) {
         this.email = email;
         this.roles = roles;
         this.token = token;
         this.userId = userId;
         this.oauthProvider = oauthProvider;
+        this.isProfileComplete = isProfileComplete;
     }
 
     public Long getUserId() {
@@ -58,5 +60,13 @@ public class UserLoginResponseDTO {
 
     public void setOauthProvider(String oauthProvider) {
         this.oauthProvider = oauthProvider;
+    }
+
+    public boolean isProfileComplete() {
+        return isProfileComplete;
+    }
+
+    public void setProfileComplete(boolean profileComplete) {
+        isProfileComplete = profileComplete;
     }
 }

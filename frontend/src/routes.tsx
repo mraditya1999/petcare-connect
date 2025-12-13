@@ -25,6 +25,9 @@ import {
   Register,
   ResetPassword,
   VerifyEmailPage,
+  GitHubCallback,
+  SendOtp,
+  VerifyOtp,
 } from "@/components";
 
 const router = createBrowserRouter(
@@ -65,6 +68,9 @@ const router = createBrowserRouter(
         <Route path={ROUTES.VERIFY_EMAIL} element={<VerifyEmailPage />} />
         <Route path={ROUTES.FORGET_PASSWORD} element={<ForgetPassword />} />
         <Route path={ROUTES.RESET_PASSWORD} element={<ResetPassword />} />
+        <Route path={ROUTES.GITHUB_CALLBACK} element={<GitHubCallback />} />
+        <Route path={ROUTES.SEND_OTP} element={<SendOtp />} />
+        <Route path={ROUTES.VERIFY_OTP} element={<VerifyOtp />} />
       </Route>
     </>,
   ),

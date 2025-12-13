@@ -1,5 +1,6 @@
 package com.petconnect.backend.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -30,7 +31,10 @@ public class Address {
     @Size(max = 255, message = "Locality cannot exceed 255 characters")
     private String locality;
 
-    @OneToOne(mappedBy = "address", cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
+    @OneToOne(mappedBy = "address",
+            cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE},
+            fetch = FetchType.LAZY)
+    @JsonBackReference
     private User user;
 
     @CreationTimestamp

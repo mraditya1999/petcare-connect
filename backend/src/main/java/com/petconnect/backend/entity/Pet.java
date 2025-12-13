@@ -3,16 +3,19 @@ package com.petconnect.backend.entity;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
-import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.util.Date;
 
-//@Builder
 @Entity
+@NamedEntityGraph(
+    name = "Pet.withOwner",
+    attributeNodes = {
+        @NamedAttributeNode("petOwner")
+    }
+)
 public class Pet {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long petId;
@@ -44,7 +47,7 @@ public class Pet {
     @Column(nullable = false)
     private String species;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", referencedColumnName = "userId", nullable = false)
     @JsonBackReference
     private User petOwner;

@@ -85,17 +85,11 @@ public class UploadController {
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponseDTO<Map<String, Object>>> getImage(@RequestParam("public_id") String publicId) {
+    public ResponseEntity<ApiResponseDTO<Map<String, Object>>> getImage(@RequestParam("public_id") String publicId) throws Exception {
         logger.info("Fetching image with publicId: {}", publicId);
-        try {
-            String decodedPublicId = URLDecoder.decode(publicId, StandardCharsets.UTF_8.name());
-            Map<String, Object> getResult = uploadService.getImage(decodedPublicId);
-            ApiResponseDTO<Map<String, Object>> apiResponseDTO = new ApiResponseDTO<>("Image fetched successfully", getResult);
-            return ResponseEntity.status(HttpStatus.OK).body(apiResponseDTO);
-        } catch (Exception e) {
-            logger.error("Error fetching image: {}", e.getMessage());
-            ApiResponseDTO<Map<String, Object>> response = new ApiResponseDTO<>("An error occurred: " + e.getMessage(), null);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
-        }
+        String decodedPublicId = URLDecoder.decode(publicId, StandardCharsets.UTF_8.name());
+        Map<String, Object> getResult = uploadService.getImage(decodedPublicId);
+        ApiResponseDTO<Map<String, Object>> apiResponseDTO = new ApiResponseDTO<>("Image fetched successfully", getResult);
+        return ResponseEntity.status(HttpStatus.OK).body(apiResponseDTO);
     }
 }

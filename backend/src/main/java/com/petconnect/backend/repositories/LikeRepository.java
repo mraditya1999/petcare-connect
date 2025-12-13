@@ -1,7 +1,6 @@
 package com.petconnect.backend.repositories;
 
 import com.petconnect.backend.entity.Like;
-import jakarta.validation.constraints.NotNull;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
 

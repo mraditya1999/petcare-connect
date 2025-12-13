@@ -239,13 +239,8 @@ public class PetService {
      * @return Page of PetResponseDTO containing the pet data
      */
     public Page<PetResponseDTO> getAllPets(Pageable pageable) {
-        try {
-            Page<Pet> petPage = petRepository.findAll(pageable);
-            return petPage.map(petMapper::toDTO);
-        } catch (Exception e) {
-            logger.error("Error fetching pets with pagination and sorting: {}", e.getMessage());
-            throw new RuntimeException("Error fetching pets with pagination and sorting", e);
-        }
+        Page<Pet> petPage = petRepository.findAll(pageable);
+        return petPage.map(petMapper::toDTO);
     }
 
     /**

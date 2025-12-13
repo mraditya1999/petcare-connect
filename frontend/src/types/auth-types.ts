@@ -5,7 +5,8 @@ export interface IUser {
     email: string;
     roles: Array<"USER" | "ADMIN" | "SPECIALIST">;
     token: string;
-    oauthProvider: "GOOGLE" | "LOCAL";
+    oauthProvider: "GOOGLE" | "LOCAL" | "GITHUB" | "MOBILE";
+    isNewUser: boolean;
   };
 }
 

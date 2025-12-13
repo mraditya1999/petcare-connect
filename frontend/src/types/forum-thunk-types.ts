@@ -61,6 +61,7 @@ export interface ISingleForum {
   commentsCount: number;
   createdAt: string;
   updatedAt: string;
+  userId: number;
 }
 
 export interface IFetchSingleForumResponse {

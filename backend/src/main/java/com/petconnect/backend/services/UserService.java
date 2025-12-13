@@ -6,14 +6,15 @@ import com.petconnect.backend.dto.user.UpdatePasswordRequestDTO;
 import com.petconnect.backend.entity.*;
 import com.petconnect.backend.exceptions.ImageDeletionException;
 import com.petconnect.backend.exceptions.ResourceNotFoundException;
-import com.petconnect.backend.mappers.AddressMapper;
 import com.petconnect.backend.mappers.SpecialistMapper;
-import com.petconnect.backend.repositories.AddressRepository;
 import com.petconnect.backend.repositories.PetRepository;
 import com.petconnect.backend.repositories.SpecialistRepository;
 import com.petconnect.backend.repositories.UserRepository;
 import com.petconnect.backend.mappers.UserMapper;
+import com.petconnect.backend.utils.PhoneUtils;
 import com.petconnect.backend.utils.RoleAssignmentUtil;
+import com.petconnect.backend.validators.PasswordValidator;
+import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,7 +46,7 @@ public class UserService {
     private final PetRepository petRepository;
 
     @Autowired
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, RoleAssignmentUtil roleAssignmentUtil, UserMapper userMapper, UploadService uploadService, AddressRepository addressRepository, AddressMapper addressMapper, SpecialistMapper specialistMapper, SpecialistRepository specialistRepository, PetRepository petRepository) {
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, RoleAssignmentUtil roleAssignmentUtil, UserMapper userMapper, UploadService uploadService, SpecialistMapper specialistMapper, SpecialistRepository specialistRepository, PetRepository petRepository) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.roleAssignmentUtil = roleAssignmentUtil;
@@ -63,11 +64,12 @@ public class UserService {
      * @return UserDTO containing the user profile information
      * @throws ResourceNotFoundException if the user is not found
      */
+    @Transactional
     public UserDTO getUserProfile(String email) {
         logger.info("Fetching profile for user with email: {}", email);
 
         try {
-            User user = userRepository.findByEmail(email)
+            User user = userRepository.findDetailedByEmail(email)
                     .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
             if (user.getRoles().stream().anyMatch(role -> role.getRoleName() == Role.RoleName.SPECIALIST)) {
@@ -78,9 +80,6 @@ public class UserService {
         } catch (ResourceNotFoundException e) {
             logger.error("User not found with email: {}", email, e);
             throw e;
-        } catch (Exception e) {
-            logger.error("An error occurred while fetching profile for user with email: {}", email, e);
-            throw new RuntimeException("An error occurred while fetching user profile", e);
         }
     }
 
@@ -94,11 +93,12 @@ public class UserService {
      * @throws IOException if an error occurs while uploading the profile image
      * @throws ResourceNotFoundException if the user is not found
      */
+    @Transactional
     public UserDTO updateUserProfile(String username, UserUpdateDTO userUpdateDTO, MultipartFile profileImage) throws IOException {
         logger.info("Updating profile for user with email: {}", username);
 
         try {
-            User currentUser = userRepository.findByEmail(username)
+            User currentUser = userRepository.findDetailedByEmail(username)
                     .orElseThrow(() -> new ResourceNotFoundException("User not found with email " + username));
 
             updateUserFields(currentUser, userUpdateDTO);
@@ -128,9 +128,6 @@ public class UserService {
         } catch (IOException e) {
             logger.error("Error uploading profile image for user with email: {}", username, e);
             throw e;
-        } catch (Exception e) {
-            logger.error("An error occurred while updating profile for user with email: {}", username, e);
-            throw new RuntimeException("An error occurred while updating user profile", e);
         }
     }
 
@@ -141,6 +138,7 @@ public class UserService {
      * @throws ResourceNotFoundException if the user is not found
      * @throws RuntimeException if an error occurs while deleting the user profile
      */
+    @Transactional
     public void deleteUserProfile(UserDetails userDetails) {
         String email = userDetails.getUsername();
         logger.info("Received request to delete profile for user with email: {}", email);
@@ -152,18 +150,11 @@ public class UserService {
             deleteAvatar(user);
             deletePetAvatars(user);
 
-            if (user instanceof Specialist) {
-                specialistRepository.delete((Specialist) user);
-            } else {
-                userRepository.delete(user);
-            }
+            userRepository.delete(user);
             logger.info("User profile deleted successfully for user with email: {}", email);
         } catch (ResourceNotFoundException e) {
             logger.error("User not found with email: {}", email, e);
             throw e;
-        } catch (Exception e) {
-            logger.error("An error occurred while deleting profile for user with email: {}", email, e);
-            throw new RuntimeException("An error occurred while deleting user profile", e);
         }
     }
 
@@ -173,6 +164,7 @@ public class UserService {
      *
      * @param user the user whose pet profiles are to be deleted
      */
+    @Transactional
     private void deletePetAvatars(User user) {
         List<Pet> pets = petRepository.findAllByPetOwner(user);
         for (Pet pet : pets) {
@@ -197,6 +189,7 @@ public class UserService {
      * @throws IllegalArgumentException if the current password is incorrect or the new password is the same as the old password
      * @throws RuntimeException if an error occurs while updating the password
      */
+    @Transactional
     public void updatePassword(String email, UpdatePasswordRequestDTO updatePasswordRequestDTO, UserDetails userDetails) {
         logger.info("Received request to update password for user with email: {}", email);
 
@@ -204,7 +197,16 @@ public class UserService {
             User user = userRepository.findByEmail(email)
                     .orElseThrow(() -> new ResourceNotFoundException("User not found with email " + email));
 
-            if (user.getOauthProvider() == User.AuthProvider.LOCAL) {
+            boolean isLocalUser = user.getOauthAccounts()
+                    .stream()
+                    .anyMatch(acc -> acc.getProvider() == OAuthAccount.AuthProvider.LOCAL);
+
+            if (!PasswordValidator.isValid(updatePasswordRequestDTO.getNewPassword())) {
+                throw new IllegalArgumentException("Password must be at least 8 characters long and include uppercase, lowercase, number, and special character.");
+            }
+
+
+            if (isLocalUser) {
                 if (!passwordEncoder.matches(updatePasswordRequestDTO.getCurrentPassword(), user.getPassword())) {
                     throw new IllegalArgumentException("Current password is incorrect.");
                 }
@@ -223,9 +225,6 @@ public class UserService {
         } catch (IllegalArgumentException e) {
             logger.error("Invalid password update request for user with email: {}", email, e);
             throw e;
-        } catch (Exception e) {
-            logger.error("An error occurred while updating password for user with email: {}", email, e);
-            throw new RuntimeException("An error occurred while updating password", e);
         }
     }
 
@@ -235,14 +234,10 @@ public class UserService {
      * @param user the user whose reset token is to be updated
      * @throws RuntimeException if an error occurs while updating the reset token
      */
+    @Transactional
     public void updateResetToken(User user) {
-        try {
-            userRepository.save(user);
-            logger.info("Reset token updated for user with ID: {}", user.getUserId());
-        } catch (Exception e) {
-            logger.error("An error occurred while updating reset token for user with ID: {}", user.getUserId(), e);
-            throw new RuntimeException("An error occurred while updating reset token", e);
-        }
+        userRepository.save(user);
+        logger.info("Reset token updated for user with ID: {}", user.getUserId());
     }
 
     /**
@@ -252,13 +247,9 @@ public class UserService {
      * @return a page of UserDTOs containing user information
      * @throws RuntimeException if an error occurs while fetching all users
      */
+    @Transactional
     public Page<UserDTO> getAllUsers(Pageable pageable) {
-        try {
-            return userRepository.findAll(pageable).map(userMapper::toDTO);
-        } catch (Exception e) {
-            logger.error("An error occurred while fetching all users", e);
-            throw new RuntimeException("An error occurred while fetching all users", e);
-        }
+        return userRepository.findAll(pageable).map(userMapper::toDTO);
     }
 
     /**
@@ -269,18 +260,11 @@ public class UserService {
      * @throws ResourceNotFoundException if the user is not found
      * @throws RuntimeException if an error occurs while fetching the user by ID
      */
+    @Transactional
     public UserDTO getUserById(Long userId) {
-        try {
-            return userRepository.findById(userId)
-                    .map(userMapper::toDTO)
-                    .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + userId));
-        } catch (ResourceNotFoundException e) {
-            logger.error("User not found with ID: {}", userId, e);
-            throw e;
-        } catch (Exception e) {
-            logger.error("An error occurred while fetching user by ID: {}", userId, e);
-            throw new RuntimeException("An error occurred while fetching user by ID", e);
-        }
+        return userRepository.findById(userId)
+                .map(userMapper::toDTO)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + userId));
     }
 
     /**
@@ -294,6 +278,7 @@ public class UserService {
      * @throws ResourceNotFoundException if the user is not found
      * @throws RuntimeException if an error occurs while updating the user profile
      */
+    @Transactional
     public UserDTO updateUserById(Long id, UserUpdateDTO userUpdateDTO, MultipartFile profileImage) throws IOException {
         logger.info("Updating profile for user with ID: {}", id);
 
@@ -326,9 +311,6 @@ public class UserService {
         } catch (ResourceNotFoundException e) {
             logger.error("User not found with ID: {}", id, e);
             throw e;
-        } catch (Exception e) {
-            logger.error("An error occurred while updating profile for user with ID: {}", id, e);
-            throw new RuntimeException("An error occurred while updating user profile", e);
         }
     }
 
@@ -339,6 +321,7 @@ public class UserService {
      * @throws ResourceNotFoundException if the user is not found
      * @throws RuntimeException if an error occurs while deleting the user
      */
+    @Transactional
     public void deleteUserById(Long userId) {
         logger.info("Received request to delete user with ID: {}", userId);
 
@@ -349,18 +332,11 @@ public class UserService {
             deleteAvatar(user);
             deletePetAvatars(user);
 
-            if (user instanceof Specialist) {
-                specialistRepository.delete((Specialist) user);
-            } else {
-                userRepository.delete(user);
-            }
+            userRepository.delete(user);
             logger.info("User (or Specialist) deleted with ID: {}", userId);
         } catch (ResourceNotFoundException e) {
             logger.error("User not found with ID: {}", userId, e);
             throw e;
-        } catch (Exception e) {
-            logger.error("An error occurred while deleting user with ID: {}", userId, e);
-            throw new RuntimeException("An error occurred while deleting user", e);
         }
     }
 
@@ -372,6 +348,7 @@ public class UserService {
      * @throws ResourceNotFoundException if the user is not found
      * @throws RuntimeException if an error occurs while updating the user roles
      */
+    @Transactional
     public void updateUserRoles(Long userId, Set<Role.RoleName> roleNames) {
         logger.info("Updating roles for user with ID: {}", userId);
 
@@ -385,9 +362,6 @@ public class UserService {
         } catch (ResourceNotFoundException e) {
             logger.error("User not found with ID: {}", userId, e);
             throw e;
-        } catch (Exception e) {
-            logger.error("An error occurred while updating roles for user with ID: {}", userId, e);
-            throw new RuntimeException("An error occurred while updating user roles", e);
         }
     }
 
@@ -399,15 +373,10 @@ public class UserService {
      * @return a page of UserDTOs containing the search results
      * @throws RuntimeException if an error occurs while searching users
      */
+    @Transactional
     public Page<UserDTO> searchUsers(String keyword, Pageable pageable) {
         logger.info("Searching users with keyword: {}", keyword);
-
-        try {
-            return userRepository.searchByKeyword(keyword, pageable).map(userMapper::toDTO);
-        } catch (Exception e) {
-            logger.error("An error occurred while searching users with keyword: {}", keyword, e);
-            throw new RuntimeException("An error occurred while searching users", e);
-        }
+        return userRepository.searchByKeyword(keyword, pageable).map(userMapper::toDTO);
     }
 
     /**
@@ -435,10 +404,24 @@ public class UserService {
      * @param user the user whose fields are to be updated
      * @param userUpdateDTO the data transfer object containing updated user information
      */
+    @Transactional
     private void updateUserFields(User user, UserUpdateDTO userUpdateDTO) {
         if (userUpdateDTO.getFirstName() != null) user.setFirstName(userUpdateDTO.getFirstName());
         if (userUpdateDTO.getLastName() != null) user.setLastName(userUpdateDTO.getLastName());
-        if (userUpdateDTO.getMobileNumber() != null) user.setMobileNumber(userUpdateDTO.getMobileNumber());
+
+        if (userUpdateDTO.getMobileNumber() != null) {
+            String normalizedPhone = PhoneUtils.normalizeToE164(userUpdateDTO.getMobileNumber());
+
+            if (normalizedPhone == null) {
+                throw new IllegalArgumentException("Invalid phone number format");
+            }
+
+            if (!PhoneUtils.isValidE164(normalizedPhone)) {
+                throw new IllegalArgumentException("Invalid phone number format");
+            }
+
+            user.setMobileNumber(normalizedPhone);
+        }
     }
 
     /**
@@ -447,6 +430,7 @@ public class UserService {
      * @param user the user whose address is to be updated
      * @param userUpdateDTO the data transfer object containing updated address information
      */
+    @Transactional
     private void updateAddress(User user, UserUpdateDTO userUpdateDTO) {
         Address address = user.getAddress() != null ? user.getAddress() : new Address();
 
@@ -469,6 +453,7 @@ public class UserService {
      * @param user the user for whom the profile image is to be uploaded
      * @throws IOException if an error occurs while uploading the profile image
      */
+    @Transactional
     private void handleProfileImageUpload(MultipartFile profileImage, User user) throws IOException {
         if (profileImage != null && !profileImage.isEmpty()) {
             if (user.getAvatarPublicId() != null && !user.getAvatarPublicId().isEmpty()) {
@@ -488,6 +473,7 @@ public class UserService {
      * @return a map containing the avatar URL and public ID
      * @throws IOException if an error occurs while uploading the profile image
      */
+    @Transactional
     private Map<String, String> uploadProfileImage(MultipartFile profileImage) throws IOException {
         Map<String, Object> uploadResult = uploadService.uploadImage(profileImage, UploadService.ProfileType.USER);
         return Map.of(
@@ -502,6 +488,7 @@ public class UserService {
      * @param user the user whose avatar image is to be deleted
      * @throws ImageDeletionException if an error occurs while deleting the avatar image
      */
+    @Transactional
     private void deleteAvatar(User user) {
         if (user.getAvatarPublicId() != null && !user.getAvatarPublicId().isEmpty()) {
             try {

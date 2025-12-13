@@ -44,158 +44,109 @@ public class AppointmentService {
 
     @Transactional(readOnly = true)
     public Page<AppointmentResponseDTO> getAppointmentsByPetOwner(Long petOwnerId, int page, int size) {
-        try {
-            Pageable pageable = PageRequest.of(page, size);
-            return appointmentRepository.findByPetOwnerUserId(petOwnerId, pageable)
-                    .map(appointmentMapper::toAppointmentResponseDTO);
-        } catch (Exception e) {
-            logger.error("Error fetching appointments for pet owner with ID {}: {}", petOwnerId, e.getMessage(), e);
-            throw new RuntimeException("Error fetching appointments", e);
-        }
+        Pageable pageable = PageRequest.of(page, size);
+        return appointmentRepository.findByPetOwnerUserId(petOwnerId, pageable)
+                .map(appointmentMapper::toAppointmentResponseDTO);
     }
 
     @Transactional(readOnly = true)
     public Page<AppointmentResponseDTO> getAppointmentsByPet(Long petId, int page, int size, Long userId) {
-        try {
-            // Verify that the authenticated user has permissions to access the pet's appointments
-            Pet pet = petRepository.findById(petId).orElseThrow(() -> new ResourceNotFoundException("Pet not found"));
-            if (!pet.getPetOwner().getUserId().equals(userId)) {
-                throw new UnauthorizedAccessException("User does not have permission to access this pet's appointments");
-            }
-
-            Pageable pageable = PageRequest.of(page, size);
-            return appointmentRepository.findByPetPetId(petId, pageable)
-                    .map(appointmentMapper::toAppointmentResponseDTO);
-        } catch (Exception e) {
-            logger.error("Error fetching appointments for pet with ID {}: {}", petId, e.getMessage(), e);
-            throw new RuntimeException("Error fetching appointments", e);
+        // Verify that the authenticated user has permissions to access the pet's appointments
+        Pet pet = petRepository.findById(petId).orElseThrow(() -> new ResourceNotFoundException("Pet not found"));
+        if (!pet.getPetOwner().getUserId().equals(userId)) {
+            throw new UnauthorizedAccessException("User does not have permission to access this pet's appointments");
         }
+
+        Pageable pageable = PageRequest.of(page, size);
+        return appointmentRepository.findByPetPetId(petId, pageable)
+                .map(appointmentMapper::toAppointmentResponseDTO);
     }
 
     @Transactional(readOnly = true)
     public Page<AppointmentResponseDTO> getAppointmentsByStatusForUser(AppointmentStatus status, int page, int size, Long userId) {
-        try {
-            Pageable pageable = PageRequest.of(page, size);
-            return appointmentRepository.findByStatusAndPetOwnerUserId(status, userId, pageable)
-                    .map(appointmentMapper::toAppointmentResponseDTO);
-        } catch (Exception e) {
-            logger.error("Error fetching appointments by status {} for user with ID {}: {}", status, userId, e.getMessage(), e);
-            throw new RuntimeException("Error fetching appointments", e);
-        }
+        Pageable pageable = PageRequest.of(page, size);
+        return appointmentRepository.findByStatusAndPetOwnerUserId(status, userId, pageable)
+                .map(appointmentMapper::toAppointmentResponseDTO);
     }
 
     @Transactional
     public AppointmentResponseDTO createAppointment(Long userId, AppointmentRequestDTO appointmentRequestDTO) {
-        try {
-            // Validate and set entities
-            Pet pet = petRepository.findById(appointmentRequestDTO.getPetId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Pet not found with ID: " + appointmentRequestDTO.getPetId()));
+        // Validate and set entities
+        Pet pet = petRepository.findById(appointmentRequestDTO.getPetId())
+                .orElseThrow(() -> new ResourceNotFoundException("Pet not found with ID: " + appointmentRequestDTO.getPetId()));
 
-            Specialist specialist = specialistRepository.findById(appointmentRequestDTO.getSpecialistId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Specialist not found with ID: " + appointmentRequestDTO.getSpecialistId()));
+        Specialist specialist = specialistRepository.findById(appointmentRequestDTO.getSpecialistId())
+                .orElseThrow(() -> new ResourceNotFoundException("Specialist not found with ID: " + appointmentRequestDTO.getSpecialistId()));
 
-            User petOwner = userRepository.findById(userId)
-                    .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + userId));
+        User petOwner = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + userId));
 
-            // Convert DTO to entity
-            Appointment appointment = new Appointment();
-            appointment.setPet(pet);
-            appointment.setSpecialist(specialist);
-            appointment.setPetOwner(petOwner);
-            appointment.setDate(appointmentRequestDTO.getDate());
-            appointment.setNotes(appointmentRequestDTO.getNotes());
-            appointment.setDuration(appointmentRequestDTO.getDuration());
-            appointment.setStatus(AppointmentStatus.SCHEDULED);
+        // Convert DTO to entity
+        Appointment appointment = new Appointment();
+        appointment.setPet(pet);
+        appointment.setSpecialist(specialist);
+        appointment.setPetOwner(petOwner);
+        appointment.setDate(appointmentRequestDTO.getDate());
+        appointment.setNotes(appointmentRequestDTO.getNotes());
+        appointment.setDuration(appointmentRequestDTO.getDuration());
+        appointment.setStatus(AppointmentStatus.SCHEDULED);
 
-            // Save and return the response DTO
-            Appointment savedAppointment = appointmentRepository.save(appointment);
-            return appointmentMapper.toAppointmentResponseDTO(savedAppointment);
-        } catch (ResourceNotFoundException e) {
-            logger.error("Resource not found: {}", e.getMessage(), e);
-            throw e;
-        } catch (Exception e) {
-            logger.error("Error creating appointment: {}", e.getMessage(), e);
-            throw new RuntimeException("Error creating appointment", e);
-        }
+        // Save and return the response DTO
+        Appointment savedAppointment = appointmentRepository.save(appointment);
+        return appointmentMapper.toAppointmentResponseDTO(savedAppointment);
     }
 
     @Transactional
     public AppointmentResponseDTO updateAppointment(Long appointmentId, Long userId, AppointmentUpdateRequestDTO updatedAppointmentDTO) {
-        try {
-            Appointment existingAppointment = appointmentRepository.findById(appointmentId)
-                    .orElseThrow(() -> new ResourceNotFoundException("Appointment not found with ID: " + appointmentId));
+        Appointment existingAppointment = appointmentRepository.findById(appointmentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Appointment not found with ID: " + appointmentId));
 
-            // Check if the user owns the appointment
-            if (!existingAppointment.getPetOwner().getUserId().equals(userId)) {
-                throw new UnauthorizedAccessException("User does not have permission to update this appointment");
-            }
-
-            // Update appointment details
-            existingAppointment.setDate(updatedAppointmentDTO.getDate());
-            existingAppointment.setNotes(updatedAppointmentDTO.getNotes());
-            existingAppointment.setDuration(updatedAppointmentDTO.getDuration());
-            existingAppointment.setStatus(updatedAppointmentDTO.getStatus()); // Update status
-
-            // Save and return the response DTO
-            Appointment savedAppointment = appointmentRepository.save(existingAppointment);
-            return appointmentMapper.toAppointmentResponseDTO(savedAppointment);
-        } catch (ResourceNotFoundException e) {
-            logger.error("Appointment not found: {}", e.getMessage(), e);
-            throw e;
-        } catch (Exception e) {
-            logger.error("Error updating appointment: {}", e.getMessage(), e);
-            throw new RuntimeException("Error updating appointment", e);
+        // Check if the user owns the appointment
+        if (!existingAppointment.getPetOwner().getUserId().equals(userId)) {
+            throw new UnauthorizedAccessException("User does not have permission to update this appointment");
         }
+
+        // Update appointment details
+        existingAppointment.setDate(updatedAppointmentDTO.getDate());
+        existingAppointment.setNotes(updatedAppointmentDTO.getNotes());
+        existingAppointment.setDuration(updatedAppointmentDTO.getDuration());
+        existingAppointment.setStatus(updatedAppointmentDTO.getStatus()); // Update status
+
+        // Save and return the response DTO
+        Appointment savedAppointment = appointmentRepository.save(existingAppointment);
+        return appointmentMapper.toAppointmentResponseDTO(savedAppointment);
     }
 
     @Transactional
     public void submitFeedback(Long userId, Long appointmentId, FeedbackDTO feedbackDTO) {
-        try {
-            Appointment appointment = appointmentRepository.findById(appointmentId)
-                    .orElseThrow(() -> new ResourceNotFoundException("Appointment not found with ID: " + appointmentId));
+        Appointment appointment = appointmentRepository.findById(appointmentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Appointment not found with ID: " + appointmentId));
 
-            // Ensure the user is the pet owner
-            if (!appointment.getPetOwner().getUserId().equals(userId)) {
-                throw new RuntimeException("User does not have permission to submit feedback for this appointment.");
-            }
-
-            // Add feedback and rating
-            appointment.setFeedback(feedbackDTO.getFeedback());
-            appointment.setRating(feedbackDTO.getRating());
-
-            appointmentRepository.save(appointment);
-        } catch (ResourceNotFoundException e) {
-            logger.error("Resource not found: {}", e.getMessage(), e);
-            throw e;
-        } catch (Exception e) {
-            logger.error("Error submitting feedback: {}", e.getMessage(), e);
-            throw new RuntimeException("Error submitting feedback", e);
+        // Ensure the user is the pet owner
+        if (!appointment.getPetOwner().getUserId().equals(userId)) {
+            throw new RuntimeException("User does not have permission to submit feedback for this appointment.");
         }
+
+        // Add feedback and rating
+        appointment.setFeedback(feedbackDTO.getFeedback());
+        appointment.setRating(feedbackDTO.getRating());
+
+        appointmentRepository.save(appointment);
     }
 
     @Transactional(readOnly = true)
     public Page<AppointmentResponseDTO> getAppointmentHistory(Long userId, int page, int size) {
-        try {
-            Pageable pageable = PageRequest.of(page, size);
-            return appointmentRepository.findByPetOwnerUserId(userId, pageable)
-                    .map(appointmentMapper::toAppointmentResponseDTO);
-        } catch (Exception e) {
-            logger.error("Error fetching appointment history for user with ID {}: {}", userId, e.getMessage(), e);
-            throw new RuntimeException("Error fetching appointment history", e);
-        }
+        Pageable pageable = PageRequest.of(page, size);
+        return appointmentRepository.findByPetOwnerUserId(userId, pageable)
+                .map(appointmentMapper::toAppointmentResponseDTO);
     }
 
 //    FOR SPECIALISTS
 @Transactional(readOnly = true)
 public Page<AppointmentResponseDTO> getAppointmentsForSpecialist(Long specialistId, int page, int size) {
-    try {
-        Pageable pageable = PageRequest.of(page, size);
-        return appointmentRepository.findBySpecialistUserId(specialistId, pageable)
-                .map(appointmentMapper::toAppointmentResponseDTO);
-    } catch (Exception e) {
-        logger.error("Error fetching appointments for specialist with ID {}: {}", specialistId, e.getMessage(), e);
-        throw new RuntimeException("Error fetching appointments for specialist", e);
-    }
+    Pageable pageable = PageRequest.of(page, size);
+    return appointmentRepository.findBySpecialistUserId(specialistId, pageable)
+            .map(appointmentMapper::toAppointmentResponseDTO);
 }
 
 

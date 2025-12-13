@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
+import org.hibernate.annotations.BatchSize;
 
 import java.util.Date;
 import java.util.List;
@@ -24,16 +25,16 @@ public class Specialist extends User {
 
     @OneToMany(mappedBy = "specialist", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     @JsonManagedReference
+    @BatchSize(size = 20)
     private List<Appointment> appointments;
 
     public Specialist() {
     }
 
-    public Specialist(Long userId, String firstName, String lastName, String email, Address address, String avatarUrl, String avatarPublicId, String mobileNumber, String password, String verificationToken, String resetToken, Set<Role> roles, boolean isVerified, Date createdAt, Date updatedAt, AuthProvider oauthProvider, String oauthProviderId, boolean emailVerified, List<Pet> pets) {
-        super(userId, firstName, lastName, email, address, avatarUrl, avatarPublicId, mobileNumber, password, verificationToken, resetToken, roles, isVerified, createdAt, updatedAt,oauthProvider,oauthProviderId,emailVerified, pets);
+    public Specialist(Long userId, String firstName, String lastName, String email, Address address, String avatarUrl, String avatarPublicId, String mobileNumber, String password, String verificationToken, String resetToken, Set<Role> roles, boolean isVerified, Date createdAt, Date updatedAt, List<Pet> pets) {
+        super(userId, firstName, lastName, email, address, avatarUrl, avatarPublicId, mobileNumber, password, verificationToken, resetToken, roles, isVerified, createdAt, updatedAt, pets);
         this.about = about;
         this.speciality = speciality;
-        this.appointments = appointments;
     }
 
     public Long getSpecialistId() {

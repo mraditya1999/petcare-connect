@@ -83,15 +83,10 @@ public class AdminController {
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "userId") String sortBy,
             @RequestParam(defaultValue = "asc") String sortDir) {
-        try {
-            Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.fromString(sortDir), sortBy));
-            Page<UserDTO> users = userService.getAllUsers(pageable);
-            logger.info("Fetched all users with pagination and sorting");
-            return ResponseEntity.ok(new ApiResponseDTO<>("Fetched all users", users));
-        } catch (Exception e) {
-            logger.error("Error fetching users: {}", e.getMessage(), e);
-            return new ResponseEntity<>(new ApiResponseDTO<>("Error fetching users"), HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.fromString(sortDir), sortBy));
+        Page<UserDTO> users = userService.getAllUsers(pageable);
+        logger.info("Fetched all users with pagination and sorting");
+        return ResponseEntity.ok(new ApiResponseDTO<>("Fetched all users", users));
     }
 
     /**
@@ -101,18 +96,10 @@ public class AdminController {
      * @return a response entity containing the user data
      */
     @GetMapping("/users/{userId}")
-    public ResponseEntity<ApiResponseDTO<UserDTO>> getUserById(@PathVariable Long userId) {
-        try {
-            UserDTO user = userService.getUserById(userId);
-            logger.info("Fetched user with ID: {}", userId);
-            return ResponseEntity.ok(new ApiResponseDTO<>("Fetched user successfully", user));
-        } catch (ResourceNotFoundException e) {
-            logger.error("User not found with ID: {}", userId, e);
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiResponseDTO<>("User not found with Id: "+ userId, null));
-        } catch (Exception e) {
-            logger.error("Error fetching user with ID: {}", userId, e);
-            return new ResponseEntity<>(new ApiResponseDTO<>("Error fetching user"), HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+    public ResponseEntity<ApiResponseDTO<UserDTO>> getUserById(@PathVariable Long userId) throws ResourceNotFoundException {
+        UserDTO user = userService.getUserById(userId);
+        logger.info("Fetched user with ID: {}", userId);
+        return ResponseEntity.ok(new ApiResponseDTO<>("Fetched user successfully", user));
     }
 
     /**
@@ -238,9 +225,6 @@ public class AdminController {
             Map<String, String> errorData = new HashMap<>();
             errorData.put("message", e.getMessage());
             return new ResponseEntity<>(new ApiResponseDTO<>("Invalid input", errorData), HttpStatus.BAD_REQUEST);
-        } catch (Exception e) {
-            logger.error("Error updating roles: {}", e.getMessage(), e);
-            return new ResponseEntity<>(new ApiResponseDTO<>("Error updating roles"), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -272,10 +256,6 @@ public class AdminController {
             logger.error("Invalid pagination parameters: page={}, size={}", page, size, e);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(new ApiResponseDTO<>("Invalid pagination parameters", null));
-        } catch (Exception e) {
-            logger.error("Error fetching users with role: {}", roleName, e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ApiResponseDTO<>("Error fetching users", null));
         }
     }
 
@@ -296,15 +276,10 @@ public class AdminController {
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "petId") String sortBy,
             @RequestParam(defaultValue = "asc") String sortDir) {
-        try {
-            Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.fromString(sortDir), sortBy));
-            Page<PetResponseDTO> pets = petService.getAllPets(pageable);
-            logger.info("Fetched all pets with pagination and sorting");
-            return ResponseEntity.ok(new ApiResponseDTO<>("Fetched all pets", pets));
-        } catch (Exception e) {
-            logger.error("Error fetching pets: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponseDTO<>("Error fetching pets", null));
-        }
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.fromString(sortDir), sortBy));
+        Page<PetResponseDTO> pets = petService.getAllPets(pageable);
+        logger.info("Fetched all pets with pagination and sorting");
+        return ResponseEntity.ok(new ApiResponseDTO<>("Fetched all pets", pets));
     }
 
     /**
@@ -314,18 +289,10 @@ public class AdminController {
      * @return ResponseEntity with ApiResponseDTO containing the pet
      */
     @GetMapping("/pets/{id}")
-    public ResponseEntity<ApiResponseDTO<PetResponseDTO>> getPetById(@PathVariable Long id) {
-        try {
-            PetResponseDTO pet = petService.getPetById(id);
-            logger.info("Fetched pet with ID: {}", id);
-            return ResponseEntity.ok(new ApiResponseDTO<>("Fetched pet", pet));
-        } catch (ResourceNotFoundException e) {
-            logger.error("Error fetching pet with ID {}: {}", id, e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiResponseDTO<>("Pet not found", null));
-        } catch (Exception e) {
-            logger.error("Error fetching pet with ID {}: {}", id, e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponseDTO<>("Error fetching pet", null));
-        }
+    public ResponseEntity<ApiResponseDTO<PetResponseDTO>> getPetById(@PathVariable Long id) throws ResourceNotFoundException {
+        PetResponseDTO pet = petService.getPetById(id);
+        logger.info("Fetched pet with ID: {}", id);
+        return ResponseEntity.ok(new ApiResponseDTO<>("Fetched pet", pet));
     }
 
     /**
@@ -361,18 +328,10 @@ public class AdminController {
      * @return ResponseEntity with ApiResponse containing the deletion status
      */
     @DeleteMapping("/pets/{id}")
-    public ResponseEntity<ApiResponseDTO<String>> deletePetById(@PathVariable Long id) {
-        try {
-            petService.deletePetById(id);
-            logger.info("Deleted pet with ID: {}", id);
-            return ResponseEntity.ok(new ApiResponseDTO<>("Pet deleted successfully"));
-        } catch (PetNotFoundException e) {
-            logger.error("Error deleting pet with ID {}: {}", id, e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiResponseDTO<>("Pet not found", null));
-        } catch (Exception e) {
-            logger.error("Error deleting pet with ID {}: {}", id, e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponseDTO<>("Error deleting pet", null));
-        }
+    public ResponseEntity<ApiResponseDTO<String>> deletePetById(@PathVariable Long id) throws PetNotFoundException {
+        petService.deletePetById(id);
+        logger.info("Deleted pet with ID: {}", id);
+        return ResponseEntity.ok(new ApiResponseDTO<>("Pet deleted successfully"));
     }
 
     //    ############################################################# SPECIALIST #########################################################
@@ -504,9 +463,6 @@ public class AdminController {
         } catch (UnauthorizedAccessException e) {
             logger.error("Unauthorized access attempt for keyword search: {}", keyword, e.getMessage());
             return new ResponseEntity<>(new ApiResponseDTO<>("Unauthorized access"), HttpStatus.UNAUTHORIZED);
-        } catch (Exception e) {
-            logger.error("Error searching specialists with keyword {}: {}", keyword, e.getMessage());
-            return new ResponseEntity<>(new ApiResponseDTO<>("Error searching specialists: " + e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -531,9 +487,6 @@ public class AdminController {
         } catch (IOException e) {
             logger.error("IO Error deleting specialist with ID {}: {}", id, e.getMessage(), e);
             return new ResponseEntity<>(new ApiResponseDTO<>("IO Error deleting specialist"), HttpStatus.INTERNAL_SERVER_ERROR);
-        } catch (Exception e) {
-            logger.error("Unexpected error deleting specialist with ID {}: {}", id, e.getMessage(), e);
-            return new ResponseEntity<>(new ApiResponseDTO<>("Error deleting specialist"), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -590,15 +543,10 @@ public class AdminController {
     public ResponseEntity<ApiResponseDTO<Page<CommentDTO>>> getAllComments(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "5") int size) {
-        try {
-            logger.debug("Fetching all comments with pagination");
-            Page<CommentDTO> comments = commentService.getAllComments(PageRequest.of(page, size))
-                    .map(commentMapper::toDTO);
-            return ResponseEntity.ok(new ApiResponseDTO<>("Comments fetched successfully", comments));
-        } catch (Exception e) {
-            logger.error("Error fetching comments: {}", e.getMessage());
-            return new ResponseEntity<>(new ApiResponseDTO<>("Error fetching comments"), HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        logger.debug("Fetching all comments with pagination");
+        Page<CommentDTO> comments = commentService.getAllComments(PageRequest.of(page, size))
+                .map(commentMapper::toDTO);
+        return ResponseEntity.ok(new ApiResponseDTO<>("Comments fetched successfully", comments));
     }
 
     /**
@@ -609,16 +557,11 @@ public class AdminController {
      */
     @GetMapping("/comments/{commentId}")
     public ResponseEntity<ApiResponseDTO<CommentDTO>> getCommentById(@PathVariable String commentId) {
-        try {
-            logger.debug("Fetching comment with ID: {}", commentId);
-            Optional<Comment> comment = commentService.getCommentById(commentId);
-            return comment.map(value -> ResponseEntity.ok(new ApiResponseDTO<>("Comment fetched successfully", commentMapper.toDTO(value))))
-                    .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND)
-                            .body(new ApiResponseDTO<>("Comment not found", null)));
-        } catch (Exception e) {
-            logger.error("Error fetching comment with ID {}: {}", commentId, e.getMessage());
-            return new ResponseEntity<>(new ApiResponseDTO<>("Error fetching comment"), HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        logger.debug("Fetching comment with ID: {}", commentId);
+        Optional<Comment> comment = commentService.getCommentById(commentId);
+        return comment.map(value -> ResponseEntity.ok(new ApiResponseDTO<>("Comment fetched successfully", commentMapper.toDTO(value))))
+                .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(new ApiResponseDTO<>("Comment not found", null)));
     }
 
     /**
@@ -630,16 +573,11 @@ public class AdminController {
      */
     @PutMapping("/comments/{commentId}")
     public ResponseEntity<ApiResponseDTO<CommentDTO>> updateCommentById(@PathVariable String commentId, @Valid @RequestBody CommentDTO commentDTO) {
-        try {
-            logger.debug("Updating comment with ID: {}", commentId);
-            Optional<CommentDTO> updatedComment = commentService.updateCommentByIdAdmin(commentId, commentDTO);
-            return updatedComment.map(value -> ResponseEntity.ok(new ApiResponseDTO<>("Comment updated successfully", value)))
-                    .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND)
-                            .body(new ApiResponseDTO<>("Comment not found", null)));
-        } catch (Exception e) {
-            logger.error("Error updating comment with ID {}: {}", commentId, e.getMessage());
-            return new ResponseEntity<>(new ApiResponseDTO<>("Error updating comment"), HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        logger.debug("Updating comment with ID: {}", commentId);
+        Optional<CommentDTO> updatedComment = commentService.updateCommentByIdAdmin(commentId, commentDTO);
+        return updatedComment.map(value -> ResponseEntity.ok(new ApiResponseDTO<>("Comment updated successfully", value)))
+                .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(new ApiResponseDTO<>("Comment not found", null)));
     }
 
     /**
@@ -650,17 +588,12 @@ public class AdminController {
      */
     @DeleteMapping("/comments/{commentId}")
     public ResponseEntity<ApiResponseDTO<Void>> deleteCommentByIdAdmin(@PathVariable String commentId) {
-        try {
-            logger.debug("Deleting comment with ID: {}", commentId);
-            boolean deleted = commentService.deleteCommentById(commentId);
-            if (deleted) {
-                return ResponseEntity.ok(new ApiResponseDTO<>("Comment deleted successfully", null));
-            } else {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiResponseDTO<>("Comment not found", null));
-            }
-        } catch (Exception e) {
-            logger.error("Error deleting comment with ID {}: {}", commentId, e.getMessage());
-            return new ResponseEntity<>(new ApiResponseDTO<>("Error deleting comment"), HttpStatus.INTERNAL_SERVER_ERROR);
+        logger.debug("Deleting comment with ID: {}", commentId);
+        boolean deleted = commentService.deleteCommentById(commentId);
+        if (deleted) {
+            return ResponseEntity.ok(new ApiResponseDTO<>("Comment deleted successfully", null));
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiResponseDTO<>("Comment not found", null));
         }
     }
 
@@ -673,16 +606,11 @@ public class AdminController {
      */
     @GetMapping("/likes")
     public ResponseEntity<ApiResponseDTO<List<LikeDTO>>> getAllLikes() {
-        try {
-            logger.debug("Fetching all likes");
-            List<LikeDTO> likes = likeService.getAllLikes().stream()
-                    .map(likeMapper::toDTO)
-                    .collect(Collectors.toList());
-            return ResponseEntity.ok(new ApiResponseDTO<>("Likes fetched successfully", likes));
-        } catch (Exception e) {
-            logger.error("Error fetching all likes: {}", e.getMessage());
-            return new ResponseEntity<>(new ApiResponseDTO<>("Error fetching likes"), HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        logger.debug("Fetching all likes");
+        List<LikeDTO> likes = likeService.getAllLikes().stream()
+                .map(likeMapper::toDTO)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(new ApiResponseDTO<>("Likes fetched successfully", likes));
     }
 
     /**
@@ -693,16 +621,11 @@ public class AdminController {
      */
     @GetMapping("/likes/{likeId}")
     public ResponseEntity<ApiResponseDTO<LikeDTO>> getLikeById(@PathVariable String likeId) {
-        try {
-            logger.debug("Fetching like with ID: {}", likeId);
-            Optional<Like> like = likeService.getLikeById(likeId);
-            return like.map(value -> ResponseEntity.ok(new ApiResponseDTO<>("Like fetched successfully", likeMapper.toDTO(value))))
-                    .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND)
-                            .body(new ApiResponseDTO<>("Like not found", null)));
-        } catch (Exception e) {
-            logger.error("Error fetching like with ID {}: {}", likeId, e.getMessage());
-            return new ResponseEntity<>(new ApiResponseDTO<>("Error fetching like"), HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        logger.debug("Fetching like with ID: {}", likeId);
+        Optional<Like> like = likeService.getLikeById(likeId);
+        return like.map(value -> ResponseEntity.ok(new ApiResponseDTO<>("Like fetched successfully", likeMapper.toDTO(value))))
+                .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(new ApiResponseDTO<>("Like not found", null)));
     }
 
     /**
@@ -713,16 +636,11 @@ public class AdminController {
      */
     @GetMapping("/comment/{commentId}/likes")
     public ResponseEntity<ApiResponseDTO<List<LikeDTO>>> getLikesByCommentId(@PathVariable String commentId) {
-        try {
-            logger.debug("Fetching likes for comment with ID: {}", commentId);
-            List<LikeDTO> likes = likeService.getAllLikesByCommentId(commentId).stream()
-                    .map(likeMapper::toDTO)
-                    .collect(Collectors.toList());
-            return ResponseEntity.ok(new ApiResponseDTO<>("Likes fetched successfully", likes));
-        } catch (Exception e) {
-            logger.error("Error fetching likes for comment with ID {}: {}", commentId, e.getMessage());
-            return new ResponseEntity<>(new ApiResponseDTO<>("Error fetching likes"), HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        logger.debug("Fetching likes for comment with ID: {}", commentId);
+        List<LikeDTO> likes = likeService.getAllLikesByCommentId(commentId).stream()
+                .map(likeMapper::toDTO)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(new ApiResponseDTO<>("Likes fetched successfully", likes));
     }
 
 }

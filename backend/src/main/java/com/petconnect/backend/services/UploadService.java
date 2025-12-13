@@ -127,12 +127,7 @@ public class UploadService {
      */
     public Map<String, Object> getImage(String publicId) throws Exception {
         logger.info("Fetching image with publicId: {}", publicId);
-        try {
-            return cloudinary.api().resource(publicId, ObjectUtils.emptyMap());
-        } catch (Exception e) {
-            logger.error("Error fetching image: {}", e.getMessage());
-            throw e;
-        }
+        return cloudinary.api().resource(publicId, ObjectUtils.emptyMap());
     }
 
     /**

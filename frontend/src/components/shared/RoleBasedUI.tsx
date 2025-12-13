@@ -7,16 +7,19 @@ interface RoleBasedUIProps {
   userComponent: ReactNode;
 }
 
-const RoleBasedUI = ({ adminComponent, specialistComponent, userComponent }: RoleBasedUIProps) => {
+const RoleBasedUI = ({
+  adminComponent,
+  specialistComponent,
+  userComponent,
+}: RoleBasedUIProps) => {
   const user = useAppSelector((state) => state.auth.user);
 
-  if (user?.data.roles.includes("ADMIN")) {
-    return <>{adminComponent}</>;
-  } else if (user?.data.roles.includes("SPECIALIST")) {
-    return <>{specialistComponent}</>;
-  } else {
-    return <>{userComponent}</>;
-  }
+  const roles = user?.data?.roles || [];
+
+  if (roles.includes("ADMIN")) return <>{adminComponent}</>;
+  if (roles.includes("SPECIALIST")) return <>{specialistComponent}</>;
+
+  return <>{userComponent}</>;
 };
 
 export default RoleBasedUI;

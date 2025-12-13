@@ -15,7 +15,6 @@ public interface CommentRepository extends MongoRepository<Comment, String> {
     Page<Comment> findByForumId(String forumId, Pageable pageable);
     void deleteByForumId(String forumId);
     long countByForumId(String forumId);
-    // Assuming you have a list of parent comment IDs:
     List<Comment> findByParentCommentIn(List<Comment> parentComments);
 }
 

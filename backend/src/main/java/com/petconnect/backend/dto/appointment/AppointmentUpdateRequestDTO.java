@@ -16,7 +16,7 @@ public class AppointmentUpdateRequestDTO {
     private String notes;
 
     @NotNull(message = "Duration is required")
-    private int duration;
+    private Integer duration;
 
     @NotNull(message = "Status is required")
     private Appointment.AppointmentStatus status;
@@ -24,7 +24,7 @@ public class AppointmentUpdateRequestDTO {
     public AppointmentUpdateRequestDTO() {
     }
 
-    public AppointmentUpdateRequestDTO(Date date, String notes, int duration, Appointment.AppointmentStatus status) {
+    public AppointmentUpdateRequestDTO(Date date, String notes, Integer duration, Appointment.AppointmentStatus status) {
         this.date = date;
         this.notes = notes;
         this.duration = duration;
@@ -47,11 +47,11 @@ public class AppointmentUpdateRequestDTO {
         this.notes = notes;
     }
 
-    public int getDuration() {
+    public Integer getDuration() {
         return duration;
     }
 
-    public void setDuration(int duration) {
+    public void setDuration(Integer duration) {
         this.duration = duration;
     }
 

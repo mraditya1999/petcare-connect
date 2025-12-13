@@ -7,6 +7,9 @@ import {
   forgetPassword,
   resetPassword,
   googleLoginUser,
+  githubLoginUser,
+  sendOtp,
+  verifyOtp,
 } from "./authThunk";
 import { IUser, IUserState } from "@/types/auth-types";
 import { getUserFromStorage } from "@/utils/helpers";
@@ -49,6 +52,21 @@ export const authSlice = createSlice({
         },
       )
       .addCase(googleLoginUser.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+      .addCase(githubLoginUser.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(
+        githubLoginUser.fulfilled,
+        (state, action: PayloadAction<IUser>) => {
+          state.user = action.payload;
+          state.loading = false;
+        },
+      )
+      .addCase(githubLoginUser.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       })
@@ -112,6 +130,38 @@ export const authSlice = createSlice({
         state.success = action.payload.message;
       })
       .addCase(resetPassword.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+      .addCase(sendOtp.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(sendOtp.fulfilled, (state) => {
+        state.loading = false;
+        state.success = "OTP sent successfully";
+      })
+      .addCase(sendOtp.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+      .addCase(verifyOtp.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(verifyOtp.fulfilled, (state, action) => {
+        state.loading = false;
+
+        const payload = action.payload;
+        if (payload.isNewUser) {
+          return;
+        }
+        state.user = {
+          message: "User logged in successfully",
+          data: payload,
+        };
+      })
+      .addCase(verifyOtp.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       });

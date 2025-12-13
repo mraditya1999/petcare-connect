@@ -1,9 +1,7 @@
 package com.petconnect.backend.controllers;
 
-import com.cloudinary.api.ApiResponse;
 import com.petconnect.backend.dto.ApiResponseDTO;
 import com.petconnect.backend.dto.LikeDTO;
-import com.petconnect.backend.entity.Like;
 import com.petconnect.backend.entity.User;
 import com.petconnect.backend.repositories.UserRepository;
 import com.petconnect.backend.services.LikeService;
@@ -86,14 +84,9 @@ public class LikeController {
                     .body(new ApiResponseDTO<>("User not found", null));
         }
 
-        try {
-            // Toggle the like status for the forum
-            Map<String, String> response = likeService.toggleLikeOnForum(forumId, username);
-            return ResponseEntity.ok(new ApiResponseDTO<>(response.get("message"), null));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ApiResponseDTO<>("An error occurred: " + e.getMessage(), null));
-        }
+        // Toggle the like status for the forum
+        Map<String, String> response = likeService.toggleLikeOnForum(forumId, username);
+        return ResponseEntity.ok(new ApiResponseDTO<>(response.get("message"), null));
     }
 
     /**
@@ -137,14 +130,9 @@ public class LikeController {
                     .body(new ApiResponseDTO<>("User not found", null));
         }
 
-        try {
-            // Toggle the like status for the comment
-            Map<String, String> response = likeService.toggleLikeOnComment(commentId, username);
-            return ResponseEntity.ok(new ApiResponseDTO<>(response.get("message"), null));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ApiResponseDTO<>("An error occurred: " + e.getMessage(), null));
-        }
+        // Toggle the like status for the comment
+        Map<String, String> response = likeService.toggleLikeOnComment(commentId, username);
+        return ResponseEntity.ok(new ApiResponseDTO<>(response.get("message"), null));
     }
 
     @GetMapping("/forums/{forumId}/check")
@@ -164,17 +152,12 @@ public class LikeController {
                     .body(new ApiResponseDTO<>("User not found", null));
         }
 
-        try {
-            boolean isLiked = likeService.checkIfUserLikedForum(user.get().getUserId(), forumId);
-            String message = isLiked ? "User has liked the forum" : "User has not liked the forum";
+        boolean isLiked = likeService.checkIfUserLikedForum(user.get().getUserId(), forumId);
+        String message = isLiked ? "User has liked the forum" : "User has not liked the forum";
 
-            Map<String, Boolean> responseData = new HashMap<>();
-            responseData.put("isLiked", isLiked);
+        Map<String, Boolean> responseData = new HashMap<>();
+        responseData.put("isLiked", isLiked);
 
-            return ResponseEntity.ok(new ApiResponseDTO<>(message, responseData));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ApiResponseDTO<>("An error occurred: " + e.getMessage(), null));
-        }
+        return ResponseEntity.ok(new ApiResponseDTO<>(message, responseData));
     }
 }

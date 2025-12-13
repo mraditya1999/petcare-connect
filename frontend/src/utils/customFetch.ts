@@ -1,22 +1,31 @@
 import axios from "axios";
 import { getUserFromStorage } from "./helpers";
 
-const baseUrl = "http://localhost:8080/api/v1";
-
 export const customFetch = axios.create({
-  baseURL: baseUrl,
+  baseURL: "http://localhost:8080/api/v1",
   withCredentials: true,
 });
 
 customFetch.interceptors.request.use(
   (config) => {
     const user = getUserFromStorage();
-    if (user) {
-      config.headers.Authorization = `Bearer ${user.data.token}`;
+    const mainToken = user?.data?.token;
+    const tempToken = localStorage.getItem("tempSignupToken");
+
+    const url = config.url || "";
+
+    // 1️⃣ Only use temp token for complete-profile
+    if (tempToken && url.includes("/auth/complete-profile")) {
+      config.headers.Authorization = `Bearer ${tempToken}`;
+      return config;
     }
+
+    // 2️⃣ Use main JWT for everything except auth routes
+    if (mainToken && !url.startsWith("/auth/")) {
+      config.headers.Authorization = `Bearer ${mainToken}`;
+    }
+
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  },
+  (error) => Promise.reject(error),
 );
