@@ -5,31 +5,8 @@ services:
       dockerfile: Dockerfile
     ports:
       - '8080:8080'
-    environment:
-      SERVER_PORT: 8080
-      DB_HOST: mysql
-      DB_PORT: 3306
-      DB_NAME: petcare_connect
-      DB_USERNAME: root
-      DB_PASSWORD: root
-      MONGO_HOST: mongodb
-      MONGO_PORT: 27017
-      MONGO_DATABASE_NAME: petcare_connect
-      MONGO_USERNAME: your_mongo_username
-      MONGO_PASSWORD: your_mongo_password
-      MAIL_SERVICE: smtp
-      MAIL_HOST: smtp.gmail.com
-      MAIL_PORT: 587
-      GMAIL_NAME: Aditya Yadav
-      GMAIL_USERNAME: ay5480620@gmail.com
-      GMAIL_PASSWORD: lgtcmbisxknrzrth
-      FRONTEND_URL_1: http://localhost:5173
-      FRONTEND_URL_2: https://petcareconnect.netlify.app
-      JWT_SECRET: sxC810M/aNcG4sgMnQ5+FuNnJuDIJqfYUJLCUEigpK2dJNSeRhT0HyOdnSaJotD0OeKo4NhgaMhGjFQVVuIgpA==
-      JWT_EXPIRATION: 86400
-      CLOUDINARY_CLOUD_NAME: dmrdplrx2
-      CLOUDINARY_API_KEY: 854444347444645
-      CLOUDINARY_API_SECRET: tu6bwIAfm7rnrKPN85Rv4piTUto
+    env_file:
+      - .env
     depends_on:
       - mysql
       - mongodb
@@ -44,10 +21,10 @@ services:
   mysql:
     image: mysql:5.7
     environment:
-      MYSQL_DATABASE: petcare_connect
-      MYSQL_USER: root
-      MYSQL_PASSWORD: root
-      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
     ports:
       - '3306:3306'
     healthcheck:
@@ -59,7 +36,7 @@ services:
   mongodb:
     image: mongo:latest
     environment:
-      MONGO_INITDB_ROOT_USERNAME: your_mongo_username
-      MONGO_INITDB_ROOT_PASSWORD: your_mongo_password
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
     ports:
       - '27017:27017'
