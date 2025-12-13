@@ -1,6 +1,6 @@
 package com.petconnect.backend.entity;
 
-import jakarta.persistence.*;
+//import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
@@ -16,7 +16,7 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
-@EntityListeners(AuditingEntityListener.class)
+// @EntityListeners(AuditingEntityListener.class)
 @Document(collection = "comments")
 public class Comment {
 
@@ -45,20 +45,20 @@ public class Comment {
     @Field("updated_at")
     private Date updatedAt;
 
-    @ElementCollection
+    // @ElementCollection
     private Set<Long> likedByUsers = new HashSet<>();
 
     @Pattern(regexp = "^[a-fA-F0-9]{24}$", message = "Parent ID must be a valid ObjectId")
     @Field("parent_id")
     private String parentId;
 
-    @ManyToOne
-    @JoinColumn(name = "parent_id", referencedColumnName = "commentId", insertable = false, updatable = false) // Join using parent_id
-    private Comment parentComment;
+    // @ManyToOne
+    // @JoinColumn(name = "parent_id", referencedColumnName = "commentId", insertable = false, updatable = false) // Join using parent_id
+    private transient Comment parentComment;
 
-    @DBRef // Use DBRef for replies
-    @OneToMany(mappedBy = "parentComment") // Remove cascade here
-    private Set<Comment> replies = new HashSet<>();
+    // @DBRef // Use DBRef for replies
+    // @OneToMany(mappedBy = "parentComment") // Remove cascade here
+    private transient Set<Comment> replies = new HashSet<>();
 
     public Comment() {
     }

@@ -13,7 +13,7 @@ import org.springframework.data.mongodb.core.mapping.Field;
 import java.util.Date;
 import java.util.Objects;
 
-@EntityListeners(AuditingEntityListener.class)
+// @EntityListeners(AuditingEntityListener.class)
 @Document(collection = "likes")
 public class Like {
     @Id
@@ -25,7 +25,7 @@ public class Like {
 
     @NotNull
     @Indexed
-    private String commentId;  // Added field for comment ID
+    private String commentId;  
 
     @NotNull
     @Indexed
@@ -35,8 +35,8 @@ public class Like {
     @Field("created_at")
     private Date createdAt;
 
-    @DBRef
-    private Forum forumPost;
+    // @DBRef
+    private transient Forum forumPost;
 
     public Like() {
     }

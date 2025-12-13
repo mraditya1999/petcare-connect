@@ -1,8 +1,10 @@
 import axios from "axios";
 import { getUserFromStorage } from "./helpers";
 
+// const baseUrl = "http://localhost:8080/api/v1"
+const baseUrl = "petcare-connect-production.up.railway.app/api/v1";
 export const customFetch = axios.create({
-  baseURL: "http://localhost:8080/api/v1",
+  baseURL: baseUrl,
   withCredentials: true,
 });
 
