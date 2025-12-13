@@ -30,7 +30,7 @@ export default function SendOtp() {
 
   const form = useForm<{ phone: string }>({
     defaultValues: {
-      phone: import.meta.env.VITE_MOBILE_NUMBER || "",
+      phone: "",
     },
     mode: "onSubmit",
   });

@@ -22,10 +22,10 @@ const Register = () => {
 
   const [registerFormCredentials, setRegisterFormCredentials] =
     useState<IRegisterCredentials>({
-      firstName: import.meta.env.VITE_FIRSTNAME || "",
-      lastName: import.meta.env.VITE_LASTNAME || "",
-      email: import.meta.env.VITE_USERNAME || "",
-      password: import.meta.env.VITE_PASSWORD || "",
+      firstName: "",
+      lastName: "",
+      email: "",
+      password: "",
     });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
