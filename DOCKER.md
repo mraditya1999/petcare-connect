@@ -21,8 +21,8 @@ docker-compose up -d
 
 ### 2. Access the Application
 
-- **Frontend**: http://localhost:5173
-- **Backend**: http://localhost:8080
+- **Frontend**: http://localhost:5173,https://petcareconnect.netlify.app
+- **Backend**: http://localhost:8080,petcare-connect-production.up.railway.app
 - **MySQL**: localhost:3306
 - **MongoDB**: localhost:27017
 

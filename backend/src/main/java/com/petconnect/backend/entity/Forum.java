@@ -17,7 +17,7 @@ import org.springframework.data.mongodb.core.mapping.DBRef;
 import java.util.*;
 import java.util.stream.Collectors;
 
-@EntityListeners(AuditingEntityListener.class)
+// @EntityListeners(AuditingEntityListener.class)
 @Document(collection = "forums")
 public class Forum {
     @Id
@@ -43,11 +43,11 @@ public class Forum {
     @Field("updated_at")
     private Date updatedAt;
 
-    @DBRef
-    private List<Comment> comments;
+    // @DBRef
+    private transient List<Comment> comments;
 
-    @DBRef
-    private List<Like> likes;
+    // @DBRef
+    private transient List<Like> likes;
 
 
     @Field("tags")
@@ -74,7 +74,7 @@ public class Forum {
         this.updatedAt = updatedAt;
         this.comments = comments;
         this.likes = likes;
-        setTags(tags); // normalize + enforce uniqueness
+        setTags(tags); 
     }
 
     public Set<String> getTags() {
