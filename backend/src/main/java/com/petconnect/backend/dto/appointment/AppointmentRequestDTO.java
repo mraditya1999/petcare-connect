@@ -6,7 +6,7 @@ import java.util.Date;
 
 public class AppointmentRequestDTO {
 
-    private Long petOwnerId;  // Optional field for pet owner ID
+    private Long petOwnerId;  
 
     @NotNull(message = "Pet ID is required")
     private Long petId;

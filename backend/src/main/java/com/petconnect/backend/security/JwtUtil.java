@@ -33,7 +33,6 @@ public class JwtUtil {
         byte[] decodedKey = Base64.getDecoder().decode(secret);
         this.secretKey = new SecretKeySpec(decodedKey, 0, decodedKey.length, "HmacSHA512");
     }
-
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
     }

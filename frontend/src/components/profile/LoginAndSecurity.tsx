@@ -17,10 +17,9 @@ const LoginAndSecurity: React.FC = () => {
   const dispatch = useAppDispatch();
   const user = useAppSelector((state) => state.auth.user);
 
-const isOAuthUser = ["GOOGLE", "GITHUB"].includes(
-  user?.data.oauthProvider ?? ""
-);
-
+  const isOAuthUser = ["GOOGLE", "GITHUB", "MOBILE"].includes(
+    user?.data.oauthProvider ?? "",
+  );
 
   const {
     register,

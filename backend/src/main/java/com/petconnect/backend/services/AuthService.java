@@ -195,7 +195,6 @@ public class AuthService implements UserDetailsService {
         logger.info("User registered with email: {}", user.getEmail());
     }
 
-
     /**
      * Authenticates a user.
      *

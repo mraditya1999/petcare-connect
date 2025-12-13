@@ -17,6 +17,7 @@ import { useGoogleLogin } from "@react-oauth/google";
 import GoogleSvg from "@/assets/images/GoogleSvg";
 import GitHubSvg from "@/assets/images/GitHubSvg";
 import { FaMobileScreenButton } from "react-icons/fa6";
+import { customFetch } from "@/utils/customFetch";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -76,9 +77,7 @@ const Login = () => {
   const githubLogin = () => {
     (async () => {
       try {
-        const resp = await (
-          await import("@/utils/customFetch")
-        ).customFetch.get("/auth/github/url");
+        const resp = await customFetch.get("/auth/github/url");
         const data = resp.data?.data;
         if (!data || !data.url || !data.state)
           throw new Error("Invalid auth url response");

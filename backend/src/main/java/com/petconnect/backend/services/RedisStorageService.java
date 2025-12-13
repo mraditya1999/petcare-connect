@@ -9,46 +9,6 @@ import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 
-//@Service
-//public class RedisStorageService {
-//
-//    private final RedisTemplate<String, String> redisTemplate;
-//
-//    @Autowired
-//    public RedisStorageService(RedisTemplate<String, String> redisTemplate) {
-//        this.redisTemplate = redisTemplate;
-//    }
-//
-//    private String verificationKey(String token) { return "token:verify:" + token; }
-//    private String resetKey(String token)        { return "token:reset:" + token; }
-//
-//    // Store verification token with TTL (e.g., 24 hours)
-//    public void saveVerificationToken(String token, String email, Duration ttl) {
-//        redisTemplate.opsForValue().set(verificationKey(token), email, ttl);
-//    }
-//
-//    public String getVerificationUser(String token) {
-//        return redisTemplate.opsForValue().get(verificationKey(token));
-//    }
-//
-//    public void deleteVerificationToken(String token) {
-//        redisTemplate.delete(verificationKey(token));
-//    }
-//
-//    // Store reset token with TTL (e.g., 15 minutes)
-//    public void saveResetToken(String token, String email, Duration ttl) {
-//        redisTemplate.opsForValue().set(resetKey(token), email, ttl);
-//    }
-//
-//    public String getResetUser(String token) {
-//        return redisTemplate.opsForValue().get(resetKey(token));
-//    }
-//
-//    public void deleteResetToken(String token) {
-//        redisTemplate.delete(resetKey(token));
-//    }
-//}
-
 @Service
 public class RedisStorageService {
 

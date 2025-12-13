@@ -10,7 +10,6 @@ import java.util.List;
 
 @Repository
 public interface PetRepository extends JpaRepository<Pet,Long> {
-    // Fetch pets with owner in one query
     @EntityGraph(value = "Pet.withOwner", type = EntityGraph.EntityGraphType.LOAD)
     List<Pet> findAllByPetOwner(User petOwner);
 

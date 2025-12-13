@@ -3,23 +3,19 @@ package com.petconnect.backend.entity;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
-import lombok.*;
-import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.util.Date;
 
-//@Builder
 @Entity
 @NamedEntityGraph(
-        name = "Pet.withOwner",
-        attributeNodes = {
-                @NamedAttributeNode("petOwner")
-        }
+    name = "Pet.withOwner",
+    attributeNodes = {
+        @NamedAttributeNode("petOwner")
+    }
 )
 public class Pet {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long petId;

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import { IUser } from "@/types/auth-types";
 import { customFetch } from "@/utils/customFetch";

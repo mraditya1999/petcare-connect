@@ -2,7 +2,7 @@ package com.petconnect.backend.dto;
 
 public class TempUserDTO {
     private String email;
-    private String password;       // already hashed
+    private String password;       
     private String firstName;
     private String lastName;
 

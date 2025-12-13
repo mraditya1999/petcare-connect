@@ -1,6 +1,5 @@
 package com.petconnect.backend.dto.specialist;
 
-import com.petconnect.backend.dto.user.AddressDTO;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Size;
 

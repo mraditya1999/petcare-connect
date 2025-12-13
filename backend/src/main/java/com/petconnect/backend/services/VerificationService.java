@@ -106,5 +106,4 @@ public class VerificationService {
         emailService.sendVerificationEmail(user);
     }
 
-
 }

@@ -1,7 +1,6 @@
 package com.petconnect.backend.controllers;
 
 import com.petconnect.backend.dto.*;
-import com.petconnect.backend.exceptions.ResourceNotFoundException;
 import com.petconnect.backend.services.ForumService;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
