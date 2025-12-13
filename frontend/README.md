@@ -52,7 +52,7 @@ These instructions will get you a copy of the project up and running on your loc
 4.  Navigate to the **Frontend** directory.
 5.  Install the required dependencies with `npm install`.
 6.  Start the development server with `npm run dev` (or `npm start`).
-7.  Open [http://localhost:5173](http://localhost:5173) to view the app in your browser.
+7.  Open [https://petcareconnect.netlify.app](https://petcareconnect.netlify.app) to view the app in your browser.
 
 ## Author
 

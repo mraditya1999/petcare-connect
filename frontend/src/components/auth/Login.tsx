@@ -26,8 +26,8 @@ const Login = () => {
   const [rememberMe, setRememberMe] = useState(false);
   const [loginFormCredentials, setLoginFormCredentials] =
     useState<ILoginCredentials>({
-      email:  "",
-      password: import.meta.env.VITE_PASSWORD || "",
+      email: "",
+      password: "",
     });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -106,7 +106,7 @@ const Login = () => {
             Email
           </Label>
           <Input
-            placeholder="balamia@gmail.com"
+            placeholder="example@gmail.com"
             type="email"
             name="email"
             value={loginFormCredentials.email}

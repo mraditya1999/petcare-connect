@@ -1,13 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <databaseChangeLog
-        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
-        https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
 
-    <!-- ===================================== -->
-    <!-- 1. Create roles table                 -->
-    <!-- ===================================== -->
     <changeSet id="1" author="aditya">
         <createTable tableName="roles">
             <column name="role_id" type="INTEGER" autoIncrement="true">
@@ -19,9 +16,6 @@
         </createTable>
     </changeSet>
 
-    <!-- ===================================== -->
-    <!-- 2. Insert default roles               -->
-    <!-- ===================================== -->
     <changeSet id="2" author="aditya">
         <insert tableName="roles">
             <column name="role_name" value="ADMIN"/>
@@ -34,9 +28,6 @@
         </insert>
     </changeSet>
 
-    <!-- ===================================== -->
-    <!-- 3. Create address table               -->
-    <!-- ===================================== -->
     <changeSet id="3" author="aditya">
         <createTable tableName="address">
             <column name="address_id" type="BIGINT" autoIncrement="true">
@@ -49,18 +40,15 @@
             <column name="state" type="VARCHAR(100)"/>
             <column name="country" type="VARCHAR(100)"/>
             <column name="locality" type="VARCHAR(255)"/>
-            <column name="created_at" type="TIMESTAMP">
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
                 <constraints nullable="false"/>
             </column>
-            <column name="updated_at" type="TIMESTAMP">
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
                 <constraints nullable="false"/>
             </column>
         </createTable>
     </changeSet>
 
-    <!-- ===================================== -->
-    <!-- 4. Create users table                 -->
-    <!-- ===================================== -->
     <changeSet id="4" author="aditya">
         <createTable tableName="users">
             <column name="user_id" type="BIGINT" autoIncrement="true">
@@ -91,10 +79,10 @@
             <column name="is_profile_complete" type="TINYINT(1)" defaultValue="0">
                 <constraints nullable="false"/>
             </column>
-            <column name="created_at" type="TIMESTAMP">
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
                 <constraints nullable="false"/>
             </column>
-            <column name="updated_at" type="TIMESTAMP">
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
                 <constraints nullable="false"/>
             </column>
         </createTable>
@@ -107,9 +95,6 @@
             onDelete="SET NULL"/>
     </changeSet>
 
-    <!-- ===================================== -->
-    <!-- 5. Create specialists table (JOINED)  -->
-    <!-- ===================================== -->
     <changeSet id="5" author="aditya">
         <createTable tableName="specialists">
             <column name="specialist_id" type="BIGINT">
@@ -131,9 +116,6 @@
             onDelete="CASCADE"/>
     </changeSet>
 
-    <!-- ===================================== -->
-    <!-- 6. Create pet table                   -->
-    <!-- ===================================== -->
     <changeSet id="6" author="aditya">
         <createTable tableName="pet">
             <column name="pet_id" type="BIGINT" autoIncrement="true">
@@ -158,10 +140,10 @@
             </column>
             <column name="avatar_url" type="VARCHAR(255)"/>
             <column name="avatar_public_id" type="VARCHAR(255)"/>
-            <column name="created_at" type="TIMESTAMP">
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
                 <constraints nullable="false"/>
             </column>
-            <column name="updated_at" type="TIMESTAMP">
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
                 <constraints nullable="false"/>
             </column>
         </createTable>
@@ -174,9 +156,6 @@
             onDelete="CASCADE"/>
     </changeSet>
 
-    <!-- ===================================== -->
-    <!-- 7. Create appointments table          -->
-    <!-- ===================================== -->
     <changeSet id="7" author="aditya">
         <createTable tableName="appointments">
             <column name="appointment_id" type="BIGINT" autoIncrement="true">
@@ -203,11 +182,10 @@
             <column name="duration" type="INT">
                 <constraints nullable="false"/>
             </column>
-            <column name="created_at" type="TIMESTAMP">
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
                 <constraints nullable="false"/>
             </column>
-            <column name="updated_at" type="TIMESTAMP"/>
-        </createTable>
+            <column name="updated_at" type="TIMESTAMP"/> </createTable>
         <addForeignKeyConstraint
             baseTableName="appointments"
             baseColumnNames="user_id"
@@ -231,9 +209,6 @@
             onDelete="CASCADE"/>
     </changeSet>
 
-    <!-- ===================================== -->
-    <!-- 8. Create oauth_accounts table        -->
-    <!-- ===================================== -->
     <changeSet id="8" author="aditya">
         <createTable tableName="oauth_accounts">
             <column name="id" type="BIGINT" autoIncrement="true">
@@ -252,10 +227,10 @@
             <column name="refresh_token" type="LONGTEXT"/>
             <column name="token_expiry" type="TIMESTAMP"/>
             <column name="refresh_token_expiry" type="TIMESTAMP"/>
-            <column name="created_at" type="TIMESTAMP">
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
                 <constraints nullable="false"/>
             </column>
-            <column name="updated_at" type="TIMESTAMP">
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
                 <constraints nullable="false"/>
             </column>
         </createTable>
@@ -275,9 +250,6 @@
         </createIndex>
     </changeSet>
 
-    <!-- ===================================== -->
-    <!-- 9. Create user_roles junction table   -->
-    <!-- ===================================== -->
     <changeSet id="9" author="aditya">
         <createTable tableName="user_roles">
             <column name="user_id" type="BIGINT">
@@ -303,9 +275,6 @@
             onDelete="CASCADE"/>
     </changeSet>
 
-    <!-- ===================================== -->
-    <!-- 10. Create performance indexes        -->
-    <!-- ===================================== -->
     <changeSet id="10" author="aditya">
         <createIndex tableName="users" indexName="idx_users_email">
             <column name="email"/>

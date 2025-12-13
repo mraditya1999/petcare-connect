@@ -60,7 +60,7 @@ Frontend: Navigate to /frontend, ensure API URLs are configured, and run:
 npm install
 npm run dev
 
-Open http://localhost:5173 to view the app in your browser.
+Open https://petcareconnect.netlify.app to view the app in your browser.
 
 Command,Directory,Description
 npm install,/frontend,Install dependencies
