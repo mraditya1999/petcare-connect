@@ -1,29 +1,28 @@
-// import { useAppSelector } from "@/app/hooks";
-// import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
-// import { ROUTES } from "@/utils/constants";
-// import { useEffect } from "react";
-import { Outlet } from "react-router-dom";
-// import { Outlet, useNavigate } from "react-router-dom";
+import { useAppSelector } from "@/app/hooks";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
+import { ROUTES } from "@/utils/constants";
+import { useEffect } from "react";
+import { Outlet, useNavigate } from "react-router-dom";
 import dogImg from "@/assets/images/authpage/dog.jpeg";
 import ThemeSwitcher from "@/components/ui/ThemeSwitcher";
 
 const AuthLayoutPage = () => {
-  // const navigate = useNavigate();
-  // const user = useAppSelector((state) => state.user.user);
+  const navigate = useNavigate();
+  const user = useAppSelector((state) => state.auth.user);
 
-  // useEffect(() => {
-  //   if (user) {
-  //     navigate(ROUTES.HOME);
-  //   }
-  // }, [user, navigate]);
+  useEffect(() => {
+    if (user) {
+      navigate(ROUTES.HOME);
+    }
+  }, [user, navigate]);
 
-  // if (user) {
-  //   return (
-  //     <div className="flex min-h-screen w-full items-center justify-center">
-  //       <LoadingSpinner />
-  //     </div>
-  //   );
-  // }
+  if (user) {
+    return (
+      <div className="flex min-h-screen w-full items-center justify-center">
+        <LoadingSpinner />
+      </div>
+    );
+  }
 
   return (
     <div className="grid min-h-screen grid-cols-1 place-items-center md:grid-cols-2">
