@@ -2,6 +2,9 @@ package com.petconnect.backend.security;
 
 import com.petconnect.backend.entity.Role;
 import com.petconnect.backend.entity.User;
+import com.petconnect.backend.exceptions.JwtTokenException;
+import com.petconnect.backend.exceptions.JwtTokenExpiredException;
+import com.petconnect.backend.exceptions.JwtTokenInvalidException;
 import io.jsonwebtoken.*;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
@@ -30,8 +33,12 @@ public class JwtUtil {
 
     @PostConstruct
     public void init() {
-        byte[] decodedKey = Base64.getDecoder().decode(secret);
-        this.secretKey = new SecretKeySpec(decodedKey, 0, decodedKey.length, "HmacSHA512");
+        try {
+            byte[] decodedKey = Base64.getDecoder().decode(secret);
+            this.secretKey = new SecretKeySpec(decodedKey, 0, decodedKey.length, "HmacSHA512");
+        } catch (IllegalArgumentException e) {
+            throw new IllegalStateException("Invalid JWT secret key format. Must be base64 encoded.", e);
+        }
     }
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
@@ -47,11 +54,19 @@ public class JwtUtil {
     }
 
     private Claims extractAllClaims(String token) {
-        return Jwts.parserBuilder()
-                .setSigningKey(secretKey)
-                .build()
-                .parseClaimsJws(token)
-                .getBody();
+        try {
+            return Jwts.parserBuilder()
+                    .setSigningKey(secretKey)
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody();
+        } catch (ExpiredJwtException e) {
+            throw new JwtTokenExpiredException();
+        } catch (UnsupportedJwtException | MalformedJwtException | IllegalArgumentException e) {
+            throw new JwtTokenInvalidException("Token is malformed or invalid");
+        } catch (JwtException e) {
+            throw new JwtTokenException("Failed to parse JWT token: " + e.getMessage());
+        }
     }
 
     public Boolean isTokenExpired(String token) {
@@ -59,29 +74,31 @@ public class JwtUtil {
     }
 
     public String generateToken(Map<String, Object> claims, String subject) {
-        return createToken(claims, subject);
+        return createToken(claims, subject, expiration * 1000);
     }
 
-    private String createToken(Map<String, Object> claims, String subject) {
+    private String createToken(Map<String, Object> claims, String subject, long ttlMillis) {
+        long now = System.currentTimeMillis();
         return Jwts.builder()
                 .setClaims(claims)
                 .setSubject(subject)
-                .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + expiration * 1000))
+                .setIssuedAt(new Date(now))
+                .setExpiration(new Date(now + ttlMillis))
                 .signWith(secretKey, SignatureAlgorithm.HS512)
                 .compact();
     }
 
     public String createToken(User user) {
         List<String> roles = user.getRoles().stream().map(Role::getAuthority).collect(Collectors.toList());
+        long now = System.currentTimeMillis();
 
         return Jwts.builder()
                 .setSubject(user.getEmail())
                 .claim("roles", roles)
                 .claim("userId", user.getUserId())
                 .claim("email", user.getEmail())
-                .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + expiration * 1000))
+                .setIssuedAt(new Date(now))
+                .setExpiration(new Date(now + expiration * 1000))
                 .signWith(secretKey, SignatureAlgorithm.HS512)
                 .compact();
     }
@@ -91,43 +108,27 @@ public class JwtUtil {
         return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
     }
 
-    // =======================================================================
-    // 🔽 BELOW THIS LINE ARE ADDED METHODS (NO EXISTING LOGIC MODIFIED)
-    // =======================================================================
-
     /**
-     * Generate token with custom TTL (from second JwtUtil)
+     * Generate token with custom TTL.
      */
     public String generateToken(Map<String, Object> claims, String subject, long ttlMillis) {
-        long now = System.currentTimeMillis();
-
-        return Jwts.builder()
-                .setClaims(claims)
-                .setSubject(subject)
-                .setIssuedAt(new Date(now))
-                .setExpiration(new Date(now + ttlMillis))
-                .signWith(secretKey, SignatureAlgorithm.HS512) // Keep HS512 (your class uses HS512)
-                .compact();
+        return createToken(claims, subject, ttlMillis);
     }
 
     /**
-     * Parse token safely (from second util)
+     * Parse token safely with proper exception handling.
      */
     public Claims parseToken(String token) {
-        return Jwts.parserBuilder()
-                .setSigningKey(secretKey)
-                .build()
-                .parseClaimsJws(token)
-                .getBody();
+        return extractAllClaims(token);
     }
 
     /**
-     * Safe expiry check (doesn’t throw JwtException)
+     * Safe expiry check (doesn't throw JwtException).
      */
     public boolean isExpiredSafe(String token) {
         try {
-            return parseToken(token).getExpiration().before(new Date());
-        } catch (JwtException ex) {
+            return extractAllClaims(token).getExpiration().before(new Date());
+        } catch (JwtTokenException ex) {
             return true;
         }
     }

@@ -318,4 +318,31 @@ public class GlobalExceptionHandler {
         ApiResponseDTO<Map<String, String>> response = new ApiResponseDTO<>("OTP expired", errorData);
         return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
     }
+
+    /**
+     * Handles JwtTokenException and its subclasses.
+     */
+    @ExceptionHandler(JwtTokenException.class)
+    public ResponseEntity<ApiResponseDTO<Object>> handleJwtTokenException(JwtTokenException ex, WebRequest request) {
+        logger.error("JWT Token error: {}", ex.getMessage(), ex);
+        return createErrorResponse(ex.getMessage(), null, HttpStatus.UNAUTHORIZED);
+    }
+
+    /**
+     * Handles JwtTokenExpiredException.
+     */
+    @ExceptionHandler(JwtTokenExpiredException.class)
+    public ResponseEntity<ApiResponseDTO<Object>> handleJwtTokenExpiredException(JwtTokenExpiredException ex, WebRequest request) {
+        logger.warn("JWT Token expired: {}", ex.getMessage());
+        return createErrorResponse(ex.getMessage(), null, HttpStatus.UNAUTHORIZED);
+    }
+
+    /**
+     * Handles JwtTokenInvalidException.
+     */
+    @ExceptionHandler(JwtTokenInvalidException.class)
+    public ResponseEntity<ApiResponseDTO<Object>> handleJwtTokenInvalidException(JwtTokenInvalidException ex, WebRequest request) {
+        logger.warn("JWT Token invalid: {}", ex.getMessage());
+        return createErrorResponse(ex.getMessage(), null, HttpStatus.UNAUTHORIZED);
+    }
 }

@@ -40,7 +40,9 @@ import org.springframework.security.oauth2.jwt.JwtException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.BodyInserters;
+import org.springframework.core.ParameterizedTypeReference;
 
 import java.security.SecureRandom;
 import java.time.Duration;
@@ -89,7 +91,7 @@ public class AuthService implements UserDetailsService {
     @Value("${verification.token.ttl.hours:24}")
     private long verificationTtlHours;
 
-    private final RestTemplate restTemplate;
+    private final WebClient webClient;
     private final UserRepository userRepository;
     private final RoleAssignmentUtil roleAssignmentUtil;
     private final PasswordEncoder passwordEncoder;
@@ -100,20 +102,19 @@ public class AuthService implements UserDetailsService {
     private final OtpRedisService otpRedisService;
     private final SmsSender smsSender;
     private final RedisStorageService redisStorageService;
-    private final CommonUtils commonUtils;
     private final UserMapper userMapper;
     private final TempUserMapper tempUserMapper;
 
 
     @Autowired
-    public AuthService(RestTemplate restTemplate, UserRepository userRepository,
+    public AuthService(WebClient webClient, UserRepository userRepository,
                        RoleAssignmentUtil roleAssignmentUtil,
                        @Lazy PasswordEncoder passwordEncoder,
                        @Lazy VerificationService verificationService,
                        JwtUtil jwtUtil,
                        TempUserStore tempUserStore,
-                       OAuthAccountRepository oauthAccountRepository, OtpRedisService otpRedisService, SmsSender smsSender, RedisStorageService redisStorageService, CommonUtils commonUtils, UserMapper userMapper, TempUserMapper tempUserMapper) {
-        this.restTemplate = restTemplate;
+                       OAuthAccountRepository oauthAccountRepository, OtpRedisService otpRedisService, SmsSender smsSender, RedisStorageService redisStorageService, UserMapper userMapper, TempUserMapper tempUserMapper) {
+        this.webClient = webClient;
         this.userRepository = userRepository;
         this.roleAssignmentUtil = roleAssignmentUtil;
         this.passwordEncoder = passwordEncoder;
@@ -124,7 +125,6 @@ public class AuthService implements UserDetailsService {
         this.otpRedisService = otpRedisService;
         this.smsSender = smsSender;
         this.redisStorageService = redisStorageService;
-        this.commonUtils = commonUtils;
         this.userMapper = userMapper;
         this.tempUserMapper = tempUserMapper;
     }
@@ -180,7 +180,7 @@ public class AuthService implements UserDetailsService {
         Set<Role.RoleName> roles = roleAssignmentUtil.determineRolesForUser(isFirstVerifiedUser );
         roleAssignmentUtil.assignRoles(user, roles);
 
-        String token = commonUtils.generateSecureToken();
+        String token = CommonUtils.generateSecureToken();
         user.setVerificationToken(token);
 
         // Save user to database with unverified status
@@ -263,13 +263,14 @@ public class AuthService implements UserDetailsService {
 
     public GoogleUserDTO fetchGoogleProfile(String accessToken) {
         String url = "https://www.googleapis.com/oauth2/v3/userinfo";
-        RestTemplate restTemplate = new RestTemplate();
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("Authorization", "Bearer " + accessToken);
-        HttpEntity<String> entity = new HttpEntity<>(headers);
-        ResponseEntity<GoogleUserDTO> response =
-                restTemplate.exchange(url, HttpMethod.GET, entity, GoogleUserDTO.class);
-        return response.getBody();
+        
+        return webClient.get()
+                .uri(url)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
+                .retrieve()
+                .bodyToMono(GoogleUserDTO.class)
+                .doOnError(error -> logger.error("Error fetching Google profile: {}", error.getMessage()))
+                .block(); // Blocking call since this is used in a non-reactive context
     }
 
     /**
@@ -408,7 +409,7 @@ public class AuthService implements UserDetailsService {
         user.setVerified(true);
 
         // Make sure validation won't fail (non-empty password)
-        String randomPassword = commonUtils.generateSecureRandomPassword();
+        String randomPassword = CommonUtils.generateSecureRandomPassword();
         user.setPassword(passwordEncoder.encode(randomPassword));
 
         boolean isFirstVerifiedUser = userRepository.countByIsVerified(true) == 0;
@@ -437,7 +438,7 @@ public class AuthService implements UserDetailsService {
             changed = true;
         }
         if (user.getPassword() == null || user.getPassword().isBlank()) {
-            String randomPassword = commonUtils.generateSecureRandomPassword();
+            String randomPassword = CommonUtils.generateSecureRandomPassword();
             user.setPassword(passwordEncoder.encode(randomPassword));
             changed = true;
         }
@@ -467,37 +468,41 @@ public class AuthService implements UserDetailsService {
             throw new IllegalArgumentException("GitHub authorization code is required");
         }
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("Accept", "application/json");
-        headers.setContentType(org.springframework.http.MediaType.APPLICATION_FORM_URLENCODED);
-
-        // Use URLEncodedUtils or MultiValueMap for form-urlencoded data
         org.springframework.util.MultiValueMap<String, String> body = new org.springframework.util.LinkedMultiValueMap<>();
         body.add("client_id", githubClientId);
         body.add("client_secret", githubClientSecret);
         body.add("code", code);
         body.add("redirect_uri", githubRedirectUri);
 
-        HttpEntity<org.springframework.util.MultiValueMap<String, String>> entity = new HttpEntity<>(body, headers);
-
         try {
-            ResponseEntity<Map> response = restTemplate.postForEntity(url, entity, Map.class);
+            Map<String, Object> response = webClient.post()
+                    .uri(url)
+                    .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                    .accept(MediaType.APPLICATION_JSON)
+                    .body(BodyInserters.fromFormData(body))
+                    .retrieve()
+                    .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
+                    .doOnError(error -> logger.error("GitHub OAuth error: {}", error.getMessage()))
+                    .block(); // Blocking call since this is used in a non-reactive context
             
-            if (response.getBody() == null) {
+            if (response == null) {
                 logger.error("Empty body returned from GitHub token exchange");
                 throw new IllegalStateException("Failed to exchange code for access token");
             }
 
-            Object token = response.getBody().get("access_token");
+            Object token = response.get("access_token");
             if (token == null) {
-                logger.error("No access_token in response from GitHub. Full response: {}", response.getBody());
+                logger.error("No access_token in response from GitHub. Full response: {}", response);
                 throw new IllegalStateException("No access token returned from GitHub");
             }
 
             logger.info("Successfully exchanged GitHub code for access token");
             return token.toString();
-        } catch (org.springframework.web.client.HttpClientErrorException ex) {
+        } catch (org.springframework.web.reactive.function.client.WebClientResponseException ex) {
             logger.error("GitHub OAuth error: {} - {}", ex.getStatusCode(), ex.getResponseBodyAsString());
+            throw new IllegalStateException("Failed to exchange code with GitHub: " + ex.getMessage(), ex);
+        } catch (Exception ex) {
+            logger.error("Unexpected error during GitHub token exchange: {}", ex.getMessage(), ex);
             throw new IllegalStateException("Failed to exchange code with GitHub: " + ex.getMessage(), ex);
         }
     }
@@ -505,20 +510,13 @@ public class AuthService implements UserDetailsService {
     public GitHubUserDTO fetchGitHubProfile(String accessToken) {
         String url = "https://api.github.com/user";
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setBearerAuth(accessToken);
-
-        HttpEntity<String> entity = new HttpEntity<>(headers);
-
-        ResponseEntity<GitHubUserDTO> response =
-                restTemplate.exchange(url, HttpMethod.GET, entity, GitHubUserDTO.class);
-
-        if (!response.getStatusCode().is2xxSuccessful()) {
-            logger.error("Failed to fetch GitHub profile, status: {}", response.getStatusCode());
-            throw new IllegalStateException("Failed to fetch GitHub profile");
-        }
-
-        return response.getBody();
+        return webClient.get()
+                .uri(url)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
+                .retrieve()
+                .bodyToMono(GitHubUserDTO.class)
+                .doOnError(error -> logger.error("Error fetching GitHub profile: {}", error.getMessage()))
+                .block(); // Blocking call since this is used in a non-reactive context
     }
 
     private String generateNumericOtp(int len) {
@@ -681,7 +679,7 @@ public class AuthService implements UserDetailsService {
             user.setFirstName(dto.getFirstName());
             user.setLastName(dto.getLastName());
             user.setEmail(email);
-            user.setPassword(passwordEncoder.encode(commonUtils.generateSecureRandomPassword()));
+            user.setPassword(passwordEncoder.encode(CommonUtils.generateSecureRandomPassword()));
             user.setIsProfileComplete(true);
 
             boolean isFirstVerifiedUser = userRepository.countByIsVerified(true) == 0;
