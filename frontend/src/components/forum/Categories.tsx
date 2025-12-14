@@ -17,7 +17,7 @@ const categories = [
 
 const Categories = () => {
   return (
-    <div className="section-width mx-auto grid max-w-6xl grid-cols-2 gap-6 px-6 lg:grid-cols-3">
+    <div className="section-width mx-auto grid max-w-6xl grid-cols-2 gap-3 px-6 md:gap-6 lg:grid-cols-3">
       {categories.map((category, index) => (
         <Card
           key={index}
@@ -25,7 +25,7 @@ const Categories = () => {
         >
           <div className="flex flex-col items-center gap-4">
             <img src={category.src} alt={category.title} />
-            <h3 className="text-center font-medium text-gray-800 dark:text-gray-200">
+            <h3 className="md:text-md text-center text-sm font-medium text-gray-800 dark:text-gray-200">
               {category.title}
             </h3>
           </div>

@@ -3,10 +3,11 @@ export interface IUser {
   data: {
     userId: string;
     email: string;
-    roles: Array<"USER" | "ADMIN" | "SPECIALIST">;
+    roles: ("USER" | "ADMIN" | "SPECIALIST")[];
     token: string;
     oauthProvider: "GOOGLE" | "LOCAL" | "GITHUB" | "MOBILE";
     isNewUser: boolean;
+    tempToken?: string | null;
   };
 }
 

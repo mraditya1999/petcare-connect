@@ -12,7 +12,7 @@ import {
   verifyOtp,
 } from "./authThunk";
 import { IUser, IUserState } from "@/types/auth-types";
-import { getUserFromStorage } from "@/utils/helpers";
+import { getUserFromStorage, saveUserToStorage } from "@/utils/helpers";
 
 const initialState: IUserState = {
   user: getUserFromStorage(),
@@ -24,7 +24,16 @@ const initialState: IUserState = {
 export const authSlice = createSlice({
   name: "auth",
   initialState,
-  reducers: {},
+  reducers: {
+    setUser: (state, action: PayloadAction<IUser>) => {
+      state.user = action.payload;
+      saveUserToStorage(action.payload, false);
+    },
+    clearUser: (state) => {
+      state.user = null;
+      localStorage.removeItem("user");
+    },
+  },
   extraReducers: (builder) => {
     builder
       .addCase(loginUser.pending, (state) => {
@@ -167,5 +176,7 @@ export const authSlice = createSlice({
       });
   },
 });
+
+export const { setUser, clearUser } = authSlice.actions;
 
 export default authSlice.reducer;
