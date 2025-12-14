@@ -21,6 +21,7 @@ import { verifyOtp, sendOtp, completeProfile } from "@/features/auth/authThunk";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import ShowToast from "../shared/ShowToast";
 import { saveUserToStorage } from "@/utils/helpers";
+import { setUser } from "@/features/auth/authSlice";
 
 interface NewUserInfo {
   firstName: string;
@@ -59,7 +60,6 @@ export default function VerifyOtp() {
     return () => clearInterval(interval);
   }, []);
 
-  // VerifyOtp.tsx (relevant parts)
   const handleVerifyOtp = async (data: { otp: string }) => {
     const res = await dispatch(verifyOtp({ phone, otp: data.otp }));
     if (verifyOtp.fulfilled.match(res)) {
@@ -75,23 +75,14 @@ export default function VerifyOtp() {
           type: "success",
         });
       } else {
-        if (!payload.isNewUser) {
-          saveUserToStorage(
-            {
-              message: "User logged in successfully.",
-              data: payload,
-            },
-            true,
-          );
+        const userData = {
+          message: "User logged in successfully.",
+          data: payload,
+        };
 
-          navigate("/");
-        } else {
-          ShowToast({
-            description:
-              "Unexpected state — new user did not return isNewUser true.",
-            type: "error",
-          });
-        }
+        saveUserToStorage(userData, true);
+        dispatch(setUser(userData));
+        navigate("/");
       }
     } else {
       ShowToast({
@@ -115,6 +106,8 @@ export default function VerifyOtp() {
     if (completeProfile.fulfilled.match(res)) {
       // Clear temp token
       localStorage.removeItem("tempSignupToken");
+      dispatch(setUser(res.payload.data));
+
       navigate("/");
     } else {
       // If server returns 401, you should prompt user to resend OTP
