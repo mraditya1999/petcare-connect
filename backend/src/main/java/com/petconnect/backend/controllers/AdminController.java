@@ -10,6 +10,7 @@ import com.petconnect.backend.entity.Comment;
 import com.petconnect.backend.entity.Like;
 import com.petconnect.backend.entity.Role;
 import com.petconnect.backend.exceptions.*;
+import com.petconnect.backend.exceptions.IllegalArgumentException;
 import com.petconnect.backend.mappers.CommentMapper;
 import com.petconnect.backend.mappers.LikeMapper;
 import com.petconnect.backend.services.*;
