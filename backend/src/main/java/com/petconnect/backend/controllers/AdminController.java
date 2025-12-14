@@ -79,8 +79,8 @@ public class AdminController {
      */
     @GetMapping("/users")
     public ResponseEntity<ApiResponseDTO<Page<UserDTO>>> getAllUsers(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "10") @Min(1) int size,
             @RequestParam(defaultValue = "userId") String sortBy,
             @RequestParam(defaultValue = "asc") String sortDir) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.fromString(sortDir), sortBy));
@@ -96,10 +96,16 @@ public class AdminController {
      * @return a response entity containing the user data
      */
     @GetMapping("/users/{userId}")
-    public ResponseEntity<ApiResponseDTO<UserDTO>> getUserById(@PathVariable Long userId) throws ResourceNotFoundException {
-        UserDTO user = userService.getUserById(userId);
-        logger.info("Fetched user with ID: {}", userId);
-        return ResponseEntity.ok(new ApiResponseDTO<>("Fetched user successfully", user));
+    public ResponseEntity<ApiResponseDTO<UserDTO>> getUserById(@PathVariable Long userId) {
+        try {
+            UserDTO user = userService.getUserById(userId);
+            logger.info("Fetched user with ID: {}", userId);
+            return ResponseEntity.ok(new ApiResponseDTO<>("Fetched user successfully", user));
+        } catch (ResourceNotFoundException e) {
+            logger.error("User not found with ID: {}", userId, e);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new ApiResponseDTO<>("User not found", null));
+        }
     }
 
     /**
@@ -178,8 +184,8 @@ public class AdminController {
     @GetMapping("/users/search")
     public ResponseEntity<ApiResponseDTO<Page<UserDTO>>> searchUsers(
             @RequestParam String keyword,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "10") @Min(1) int size,
             @RequestParam(defaultValue = "userId") String sortBy,
             @RequestParam(defaultValue = "asc") String sortDir) {
         try {
@@ -272,8 +278,8 @@ public class AdminController {
      */
     @GetMapping("/pets")
     public ResponseEntity<ApiResponseDTO<Page<PetResponseDTO>>> getAllPets(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "10") @Min(1) int size,
             @RequestParam(defaultValue = "petId") String sortBy,
             @RequestParam(defaultValue = "asc") String sortDir) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.fromString(sortDir), sortBy));
@@ -289,10 +295,16 @@ public class AdminController {
      * @return ResponseEntity with ApiResponseDTO containing the pet
      */
     @GetMapping("/pets/{id}")
-    public ResponseEntity<ApiResponseDTO<PetResponseDTO>> getPetById(@PathVariable Long id) throws ResourceNotFoundException {
-        PetResponseDTO pet = petService.getPetById(id);
-        logger.info("Fetched pet with ID: {}", id);
-        return ResponseEntity.ok(new ApiResponseDTO<>("Fetched pet", pet));
+    public ResponseEntity<ApiResponseDTO<PetResponseDTO>> getPetById(@PathVariable Long id) {
+        try {
+            PetResponseDTO pet = petService.getPetById(id);
+            logger.info("Fetched pet with ID: {}", id);
+            return ResponseEntity.ok(new ApiResponseDTO<>("Fetched pet", pet));
+        } catch (ResourceNotFoundException e) {
+            logger.error("Pet not found with ID: {}", id, e);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new ApiResponseDTO<>("Pet not found", null));
+        }
     }
 
     /**
@@ -307,7 +319,7 @@ public class AdminController {
     @PutMapping(value = "/pets/{id}", consumes = "multipart/form-data")
     public ResponseEntity<ApiResponseDTO<PetResponseDTO>> updatePetById(@PathVariable Long id,
                                                                         @Valid @ModelAttribute PetRequestDTO petRequestDTO,
-                                                                        @RequestPart(required = false) MultipartFile avatarFile) throws IOException {
+                                                                        @RequestPart(required = false) MultipartFile avatarFile) {
         try {
             PetResponseDTO updatedPet = petService.updatePetById(id, petRequestDTO, avatarFile);
             logger.info("Updated pet with ID: {}", id);
@@ -328,10 +340,16 @@ public class AdminController {
      * @return ResponseEntity with ApiResponse containing the deletion status
      */
     @DeleteMapping("/pets/{id}")
-    public ResponseEntity<ApiResponseDTO<String>> deletePetById(@PathVariable Long id) throws PetNotFoundException {
-        petService.deletePetById(id);
-        logger.info("Deleted pet with ID: {}", id);
-        return ResponseEntity.ok(new ApiResponseDTO<>("Pet deleted successfully"));
+    public ResponseEntity<ApiResponseDTO<String>> deletePetById(@PathVariable Long id) {
+        try {
+            petService.deletePetById(id);
+            logger.info("Deleted pet with ID: {}", id);
+            return ResponseEntity.ok(new ApiResponseDTO<>("Pet deleted successfully"));
+        } catch (PetNotFoundException e) {
+            logger.error("Pet not found with ID: {}", id, e);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new ApiResponseDTO<>("Pet not found", null));
+        }
     }
 
     //    ############################################################# SPECIALIST #########################################################
@@ -448,8 +466,8 @@ public class AdminController {
     @GetMapping("/specialists/search")
     public ResponseEntity<ApiResponseDTO<Page<SpecialistResponseDTO>>> searchSpecialists(
             @RequestParam String keyword,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "10") @Min(1) int size,
             @RequestParam(defaultValue = "specialistId") String sortBy,
             @RequestParam(defaultValue = "asc") String sortDir) {
         try {
@@ -541,8 +559,8 @@ public class AdminController {
      */
     @GetMapping("/comments")
     public ResponseEntity<ApiResponseDTO<Page<CommentDTO>>> getAllComments(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "5") int size) {
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "5") @Min(1) int size) {
         logger.debug("Fetching all comments with pagination");
         Page<CommentDTO> comments = commentService.getAllComments(PageRequest.of(page, size))
                 .map(commentMapper::toDTO);

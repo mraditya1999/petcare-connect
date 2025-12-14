@@ -11,6 +11,8 @@ import com.petconnect.backend.repositories.CommentRepository;
 import com.petconnect.backend.repositories.ForumRepository;
 import com.petconnect.backend.repositories.LikeRepository;
 import com.petconnect.backend.repositories.UserRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -28,6 +30,8 @@ import java.util.stream.Collectors;
 @Transactional
 public class CommentService {
 
+    private static final Logger logger = LoggerFactory.getLogger(CommentService.class);
+
     private final UserRepository userRepository;
     private final CommentRepository commentRepository;
     private final CommentMapper commentMapper;
@@ -37,6 +41,24 @@ public class CommentService {
 
     @Autowired
     public CommentService(UserRepository userRepository, CommentRepository commentRepository, CommentMapper commentMapper, ForumRepository forumRepository, LikeRepository likeRepository, UserMapper userMapper) {
+        if (userRepository == null) {
+            throw new IllegalArgumentException("UserRepository cannot be null");
+        }
+        if (commentRepository == null) {
+            throw new IllegalArgumentException("CommentRepository cannot be null");
+        }
+        if (commentMapper == null) {
+            throw new IllegalArgumentException("CommentMapper cannot be null");
+        }
+        if (forumRepository == null) {
+            throw new IllegalArgumentException("ForumRepository cannot be null");
+        }
+        if (likeRepository == null) {
+            throw new IllegalArgumentException("LikeRepository cannot be null");
+        }
+        if (userMapper == null) {
+            throw new IllegalArgumentException("UserMapper cannot be null");
+        }
         this.userRepository = userRepository;
         this.commentRepository = commentRepository;
         this.commentMapper = commentMapper;
@@ -80,19 +102,50 @@ public class CommentService {
         return new PageImpl<>(paginatedRootComments, pageable, rootComments.size());
     }
 
+    /**
+     * Creates a new comment on a forum.
+     *
+     * @param email the user's email (must not be null or blank)
+     * @param forumId the forum ID (must not be null or blank)
+     * @param commentDTO the comment data (must not be null)
+     * @return the created comment DTO
+     * @throws IllegalArgumentException if any parameter is null or email/forumId is blank
+     * @throws ResourceNotFoundException if user or forum is not found
+     */
     @Transactional
     public CommentDTO createComment(String email, String forumId, CommentDTO commentDTO) {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with email " + email));
-        forumRepository.findById(forumId)
-                .orElseThrow(() -> new ResourceNotFoundException("Forum not found with id " + forumId));
+        if (email == null || email.isBlank()) {
+            throw new IllegalArgumentException("Email cannot be null or blank");
+        }
+        if (forumId == null || forumId.isBlank()) {
+            throw new IllegalArgumentException("Forum ID cannot be null or blank");
+        }
+        if (commentDTO == null) {
+            throw new IllegalArgumentException("CommentDTO cannot be null");
+        }
+        if (commentDTO.getText() == null || commentDTO.getText().isBlank()) {
+            throw new IllegalArgumentException("Comment text cannot be null or blank");
+        }
+        
+        try {
+            User user = userRepository.findByEmail(email)
+                    .orElseThrow(() -> new ResourceNotFoundException("User not found with email " + email));
+            forumRepository.findById(forumId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Forum not found with id " + forumId));
 
-        Comment comment = commentMapper.toEntity(commentDTO);
-        comment.setForumId(forumId);
-        comment.setUserId(user.getUserId());
-        comment = commentRepository.save(comment);
+            Comment comment = commentMapper.toEntity(commentDTO);
+            comment.setForumId(forumId);
+            comment.setUserId(user.getUserId());
+            comment = commentRepository.save(comment);
 
-        return mapCommentWithRepliesToDTO(comment);
+            logger.info("Comment created by user {} on forum {}", email, forumId);
+            return mapCommentWithRepliesToDTO(comment);
+        } catch (ResourceNotFoundException e) {
+            throw e;
+        } catch (Exception e) {
+            logger.error("Error creating comment for user {} on forum {}", email, forumId, e);
+            throw new RuntimeException("Failed to create comment", e);
+        }
     }
 
 
@@ -119,40 +172,102 @@ public class CommentService {
                 });
     }
 
+    /**
+     * Deletes a comment if the user is the owner.
+     *
+     * @param email the user's email (must not be null or blank)
+     * @param commentId the comment ID (must not be null or blank)
+     * @return true if the comment was deleted, false if not found or user is not the owner
+     * @throws IllegalArgumentException if email or commentId is null or blank
+     * @throws ResourceNotFoundException if user is not found
+     */
     @Transactional
     public boolean deleteComment(String email, String commentId) {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with email " + email));
+        if (email == null || email.isBlank()) {
+            throw new IllegalArgumentException("Email cannot be null or blank");
+        }
+        if (commentId == null || commentId.isBlank()) {
+            throw new IllegalArgumentException("Comment ID cannot be null or blank");
+        }
+        
+        try {
+            User user = userRepository.findByEmail(email)
+                    .orElseThrow(() -> new ResourceNotFoundException("User not found with email " + email));
 
-        return commentRepository.findById(commentId)
-                .filter(comment -> comment.getUserId().equals(user.getUserId()))
-                .map(comment -> {
-                    likeRepository.deleteByCommentId(commentId); // Delete likes first
-                    commentRepository.delete(comment); // Then delete comment
-                    return true;
-                }).orElse(false);
+            return commentRepository.findById(commentId)
+                    .filter(comment -> comment.getUserId().equals(user.getUserId()))
+                    .map(comment -> {
+                        likeRepository.deleteByCommentId(commentId); // Delete likes first
+                        commentRepository.delete(comment); // Then delete comment
+                        logger.info("Comment {} deleted by user {}", commentId, email);
+                        return true;
+                    }).orElse(false);
+        } catch (ResourceNotFoundException e) {
+            throw e;
+        } catch (Exception e) {
+            logger.error("Error deleting comment {} for user {}", commentId, email, e);
+            throw new RuntimeException("Failed to delete comment", e);
+        }
     }
 
+    /**
+     * Creates a reply to a comment.
+     *
+     * @param forumId the forum ID (must not be null or blank)
+     * @param email the user's email (must not be null or blank)
+     * @param commentDTO the reply comment data (must not be null)
+     * @param parentId the parent comment ID (must not be null or blank)
+     * @return the created reply comment DTO
+     * @throws IllegalArgumentException if any parameter is null or forumId/email/parentId is blank
+     * @throws ResourceNotFoundException if user, forum, or parent comment is not found
+     */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public CommentDTO replyToComment(String forumId, String email, CommentDTO commentDTO, String parentId) {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with email " + email));
-        forumRepository.findById(forumId)
-                .orElseThrow(() -> new ResourceNotFoundException("Forum not found with id " + forumId));
-        Comment parentComment = commentRepository.findById(parentId)
-                .orElseThrow(() -> new ResourceNotFoundException("Parent comment not found with id " + parentId));
+        if (forumId == null || forumId.isBlank()) {
+            throw new IllegalArgumentException("Forum ID cannot be null or blank");
+        }
+        if (email == null || email.isBlank()) {
+            throw new IllegalArgumentException("Email cannot be null or blank");
+        }
+        if (commentDTO == null) {
+            throw new IllegalArgumentException("CommentDTO cannot be null");
+        }
+        if (commentDTO.getText() == null || commentDTO.getText().isBlank()) {
+            throw new IllegalArgumentException("Comment text cannot be null or blank");
+        }
+        if (parentId == null || parentId.isBlank()) {
+            throw new IllegalArgumentException("Parent comment ID cannot be null or blank");
+        }
+        
+        try {
+            User user = userRepository.findByEmail(email)
+                    .orElseThrow(() -> new ResourceNotFoundException("User not found with email " + email));
+            forumRepository.findById(forumId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Forum not found with id " + forumId));
+            Comment parentComment = commentRepository.findById(parentId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Parent comment not found with id " + parentId));
 
-        Comment comment = commentMapper.toEntity(commentDTO);
-        comment.setForumId(forumId);
-        comment.setUserId(user.getUserId());
-        comment.setParentComment(parentComment);
+            Comment comment = commentMapper.toEntity(commentDTO);
+            comment.setForumId(forumId);
+            comment.setUserId(user.getUserId());
+            comment.setParentComment(parentComment);
 
-        comment = commentRepository.save(comment);
+            comment = commentRepository.save(comment);
 
-        parentComment.getReplies().add(comment);
-        commentRepository.save(parentComment);
+            if (parentComment.getReplies() == null) {
+                parentComment.setReplies(new HashSet<>());
+            }
+            parentComment.getReplies().add(comment);
+            commentRepository.save(parentComment);
 
-        return mapCommentWithRepliesToDTO(comment);
+            logger.info("Reply created by user {} to comment {} on forum {}", email, parentId, forumId);
+            return mapCommentWithRepliesToDTO(comment);
+        } catch (ResourceNotFoundException e) {
+            throw e;
+        } catch (Exception e) {
+            logger.error("Error creating reply for user {} to comment {} on forum {}", email, parentId, forumId, e);
+            throw new RuntimeException("Failed to create reply", e);
+        }
     }
 
     private CommentDTO mapCommentWithRepliesToDTO(Comment comment) {

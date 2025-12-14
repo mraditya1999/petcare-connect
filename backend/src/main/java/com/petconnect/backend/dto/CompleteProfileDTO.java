@@ -3,7 +3,13 @@ package com.petconnect.backend.dto;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class CompleteProfileDTO {
     @NotEmpty(message = "Phone number is required")
     private String phone;
@@ -20,56 +26,4 @@ public class CompleteProfileDTO {
     @Email(message = "Email must be valid")
     @Size(max = 100, message = "Email cannot exceed 100 characters")
     private String email;
-
-    public CompleteProfileDTO() {
-    }
-
-    public CompleteProfileDTO(String phone, String firstName, String lastName, String email) {
-        this.phone = phone;
-        this.firstName = firstName;
-        this.lastName = lastName;
-        this.email = email;
-    }
-
-    public String getPhone() {
-        return phone;
-    }
-
-    public void setPhone(String phone) {
-        this.phone = phone;
-    }
-
-    public String getFirstName() {
-        return firstName;
-    }
-
-    public void setFirstName(String firstName) {
-        this.firstName = firstName;
-    }
-
-    public String getLastName() {
-        return lastName;
-    }
-
-    public void setLastName(String lastName) {
-        this.lastName = lastName;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    @Override
-    public String toString() {
-        return "CompleteProfileDTO{" +
-                "phone='" + phone + '\'' +
-                ", firstName='" + firstName + '\'' +
-                ", lastName='" + lastName + '\'' +
-                ", email='" + email + '\'' +
-                '}';
-    }
 }

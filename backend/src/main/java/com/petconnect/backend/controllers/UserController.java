@@ -19,6 +19,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 
 @RestController
@@ -61,11 +62,10 @@ public class UserController {
      * @return the ResponseEntity containing the ApiResponseDTO with the updated user information
      */
     @PutMapping(consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
-        public ResponseEntity<ApiResponseDTO<UserDTO>> updateUserProfile(
+    public ResponseEntity<ApiResponseDTO<UserDTO>> updateUserProfile(
             @AuthenticationPrincipal UserDetails userDetails,
             @Valid @ModelAttribute UserUpdateDTO userUpdateDTO,
-            @RequestParam(value = "profileImage", required = false) List<MultipartFile> profileImages)
-            throws java.io.IOException {
+            @RequestParam(value = "profileImage", required = false) List<MultipartFile> profileImages) throws IOException {
 
         logger.info("Received request to update user profile for: {}", userDetails.getUsername());
         MultipartFile profileImage = fileValidator.getSingleFile(profileImages);

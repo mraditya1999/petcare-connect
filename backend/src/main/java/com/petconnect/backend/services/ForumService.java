@@ -12,6 +12,8 @@ import com.petconnect.backend.repositories.CommentRepository;
 import com.petconnect.backend.repositories.ForumRepository;
 import com.petconnect.backend.repositories.LikeRepository;
 import com.petconnect.backend.repositories.UserRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -30,10 +32,10 @@ import java.util.stream.Collectors;
 @Service
 public class ForumService {
 
+    private static final Logger logger = LoggerFactory.getLogger(ForumService.class);
     private static final String USER_NOT_FOUND = "User not found with email ";
     private static final String FORUM_NOT_FOUND = "Forum not found with id ";
     private static final String COMMENT_NOT_FOUND = "Comment not found with id ";
-
 
     private final ForumRepository forumRepository;
     private final UserRepository userRepository;
@@ -48,6 +50,30 @@ public class ForumService {
 
     @Autowired
     public ForumService(ForumRepository forumRepository, UserRepository userRepository, LikeRepository likeRepository, CommentRepository commentRepository, ForumMapper forumMapper, LikeMapper likeMapper, CommentMapper commentMapper, LikeService likeService, CommentService commentService, MongoTemplate mongoTemplate) {
+        if (forumRepository == null) {
+            throw new IllegalArgumentException("ForumRepository cannot be null");
+        }
+        if (userRepository == null) {
+            throw new IllegalArgumentException("UserRepository cannot be null");
+        }
+        if (likeRepository == null) {
+            throw new IllegalArgumentException("LikeRepository cannot be null");
+        }
+        if (commentRepository == null) {
+            throw new IllegalArgumentException("CommentRepository cannot be null");
+        }
+        if (forumMapper == null) {
+            throw new IllegalArgumentException("ForumMapper cannot be null");
+        }
+        if (likeService == null) {
+            throw new IllegalArgumentException("LikeService cannot be null");
+        }
+        if (commentService == null) {
+            throw new IllegalArgumentException("CommentService cannot be null");
+        }
+        if (mongoTemplate == null) {
+            throw new IllegalArgumentException("MongoTemplate cannot be null");
+        }
         this.forumRepository = forumRepository;
         this.userRepository = userRepository;
         this.likeRepository = likeRepository;
@@ -135,19 +161,53 @@ public class ForumService {
     }
 
 
+    /**
+     * Creates a new forum post.
+     *
+     * @param email the user's email (must not be null or blank)
+     * @param forumCreateDTO the forum creation data (must not be null)
+     * @return the created forum DTO
+     * @throws IllegalArgumentException if email is null/blank or forumCreateDTO is null/invalid
+     * @throws ResourceNotFoundException if user is not found
+     */
     @Transactional
     public ForumDTO createForum(String email, ForumCreateDTO forumCreateDTO) {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with email " + email));
+        if (email == null || email.isBlank()) {
+            throw new IllegalArgumentException("Email cannot be null or blank");
+        }
+        if (forumCreateDTO == null) {
+            throw new IllegalArgumentException("ForumCreateDTO cannot be null");
+        }
+        if (forumCreateDTO.getTitle() == null || forumCreateDTO.getTitle().isBlank()) {
+            throw new IllegalArgumentException("Forum title cannot be null or blank");
+        }
+        if (forumCreateDTO.getContent() == null || forumCreateDTO.getContent().isBlank()) {
+            throw new IllegalArgumentException("Forum content cannot be null or blank");
+        }
+        
+        try {
+            User user = userRepository.findByEmail(email)
+                    .orElseThrow(() -> new ResourceNotFoundException("User not found with email " + email));
 
-        Forum forum = new Forum();
-        forum.setUserId(user.getUserId());
-        forum.setTitle(forumCreateDTO.getTitle());
-        forum.setContent(forumCreateDTO.getContent());
-        forum.setTags(forumCreateDTO.getTags());
+            Forum forum = new Forum();
+            forum.setUserId(user.getUserId());
+            forum.setTitle(forumCreateDTO.getTitle().trim());
+            forum.setContent(forumCreateDTO.getContent().trim());
+            if (forumCreateDTO.getTags() != null) {
+                forum.setTags(forumCreateDTO.getTags());
+            } else {
+                forum.setTags(new ArrayList<>());
+            }
 
-        forum = forumRepository.save(forum);
-        return convertToForumDTO(forum);
+            forum = forumRepository.save(forum);
+            logger.info("Forum created by user {} with ID: {}", email, forum.getForumId());
+            return convertToForumDTO(forum);
+        } catch (ResourceNotFoundException e) {
+            throw e;
+        } catch (Exception e) {
+            logger.error("Error creating forum for user {}", email, e);
+            throw new RuntimeException("Failed to create forum", e);
+        }
     }
 
     @Transactional
@@ -176,26 +236,50 @@ public class ForumService {
         return convertToForumDTO(forum);
     }
 
+    /**
+     * Deletes a forum post if the user is the owner.
+     *
+     * @param email the user's email (must not be null or blank)
+     * @param forumId the forum ID (must not be null or blank)
+     * @throws IllegalArgumentException if email/forumId is null/blank or user is not the owner
+     * @throws ResourceNotFoundException if user or forum is not found
+     */
     @Transactional
     public void deleteForum(String email, String forumId) {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with email " + email));
-
-        Forum forum = forumRepository.findById(forumId)
-                .orElseThrow(() -> new ResourceNotFoundException("Forum not found with id " + forumId));
-
-        if (!forum.getUserId().equals(user.getUserId())) {
-            throw new IllegalArgumentException("You can only delete your own forums.");
+        if (email == null || email.isBlank()) {
+            throw new IllegalArgumentException("Email cannot be null or blank");
         }
+        if (forumId == null || forumId.isBlank()) {
+            throw new IllegalArgumentException("Forum ID cannot be null or blank");
+        }
+        
+        try {
+            User user = userRepository.findByEmail(email)
+                    .orElseThrow(() -> new ResourceNotFoundException("User not found with email " + email));
 
-        // Delete all associated likes
-        likeRepository.deleteByForumId(forumId);
+            Forum forum = forumRepository.findById(forumId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Forum not found with id " + forumId));
 
-        // Delete all associated comments and their sub-comments
-        deleteCommentsByForumId(forumId);
+            if (!forum.getUserId().equals(user.getUserId())) {
+                logger.warn("User {} attempted to delete forum {} owned by user {}", email, forumId, forum.getUserId());
+                throw new IllegalArgumentException("You can only delete your own forums.");
+            }
 
-        // Delete the forum itself
-        forumRepository.delete(forum);
+            // Delete all associated likes
+            likeRepository.deleteByForumId(forumId);
+
+            // Delete all associated comments and their sub-comments
+            deleteCommentsByForumId(forumId);
+
+            // Delete the forum itself
+            forumRepository.delete(forum);
+            logger.info("Forum {} deleted by user {}", forumId, email);
+        } catch (ResourceNotFoundException | IllegalArgumentException e) {
+            throw e;
+        } catch (Exception e) {
+            logger.error("Error deleting forum {} for user {}", forumId, email, e);
+            throw new RuntimeException("Failed to delete forum", e);
+        }
     }
 
     @Transactional

@@ -102,45 +102,26 @@ package com.petconnect.backend.dto.specialist;
 
 import com.petconnect.backend.dto.user.AddressDTO;
 import com.petconnect.backend.dto.user.UserDTO;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@EqualsAndHashCode(callSuper = true)
 public class SpecialistResponseDTO extends UserDTO {
     private Long SpecialistId;
     private String speciality;
     private String about;
 
-    // Default constructor
-    public SpecialistResponseDTO() {}
-
-    public SpecialistResponseDTO(Long userId, String firstName, String lastName, String email, AddressDTO address, String avatarUrl, String avatarPublicId, String mobileNumber, String speciality, String about,Long specialistId) {
+    // Convenience constructor
+    public SpecialistResponseDTO(Long userId, String firstName, String lastName, String email, AddressDTO address, String avatarUrl, String avatarPublicId, String mobileNumber, String speciality, String about, Long specialistId) {
         super(userId, firstName, lastName, email, address, avatarUrl, avatarPublicId, mobileNumber);
         this.speciality = speciality;
         this.about = about;
         this.SpecialistId = specialistId;
-    }
-
-    // Getters and setters
-    public String getSpeciality() {
-        return speciality;
-    }
-
-    public void setSpeciality(String speciality) {
-        this.speciality = speciality;
-    }
-
-    public String getAbout() {
-        return about;
-    }
-
-    public void setAbout(String about) {
-        this.about = about;
-    }
-
-    public Long getSpecialistId() {
-        return SpecialistId;
-    }
-
-    public void setSpecialistId(Long specialistId) {
-        SpecialistId = specialistId;
     }
 
 

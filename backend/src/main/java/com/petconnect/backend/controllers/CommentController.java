@@ -4,6 +4,7 @@ import com.petconnect.backend.dto.ApiResponseDTO;
 import com.petconnect.backend.dto.CommentDTO;
 import com.petconnect.backend.services.CommentService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,8 +39,8 @@ public class CommentController {
     @GetMapping("/forums/{forumId}")
     public ResponseEntity<ApiResponseDTO<Page<CommentDTO>>> getAllCommentsByForumId(
             @PathVariable String forumId,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "5") int size) {
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "5") @Min(1) int size) {
         logger.debug("Fetching comments for forum ID: {}", forumId);
         Page<CommentDTO> comments = commentService.getAllCommentsByForumId(forumId, page, size);
         return ResponseEntity.ok(new ApiResponseDTO<>("Comments fetched successfully", comments));
@@ -107,9 +108,10 @@ public class CommentController {
     }
 
     @GetMapping("/{commentId}")
-    public ResponseEntity<CommentDTO> getCommentByIdWithSubcomments(@PathVariable String commentId) {
+    public ResponseEntity<ApiResponseDTO<CommentDTO>> getCommentByIdWithSubcomments(@PathVariable String commentId) {
+        logger.debug("Fetching comment with subcomments for ID: {}", commentId);
         CommentDTO comment = commentService.getCommentByIdWithSubcomments(commentId);
-        return new ResponseEntity<>(comment, HttpStatus.OK);
+        return ResponseEntity.ok(new ApiResponseDTO<>("Comment fetched successfully", comment));
     }
 
     /**

@@ -22,7 +22,13 @@ import java.time.Instant;
                 columnNames = {"provider", "providerUserId"}
         )
 )
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 @Builder
+@ToString(exclude = {"user", "accessToken", "refreshToken"})
+@EqualsAndHashCode(exclude = {"user"})
 public class OAuthAccount {
 
     @Id
@@ -85,117 +91,5 @@ public class OAuthAccount {
         GITHUB,
         MOBILE,
         LOCAL
-    }
-
-    public OAuthAccount() {
-    }
-
-    public OAuthAccount(Long id, User user, AuthProvider provider, String providerUserId, String accessToken, String refreshToken, Instant tokenExpiry, Instant refreshTokenExpiry, Instant createdAt, Instant updatedAt) {
-        this.id = id;
-        this.user = user;
-        this.provider = provider;
-        this.providerUserId = providerUserId;
-        this.accessToken = accessToken;
-        this.refreshToken = refreshToken;
-        this.tokenExpiry = tokenExpiry;
-        this.refreshTokenExpiry = refreshTokenExpiry;
-        this.createdAt = createdAt;
-        this.updatedAt = updatedAt;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public User getUser() {
-        return user;
-    }
-
-    public void setUser(User user) {
-        this.user = user;
-    }
-
-    public AuthProvider getProvider() {
-        return provider;
-    }
-
-    public void setProvider(AuthProvider provider) {
-        this.provider = provider;
-    }
-
-    public String getProviderUserId() {
-        return providerUserId;
-    }
-
-    public void setProviderUserId(String providerUserId) {
-        this.providerUserId = providerUserId;
-    }
-
-    public String getAccessToken() {
-        return accessToken;
-    }
-
-    public void setAccessToken(String accessToken) {
-        this.accessToken = accessToken;
-    }
-
-    public String getRefreshToken() {
-        return refreshToken;
-    }
-
-    public void setRefreshToken(String refreshToken) {
-        this.refreshToken = refreshToken;
-    }
-
-    public Instant getTokenExpiry() {
-        return tokenExpiry;
-    }
-
-    public void setTokenExpiry(Instant tokenExpiry) {
-        this.tokenExpiry = tokenExpiry;
-    }
-
-    public Instant getRefreshTokenExpiry() {
-        return refreshTokenExpiry;
-    }
-
-    public void setRefreshTokenExpiry(Instant refreshTokenExpiry) {
-        this.refreshTokenExpiry = refreshTokenExpiry;
-    }
-
-    public Instant getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(Instant createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public Instant getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(Instant updatedAt) {
-        this.updatedAt = updatedAt;
-    }
-
-    @Override
-    public String toString() {
-        return "OAuthAccount{" +
-                "id=" + id +
-                ", user=" + user +
-                ", provider=" + provider +
-                ", providerUserId='" + providerUserId + '\'' +
-                ", accessToken='" + accessToken + '\'' +
-                ", refreshToken='" + refreshToken + '\'' +
-                ", tokenExpiry=" + tokenExpiry +
-                ", refreshTokenExpiry=" + refreshTokenExpiry +
-                ", createdAt=" + createdAt +
-                ", updatedAt=" + updatedAt +
-                '}';
     }
 }

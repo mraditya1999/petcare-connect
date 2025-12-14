@@ -130,16 +130,12 @@ export const resetPassword = createAsyncThunk<
   { rejectValue: string }
 >(
   "auth/resetPassword",
-  async (
-    { parsedData, token, email }: ResetPasswordParams,
-    { rejectWithValue },
-  ) => {
+  async ({ parsedData, token }: ResetPasswordParams, { rejectWithValue }) => {
     try {
-      ShowToast({ description: "Resetting password...", type: "success" });
+      // ShowToast({ description: "Resetting password...", type: "success" });
       const response = await customFetch.post("/auth/reset-password", {
         newPassword: parsedData.password,
         token,
-        email,
       });
       ShowToast({ description: "Password reset successful!", type: "success" });
       return response.data;

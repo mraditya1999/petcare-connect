@@ -33,6 +33,12 @@ export const authSlice = createSlice({
       state.user = null;
       localStorage.removeItem("user");
     },
+    clearSuccess: (state) => {
+      state.success = null;
+    },
+    clearError: (state) => {
+      state.error = null;
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -141,6 +147,7 @@ export const authSlice = createSlice({
       .addCase(resetPassword.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
+        state.success = null;
       })
       .addCase(sendOtp.pending, (state) => {
         state.loading = true;
@@ -177,6 +184,6 @@ export const authSlice = createSlice({
   },
 });
 
-export const { setUser, clearUser } = authSlice.actions;
+export const { setUser, clearUser, clearSuccess, clearError } = authSlice.actions;
 
 export default authSlice.reducer;

@@ -138,18 +138,29 @@ public class AuthService implements UserDetailsService {
      */
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        email = email.toLowerCase(Locale.ROOT);
-        String finalEmail = email;
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + finalEmail));
+        if (email == null || email.isBlank()) {
+            throw new UsernameNotFoundException("Email cannot be null or blank");
+        }
+        
+        try {
+            email = email.toLowerCase(Locale.ROOT);
+            String finalEmail = email;
+            User user = userRepository.findByEmail(email)
+                    .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + finalEmail));
 
-        Set<GrantedAuthority> authorities = user.getRoles().stream()
-                .map(role -> new SimpleGrantedAuthority("ROLE_" + role.getRoleName().name()))
-                .collect(Collectors.toSet());
+            Set<GrantedAuthority> authorities = user.getRoles() != null ? user.getRoles().stream()
+                    .map(role -> new SimpleGrantedAuthority("ROLE_" + role.getRoleName().name()))
+                    .collect(Collectors.toSet()) : new HashSet<>();
 
-        // If password is null (OAuth-only account), supply empty string to avoid NPE in Spring User constructor.
-        String pwd = user.getPassword() == null ? "" : user.getPassword();
-        return new org.springframework.security.core.userdetails.User(user.getEmail(), pwd, authorities);
+            // If password is null (OAuth-only account), supply empty string to avoid NPE in Spring User constructor.
+            String pwd = user.getPassword() == null ? "" : user.getPassword();
+            return new org.springframework.security.core.userdetails.User(user.getEmail(), pwd, authorities);
+        } catch (UsernameNotFoundException e) {
+            throw e;
+        } catch (Exception e) {
+            logger.error("Error loading user by username: {}", email, e);
+            throw new UsernameNotFoundException("Error loading user: " + email, e);
+        }
     }
 
     /**
@@ -203,23 +214,49 @@ public class AuthService implements UserDetailsService {
      * @return an Optional containing the authenticated user, if found
      * @throws AuthenticationException if authentication fails
      */
+    /**
+     * Authenticates a user with email and password.
+     *
+     * @param email the user's email (must not be null or blank)
+     * @param password the user's password (must not be null or blank)
+     * @return an Optional containing the authenticated user
+     * @throws IllegalArgumentException if email or password is null/blank
+     * @throws AuthenticationException if authentication fails
+     */
     public Optional<User> authenticateUser(String email, String password) {
-        email = email.toLowerCase(Locale.ROOT);
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new AuthenticationException("Invalid email or password."));
-
-        if (user.getPassword() == null) {
-            // This account does not have a password (likely OAuth-only)
-            logger.warn("Attempt to password-authenticate OAuth-only account: {}", email);
-            throw new AuthenticationException("Invalid email or password.");
+        if (email == null || email.isBlank()) {
+            throw new IllegalArgumentException("Email cannot be null or blank");
         }
+        if (password == null || password.isBlank()) {
+            throw new IllegalArgumentException("Password cannot be null or blank");
+        }
+        
+        try {
+            final String normalizedEmail = email.toLowerCase(Locale.ROOT).trim();
+            User user = userRepository.findByEmail(normalizedEmail)
+                    .orElseThrow(() -> {
+                        logger.warn("Authentication attempt with non-existent email: {}", normalizedEmail);
+                        return new AuthenticationException("Invalid email or password.");
+                    });
 
-        if (passwordEncoder.matches(password, user.getPassword())) {
-            logger.info("User authenticated with email: {}", email);
-            return Optional.of(user);
-        } else {
-            logger.warn("Invalid email or password for email: {}", email);
-            throw new AuthenticationException("Invalid email or password.");
+            if (user.getPassword() == null) {
+                // This account does not have a password (likely OAuth-only)
+                logger.warn("Attempt to password-authenticate OAuth-only account: {}", email);
+                throw new AuthenticationException("Invalid email or password.");
+            }
+
+            if (passwordEncoder.matches(password, user.getPassword())) {
+                logger.info("User authenticated with email: {}", email);
+                return Optional.of(user);
+            } else {
+                logger.warn("Invalid password for email: {}", email);
+                throw new AuthenticationException("Invalid email or password.");
+            }
+        } catch (AuthenticationException e) {
+            throw e;
+        } catch (Exception e) {
+            logger.error("Error authenticating user with email: {}", email, e);
+            throw new AuthenticationException("Authentication failed: " + e.getMessage());
         }
     }
 
@@ -527,22 +564,51 @@ public class AuthService implements UserDetailsService {
         return String.format("%0" + len + "d", val);
     }
 
+    /**
+     * Sends an OTP to the specified phone number.
+     *
+     * @param phone the phone number (must not be null or blank)
+     * @throws IllegalArgumentException if phone is null or blank
+     * @throws IllegalStateException if phone is in cooldown or blocked
+     */
     public void sendOtp(String phone) {
-        if (otpRedisService.isInCooldown(phone)) {
-            throw new IllegalStateException("Please wait before requesting another code.");
+        if (phone == null || phone.isBlank()) {
+            throw new IllegalArgumentException("Phone number cannot be null or blank");
         }
+        
+        try {
+            String normalizedPhone = PhoneUtils.normalizeToE164(phone);
+            if (normalizedPhone == null) {
+                throw new IllegalArgumentException("Invalid phone number format");
+            }
+            
+            if (otpRedisService.isPhoneBlocked(normalizedPhone)) {
+                logger.warn("OTP send attempt for blocked phone: {}", normalizedPhone);
+                throw new IllegalStateException("Phone number is temporarily blocked. Please try again later.");
+            }
+            
+            if (otpRedisService.isInCooldown(normalizedPhone)) {
+                logger.warn("OTP send attempt during cooldown for phone: {}", normalizedPhone);
+                throw new IllegalStateException("Please wait before requesting another code.");
+            }
 
-        String otp = generateNumericOtp(otpLength);
-        String hashed = passwordEncoder.encode(otp);
+            String otp = generateNumericOtp(otpLength);
+            String hashed = passwordEncoder.encode(otp);
 
-        otpRedisService.saveOtp(phone, hashed);  // stores OTP hash in Redis
-        otpRedisService.setCooldown(phone);       // sets cooldown
+            otpRedisService.saveOtp(normalizedPhone, hashed);  // stores OTP hash in Redis
+            otpRedisService.setCooldown(normalizedPhone);       // sets cooldown
 
-        String message = String.format("Your verification code is %s. Expires in %d minutes.", otp, otpTtlMinutes);
-        smsSender.sendSms(phone, message);
+            String message = String.format("Your verification code is %s. Expires in %d minutes.", otp, otpTtlMinutes);
+            smsSender.sendSms(normalizedPhone, message);
 
-        // Log OTP sent (without exposing code)
-        logger.info("OTP sent to phone: {}", phone);
+            // Log OTP sent (without exposing code)
+            logger.info("OTP sent to phone: {}", normalizedPhone);
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            throw e;
+        } catch (Exception e) {
+            logger.error("Error sending OTP to phone: {}", phone, e);
+            throw new RuntimeException("Failed to send OTP", e);
+        }
     }
 
 
@@ -601,7 +667,7 @@ public class AuthService implements UserDetailsService {
         if (found.isPresent()) {
             User user = found.get();
 
-            if (!user.getIsProfileComplete()) {
+            if (!user.isProfileComplete()) {
                 String tempToken = generateJwtToken(user);
                 return new VerifyOtpResult(true, null, user.getUserId(), tempToken);
             }
@@ -626,13 +692,13 @@ public class AuthService implements UserDetailsService {
                 .findFirst()
                 .map(acc -> acc.getProvider().name())
                 .orElse(OAuthAccount.AuthProvider.MOBILE.name());
-        boolean isProfileCompleted = user.getIsProfileComplete();
+        boolean isProfileCompleted = user.isProfileComplete();
 
         return new UserLoginResponseDTO(
+                user.getUserId(),
                 user.getEmail(),
                 roles,
                 jwt,
-                user.getUserId(),
                 oauthProvider,
                 isProfileCompleted
         );
@@ -664,7 +730,7 @@ public class AuthService implements UserDetailsService {
             user.setFirstName(dto.getFirstName());
             user.setLastName(dto.getLastName());
             user.setEmail(email);
-            user.setIsProfileComplete(true);
+            user.setProfileComplete(true);
             user.setVerified(true);
 
             logger.info("Updating existing user profile for phone: {}", phone);
@@ -680,7 +746,7 @@ public class AuthService implements UserDetailsService {
             user.setLastName(dto.getLastName());
             user.setEmail(email);
             user.setPassword(passwordEncoder.encode(CommonUtils.generateSecureRandomPassword()));
-            user.setIsProfileComplete(true);
+            user.setProfileComplete(true);
 
             boolean isFirstVerifiedUser = userRepository.countByIsVerified(true) == 0;
             Set<Role.RoleName> roles = roleAssignmentUtil.determineRolesForUser(isFirstVerifiedUser);

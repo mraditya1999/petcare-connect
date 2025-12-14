@@ -9,6 +9,7 @@ import com.petconnect.backend.mappers.SpecialistMapper;
 import com.petconnect.backend.services.SpecialistService;
 import com.petconnect.backend.validators.FileValidator;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.data.domain.Page;
@@ -38,7 +39,7 @@ public class SpecialistController {
 
     private final SpecialistService specialistService;
     private final SpecialistMapper specialistMapper;
-    private static final Logger logger = LoggerFactory.getLogger(AuthController.class);
+    private static final Logger logger = LoggerFactory.getLogger(SpecialistController.class);
     private final FileValidator fileValidator;
 
     @Autowired
@@ -81,9 +82,8 @@ public class SpecialistController {
             }
 
             SpecialistResponseDTO updatedSpecialist = specialistService.updateSpecialist(specialistUpdateRequestDTO, profileImage, userDetails);
-            SpecialistResponseDTO specialistResponseDTO = specialistMapper.toSpecialistResponseDTO(updatedSpecialist);
             logger.info("Updated specialist profile for user: {}", userDetails.getUsername());
-            return ResponseEntity.ok(new ApiResponseDTO<>("Specialist updated successfully", specialistResponseDTO));
+            return ResponseEntity.ok(new ApiResponseDTO<>("Specialist updated successfully", updatedSpecialist));
         } catch (FileValidationException e) {
             logger.error(e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponseDTO<>(e.getMessage(), null));
@@ -107,8 +107,8 @@ public class SpecialistController {
      */
     @GetMapping
     public ResponseEntity<ApiResponseDTO<Page<SpecialistResponseDTO>>> getAllSpecialists(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "10") @Min(1) int size,
             @RequestParam(defaultValue = "userId") String sortBy,
             @RequestParam(defaultValue = "asc") String sortDir) {
         try {

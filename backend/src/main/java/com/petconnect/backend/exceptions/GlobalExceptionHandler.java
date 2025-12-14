@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.WebRequest;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -345,4 +346,30 @@ public class GlobalExceptionHandler {
         logger.warn("JWT Token invalid: {}", ex.getMessage());
         return createErrorResponse(ex.getMessage(), null, HttpStatus.UNAUTHORIZED);
     }
+
+     @ExceptionHandler(IOException.class)
+    public ResponseEntity<ErrorResponse> handleIOException(IOException ex, WebRequest request) {
+        logger.error("IO Exception occurred: {}", ex.getMessage(), ex);
+        ErrorResponse errorResponse = new ErrorResponse(
+            "FILE_PROCESSING_ERROR",
+            "An error occurred while processing the file: " + ex.getMessage(),
+            HttpStatus.INTERNAL_SERVER_ERROR.value()
+        );
+        return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ErrorResponse> handleIllegalArgumentException(IllegalArgumentException ex) {
+        logger.warn("IllegalArgumentException: {}", ex.getMessage(), ex);
+
+        ErrorResponse errorResponse = new ErrorResponse(
+                ex.getMessage(),
+                null,
+                HttpStatus.BAD_REQUEST.value()
+        );
+
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+    }
+
+
 }

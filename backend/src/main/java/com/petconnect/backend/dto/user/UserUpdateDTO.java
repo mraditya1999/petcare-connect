@@ -1,8 +1,13 @@
 package com.petconnect.backend.dto.user;
 
-
 import jakarta.validation.constraints.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class UserUpdateDTO {
 
     @NotBlank(message = "First name is mandatory")
@@ -30,80 +35,4 @@ public class UserUpdateDTO {
 
     @Size(max = 255, message = "Locality cannot exceed 255 characters")
     private String locality;
-
-    // It's usually best to handle image uploads separately, not directly in the DTO
-    // private MultipartFile profileImage;  // Remove from DTO
-
-    // Getters and setters for all fields
-    public String getFirstName() {
-        return firstName;
-    }
-
-    public void setFirstName(String firstName) {
-        this.firstName = firstName;
-    }
-
-    public String getLastName() {
-        return lastName;
-    }
-
-    public void setLastName(String lastName) {
-        this.lastName = lastName;
-    }
-
-//    public String getEmail() {
-//        return email;
-//    }
-//
-//    public void setEmail(String email) {
-//        this.email = email;
-//    }
-
-    public String getMobileNumber() {
-        return mobileNumber;
-    }
-
-    public void setMobileNumber(String mobileNumber) {
-        this.mobileNumber = mobileNumber;
-    }
-
-    public Long getPincode() {
-        return pincode;
-    }
-
-    public void setPincode(Long pincode) {
-        this.pincode = pincode;
-    }
-
-    public String getCity() {
-        return city;
-    }
-
-    public void setCity(String city) {
-        this.city = city;
-    }
-
-    public String getState() {
-        return state;
-    }
-
-    public void setState(String state) {
-        this.state = state;
-    }
-
-    public String getCountry() {
-        return country;
-    }
-
-    public void setCountry(String country) {
-        this.country = country;
-    }
-
-    public String getLocality() {
-        return locality;
-    }
-
-    public void setLocality(String locality) {
-        this.locality = locality;
-    }
 }

@@ -1,7 +1,13 @@
 package com.petconnect.backend.dto.pet;
 
 import jakarta.validation.constraints.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class PetRequestDTO {
 
     @NotNull(message = "Pet name cannot be null")
@@ -31,94 +37,4 @@ public class PetRequestDTO {
 
     private String avatarUrl;
     private String avatarPublicId;
-
-    public PetRequestDTO() {
-    }
-
-    public PetRequestDTO(String petName, String breed, Integer age, Double weight, String gender, String species) {
-        this.petName = petName;
-        this.breed = breed;
-        this.age = age;
-        this.weight = weight;
-        this.gender = gender;
-        this.species = species;
-    }
-
-    public String getPetName() {
-        return petName;
-    }
-
-    public void setPetName(String petName) {
-        this.petName = petName;
-    }
-
-    public String getBreed() {
-        return breed;
-    }
-
-    public void setBreed(String breed) {
-        this.breed = breed;
-    }
-
-    public int getAge() {
-        return age;
-    }
-
-    public void setAge(int age) {
-        this.age = age;
-    }
-
-    public Double getWeight() {
-        return weight;
-    }
-
-    public void setWeight(Double weight) {
-        this.weight = weight;
-    }
-
-    public String getGender() {
-        return gender;
-    }
-
-    public void setGender(String gender) {
-        this.gender = gender;
-    }
-
-    public String getSpecies() {
-        return species;
-    }
-
-    public void setSpecies(String species) {
-        this.species = species;
-    }
-
-    public String getAvatarUrl() {
-        return avatarUrl;
-    }
-
-    public void setAvatarUrl(String avatarUrl) {
-        this.avatarUrl = avatarUrl;
-    }
-
-    public String getAvatarPublicId() {
-        return avatarPublicId;
-    }
-
-    public void setAvatarPublicId(String avatarPublicId) {
-        this.avatarPublicId = avatarPublicId;
-    }
-
-    @Override
-    public String toString() {
-        return "PetRequestDTO{" +
-                "petName='" + petName + '\'' +
-                ", breed='" + breed + '\'' +
-                ", age=" + age +
-                ", weight=" + weight +
-                ", gender='" + gender + '\'' +
-                ", species='" + species + '\'' +
-                ", avatarUrl='" + avatarUrl + '\'' +
-                ", avatarPublicId='" + avatarPublicId + '\'' +
-                '}';
-    }
 }

@@ -41,6 +41,21 @@ public class PetService {
 
     @Autowired
     public PetService(PetRepository petRepository, UserRepository userRepository, PetMapper petMapper, UploadService uploadService, PetValidator petValidator) {
+        if (petRepository == null) {
+            throw new IllegalArgumentException("PetRepository cannot be null");
+        }
+        if (userRepository == null) {
+            throw new IllegalArgumentException("UserRepository cannot be null");
+        }
+        if (petMapper == null) {
+            throw new IllegalArgumentException("PetMapper cannot be null");
+        }
+        if (uploadService == null) {
+            throw new IllegalArgumentException("UploadService cannot be null");
+        }
+        if (petValidator == null) {
+            throw new IllegalArgumentException("PetValidator cannot be null");
+        }
         this.petRepository = petRepository;
         this.userRepository = userRepository;
         this.petMapper = petMapper;
@@ -59,38 +74,63 @@ public class PetService {
      */
     @Transactional
     public PetResponseDTO createPetForUser(@Valid PetRequestDTO petRequestDTO, MultipartFile avatarFile, String username) throws IOException {
+        if (username == null || username.isBlank()) {
+            throw new IllegalArgumentException("Username cannot be null or blank");
+        }
+        if (petRequestDTO == null) {
+            throw new IllegalArgumentException("PetRequestDTO cannot be null");
+        }
+        
         logger.info("Received request to create a pet for user: {}", username);
 
-        User petOwner = userRepository.findByEmail(username)
-                .orElseThrow(() -> {
-                    logger.error("User not found with email: {}", username);
-                    return new ResourceNotFoundException("User not found");
-                });
+        try {
+            User petOwner = userRepository.findByEmail(username)
+                    .orElseThrow(() -> {
+                        logger.error("User not found with email: {}", username);
+                        return new ResourceNotFoundException("User not found");
+                    });
 
-        petValidator.validate(petRequestDTO);
+            petValidator.validate(petRequestDTO);
 
-        if (petRepository.existsByPetOwnerAndPetName(petOwner, petRequestDTO.getPetName())) {
-            logger.error("Duplicate pet name: {}", petRequestDTO.getPetName());
-            throw new DuplicatePetNameException("A pet with the same name already exists for this user");
+            if (petRequestDTO.getPetName() != null && 
+                petRepository.existsByPetOwnerAndPetName(petOwner, petRequestDTO.getPetName())) {
+                logger.error("Duplicate pet name: {} for user: {}", petRequestDTO.getPetName(), username);
+                throw new DuplicatePetNameException("A pet with the same name already exists for this user");
+            }
+
+            Pet pet = petMapper.toEntity(petRequestDTO);
+            pet.setPetOwner(petOwner);
+            if (petRequestDTO.getGender() != null && !petRequestDTO.getGender().isBlank()) {
+                try {
+                    pet.setGender(Pet.Gender.valueOf(petRequestDTO.getGender().toUpperCase()));
+                } catch (IllegalArgumentException e) {
+                    logger.error("Invalid gender value: {}", petRequestDTO.getGender());
+                    throw new IllegalArgumentException("Invalid gender value: " + petRequestDTO.getGender());
+                }
+            }
+
+            Pet savedPet = petRepository.save(pet);
+            logger.info("Pet created with ID: {}", savedPet.getPetId());
+
+            if (avatarFile != null && !avatarFile.isEmpty()) {
+                logger.info("Uploading new profile image for pet");
+                Map<String, Object> uploadResult = uploadService.uploadImage(avatarFile, UploadService.ProfileType.PET);
+                savedPet.setAvatarUrl((String) uploadResult.get("url"));
+                savedPet.setAvatarPublicId((String) uploadResult.get("public_id"));
+                savedPet = petRepository.save(savedPet); // Update the pet with avatar information
+                logger.info("Updated pet with avatar image ID: {}", savedPet.getPetId());
+            }
+
+            return petMapper.toDTO(savedPet);
+        } catch (ResourceNotFoundException | DuplicatePetNameException | IllegalArgumentException e) {
+            throw e;
+        } catch (IOException e) {
+            logger.error("Error uploading avatar for pet creation for user: {}", username, e);
+            throw e;
+        } catch (Exception e) {
+            logger.error("Error creating pet for user: {}", username, e);
+            throw new RuntimeException("Failed to create pet", e);
         }
-
-        Pet pet = petMapper.toEntity(petRequestDTO);
-        pet.setPetOwner(petOwner);
-        pet.setGender(Pet.Gender.valueOf(petRequestDTO.getGender().toUpperCase())); // Convert String to Gender enum
-
-        Pet savedPet = petRepository.save(pet);
-        logger.info("Pet created with ID: {}", savedPet.getPetId());
-
-        if (avatarFile != null && !avatarFile.isEmpty()) {
-            logger.info("Uploading new profile image for pet");
-            Map<String, Object> uploadResult = uploadService.uploadImage(avatarFile, UploadService.ProfileType.PET);
-            savedPet.setAvatarUrl((String) uploadResult.get("url"));
-            savedPet.setAvatarPublicId((String) uploadResult.get("public_id"));
-            petRepository.save(savedPet); // Update the pet with avatar information
-            logger.info("Updated pet with avatar image ID: {}", savedPet.getPetId());
-        }
-
-        return petMapper.toDTO(savedPet);
     }
 
     /**
@@ -120,18 +160,32 @@ public class PetService {
      * @return PetResponseDTO containing the pet data
      */
     public PetResponseDTO getPetOfUserById(Long id, String username) {
-        Pet pet = petRepository.findById(id)
-                .orElseThrow(() -> {
-                    logger.error("Pet not found with ID: {}", id);
-                    return new ResourceNotFoundException("Pet not found");
-                });
-
-        if (!pet.getPetOwner().getEmail().equals(username)) {
-            logger.error("Unauthorized access to pet with ID: {}", id);
-            throw new UnauthorizedAccessException("Unauthorized to access this pet");
+        if (id == null) {
+            throw new IllegalArgumentException("Pet ID cannot be null");
         }
+        if (username == null || username.isBlank()) {
+            throw new IllegalArgumentException("Username cannot be null or blank");
+        }
+        
+        try {
+            Pet pet = petRepository.findById(id)
+                    .orElseThrow(() -> {
+                        logger.error("Pet not found with ID: {}", id);
+                        return new ResourceNotFoundException("Pet not found");
+                    });
 
-        return petMapper.toDTO(pet);
+            if (pet.getPetOwner() == null || !username.equals(pet.getPetOwner().getEmail())) {
+                logger.error("Unauthorized access to pet with ID: {} by user: {}", id, username);
+                throw new UnauthorizedAccessException("Unauthorized to access this pet");
+            }
+
+            return petMapper.toDTO(pet);
+        } catch (ResourceNotFoundException | UnauthorizedAccessException e) {
+            throw e;
+        } catch (Exception e) {
+            logger.error("Error retrieving pet {} for user {}", id, username, e);
+            throw new RuntimeException("Failed to retrieve pet", e);
+        }
     }
 
 
@@ -147,53 +201,91 @@ public class PetService {
      */
     @Transactional
     public PetResponseDTO updatePetForUser(Long id, @Valid PetRequestDTO petRequestDTO, MultipartFile avatarFile, String username) throws IOException {
-        Pet existingPet = petRepository.findById(id)
-                .orElseThrow(() -> {
-                    logger.error("Pet not found with ID: {}", id);
-                    return new ResourceNotFoundException("Pet not found");
-                });
-
-        if (!existingPet.getPetOwner().getEmail().equals(username)) {
-            logger.error("Unauthorized to update pet with ID: {}", id);
-            throw new UnauthorizedAccessException("Unauthorized to update this pet");
+        if (id == null) {
+            throw new IllegalArgumentException("Pet ID cannot be null");
         }
+        if (username == null || username.isBlank()) {
+            throw new IllegalArgumentException("Username cannot be null or blank");
+        }
+        if (petRequestDTO == null) {
+            throw new IllegalArgumentException("PetRequestDTO cannot be null");
+        }
+        
+        try {
+            Pet existingPet = petRepository.findById(id)
+                    .orElseThrow(() -> {
+                        logger.error("Pet not found with ID: {}", id);
+                        return new ResourceNotFoundException("Pet not found");
+                    });
 
-        petValidator.validate(petRequestDTO);
+            if (existingPet.getPetOwner() == null || !username.equals(existingPet.getPetOwner().getEmail())) {
+                logger.error("Unauthorized to update pet with ID: {} by user: {}", id, username);
+                throw new UnauthorizedAccessException("Unauthorized to update this pet");
+            }
 
-        // Update pet details
-        if (petRequestDTO.getPetName() != null) existingPet.setPetName(petRequestDTO.getPetName());
-        if (petRequestDTO.getAge() != 0) existingPet.setAge(petRequestDTO.getAge());
-        if (petRequestDTO.getWeight() != null) existingPet.setWeight(petRequestDTO.getWeight());
-        if (petRequestDTO.getGender() != null) existingPet.setGender(Pet.Gender.valueOf(petRequestDTO.getGender().toUpperCase()));
-        if (petRequestDTO.getBreed() != null) existingPet.setBreed(petRequestDTO.getBreed());
-        if (petRequestDTO.getSpecies() != null) existingPet.setSpecies(petRequestDTO.getSpecies());
+            petValidator.validate(petRequestDTO);
 
-        // Upload avatar file if present
-        if (avatarFile != null && !avatarFile.isEmpty()) {
-            // Delete old image first
-            if (existingPet.getAvatarPublicId() != null && !existingPet.getAvatarPublicId().isEmpty()) {
-                logger.info("Deleting old profile image for pet with ID: {}", existingPet.getPetId());
+            // Update pet details
+            if (petRequestDTO.getPetName() != null && !petRequestDTO.getPetName().isBlank()) {
+                existingPet.setPetName(petRequestDTO.getPetName().trim());
+            }
+            if (petRequestDTO.getAge() > 0) {
+                existingPet.setAge(petRequestDTO.getAge());
+            }
+            if (petRequestDTO.getWeight() != null) {
+                existingPet.setWeight(petRequestDTO.getWeight());
+            }
+            if (petRequestDTO.getGender() != null && !petRequestDTO.getGender().isBlank()) {
                 try {
-                    uploadService.deleteImage(existingPet.getAvatarPublicId());
-                } catch (IOException e) {
-                    logger.error("Error deleting old avatar with ID: {}", existingPet.getAvatarPublicId(), e);
-                    throw new ImageDeletionException("Error deleting old avatar image", e);
+                    existingPet.setGender(Pet.Gender.valueOf(petRequestDTO.getGender().toUpperCase()));
+                } catch (IllegalArgumentException e) {
+                    logger.error("Invalid gender value: {}", petRequestDTO.getGender());
+                    throw new IllegalArgumentException("Invalid gender value: " + petRequestDTO.getGender());
+                }
+            }
+            if (petRequestDTO.getBreed() != null) {
+                existingPet.setBreed(petRequestDTO.getBreed().trim());
+            }
+            if (petRequestDTO.getSpecies() != null) {
+                existingPet.setSpecies(petRequestDTO.getSpecies().trim());
+            }
+
+            // Upload avatar file if present
+            if (avatarFile != null && !avatarFile.isEmpty()) {
+                // Delete old image first
+                if (existingPet.getAvatarPublicId() != null && !existingPet.getAvatarPublicId().isEmpty()) {
+                    logger.info("Deleting old profile image for pet with ID: {}", existingPet.getPetId());
+                    try {
+                        uploadService.deleteImage(existingPet.getAvatarPublicId());
+                    } catch (IOException e) {
+                        logger.error("Error deleting old avatar with ID: {}", existingPet.getAvatarPublicId(), e);
+                        throw new ImageDeletionException("Error deleting old avatar image", e);
+                    }
+                }
+
+                // Upload new image
+                logger.info("Uploading new profile image for pet");
+                Map<String, Object> uploadResult = uploadService.uploadImage(avatarFile, UploadService.ProfileType.PET);
+                existingPet.setAvatarUrl((String) uploadResult.get("url"));
+                existingPet.setAvatarPublicId((String) uploadResult.get("public_id"));
+            } else {
+                if (petRequestDTO.getAvatarUrl() != null) {
+                    existingPet.setAvatarUrl(petRequestDTO.getAvatarUrl());
                 }
             }
 
-            // Upload new image
-            logger.info("Uploading new profile image for pet");
-            Map<String, Object> uploadResult = uploadService.uploadImage(avatarFile, UploadService.ProfileType.PET);
-            existingPet.setAvatarUrl((String) uploadResult.get("url"));
-            existingPet.setAvatarPublicId((String) uploadResult.get("public_id"));
-        } else {
-            if (petRequestDTO.getAvatarUrl() != null) {
-                existingPet.setAvatarUrl(petRequestDTO.getAvatarUrl());
-            }
+            Pet updatedPet = petRepository.save(existingPet);
+            logger.info("Pet {} updated by user {}", id, username);
+            return petMapper.toDTO(updatedPet);
+        } catch (ResourceNotFoundException | UnauthorizedAccessException | ImageDeletionException | IllegalArgumentException e) {
+            throw e;
+        } catch (IOException e) {
+            logger.error("Error uploading avatar for pet update for user: {}", username, e);
+            throw e;
+        } catch (Exception e) {
+            logger.error("Error updating pet {} for user {}", id, username, e);
+            throw new RuntimeException("Failed to update pet", e);
         }
-
-        Pet updatedPet = petRepository.save(existingPet);
-        return petMapper.toDTO(updatedPet);
     }
 
     /**
