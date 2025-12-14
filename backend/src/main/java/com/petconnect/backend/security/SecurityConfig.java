@@ -1,7 +1,9 @@
 package com.petconnect.backend.security;
 
+import com.petconnect.backend.config.SecurityProperties;
 import com.petconnect.backend.services.AuthService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -10,50 +12,66 @@ import org.springframework.security.config.annotation.authentication.builders.Au
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
+import org.springframework.web.cors.CorsConfigurationSource;
 import static org.springframework.security.config.Customizer.withDefaults;
 
 @EnableWebSecurity
 @Configuration
+@EnableConfigurationProperties(SecurityProperties.class)
 public class SecurityConfig {
 
     private final JwtRequestFilter jwtRequestFilter;
     private final AuthService authService;
+    private final SecurityProperties securityProperties;
+    private final CorsConfigurationSource corsConfigurationSource;
 
     @Autowired
-    public SecurityConfig(JwtRequestFilter jwtRequestFilter, AuthService authService) {
+    public SecurityConfig(JwtRequestFilter jwtRequestFilter, AuthService authService, 
+                         SecurityProperties securityProperties, CorsConfigurationSource corsConfigurationSource) {
         this.jwtRequestFilter = jwtRequestFilter;
         this.authService = authService;
+        this.securityProperties = securityProperties;
+        this.corsConfigurationSource = corsConfigurationSource;
     }
-
-    private static final String[] AUTH_WHITELIST = {
-            "/auth/**",
-            "/upload/**",
-    };
-
-    private static final String[] GET_REQUEST_WHITELIST = {
-            "/forums/**"
-            , "/specialists/**"
-            ,"/comments/**"
-            ,"/likes/**"
-    };
 
     @Bean
     SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
-        http.cors(withDefaults())
+        http.cors(cors -> cors.configurationSource(corsConfigurationSource))
                 .authorizeHttpRequests((requests) -> requests
-                        .requestMatchers(AUTH_WHITELIST).permitAll()
-                        .requestMatchers(HttpMethod.GET,GET_REQUEST_WHITELIST ).permitAll()
+                        .requestMatchers(securityProperties.authWhitelist().toArray(new String[0])).permitAll()
+                        .requestMatchers(HttpMethod.GET, securityProperties.getRequestWhitelist().toArray(new String[0])).permitAll()
                         .requestMatchers(HttpMethod.POST, "/specialists/**").hasRole("ADMIN")
                         .requestMatchers("/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/profile/**", "/forums/**", "/appointments/**", "/pets/**","/comments/**","/likes/**").authenticated()
+                        // GET requests to forums, comments, likes are already permitted via getRequestWhitelist
+                        // Only POST, PUT, DELETE require authentication
+                        .requestMatchers(HttpMethod.POST, "/forums/**").authenticated()
+                        .requestMatchers(HttpMethod.PUT, "/forums/**").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/forums/**").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/comments/**").authenticated()
+                        .requestMatchers(HttpMethod.PUT, "/comments/**").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/comments/**").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/likes/**").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/likes/**").authenticated()
+                        .requestMatchers("/profile/**", "/appointments/**", "/pets/**").authenticated()
                         .anyRequest().authenticated())
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .headers(headers -> headers
+                        .contentSecurityPolicy(csp -> csp.policyDirectives("default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'"))
+                        .frameOptions(HeadersConfigurer.FrameOptionsConfig::deny)
+                        .xssProtection(xss -> xss.headerValue(org.springframework.security.web.header.writers.XXssProtectionHeaderWriter.HeaderValue.ENABLED_MODE_BLOCK))
+                        .contentTypeOptions(withDefaults())
+                        .referrerPolicy(referrer -> referrer.policy(ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN))
+                        .httpStrictTransportSecurity(hsts -> hsts
+                                .maxAgeInSeconds(31536000)
+                                .includeSubDomains(true)))
                 .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
         http.httpBasic(withDefaults());
         return http.build();

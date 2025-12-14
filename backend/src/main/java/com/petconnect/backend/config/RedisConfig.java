@@ -1,6 +1,6 @@
 package com.petconnect.backend.config;
 
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
@@ -10,17 +10,23 @@ import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSeriali
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 @Configuration
+@EnableConfigurationProperties(RedisProperties.class)
 public class RedisConfig {
 
     @Bean
-    public LettuceConnectionFactory lettuceConnectionFactory(
-            @Value("${spring.data.redis.host}") String host,
-            @Value("${spring.data.redis.port}") int port,
-            @Value("${spring.data.redis.password:}") String pwd) {
+    public LettuceConnectionFactory lettuceConnectionFactory(RedisProperties properties) {
+        RedisStandaloneConfiguration conf = new RedisStandaloneConfiguration(
+                properties.host(), 
+                properties.port());
+        
+        if (properties.password() != null && !properties.password().isBlank()) {
+            conf.setPassword(properties.password());
+        }
 
-        RedisStandaloneConfiguration conf = new RedisStandaloneConfiguration(host, port);
-        if (!pwd.isBlank()) conf.setPassword(pwd);
-        return new LettuceConnectionFactory(conf);
+        LettuceConnectionFactory factory = new LettuceConnectionFactory(conf);
+        // Timeout configuration can be added via LettucePoolingClientConfiguration if needed
+        // For now, using default timeouts to maintain existing functionality
+        return factory;
     }
 
     @Bean
@@ -29,6 +35,7 @@ public class RedisConfig {
         template.setConnectionFactory(factory);
         template.setKeySerializer(new StringRedisSerializer());
         template.setValueSerializer(new GenericJackson2JsonRedisSerializer());
+        template.afterPropertiesSet();
         return template;
     }
 }

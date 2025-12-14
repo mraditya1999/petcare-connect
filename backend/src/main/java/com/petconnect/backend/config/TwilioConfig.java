@@ -2,21 +2,22 @@ package com.petconnect.backend.config;
 
 import com.twilio.Twilio;
 import jakarta.annotation.PostConstruct;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
+@EnableConfigurationProperties(TwilioProperties.class)
 public class TwilioConfig {
 
-    @Value("${twilio.accountSid}")
-    private String accountSid;
+    private final TwilioProperties twilioProperties;
 
-    @Value("${twilio.authToken}")
-    private String authToken;
+    public TwilioConfig(TwilioProperties twilioProperties) {
+        this.twilioProperties = twilioProperties;
+    }
 
     @PostConstruct
     public void init() {
-        Twilio.init(accountSid, authToken);
+        Twilio.init(twilioProperties.accountSid(), twilioProperties.authToken());
     }
 }
 

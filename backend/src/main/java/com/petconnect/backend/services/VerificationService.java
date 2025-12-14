@@ -4,7 +4,6 @@ import com.petconnect.backend.entity.Role;
 import com.petconnect.backend.entity.User;
 import com.petconnect.backend.exceptions.ResourceNotFoundException;
 import com.petconnect.backend.repositories.UserRepository;
-import com.petconnect.backend.utils.CommonUtils;
 import com.petconnect.backend.utils.RoleAssignmentUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,20 +24,18 @@ public class VerificationService {
     private final EmailService emailService;
     private final RoleAssignmentUtil roleAssignmentUtil;
     private final RedisStorageService redisStorageService;
-    private final CommonUtils commonUtils;
 
     @Autowired
     public VerificationService(UserRepository userRepository,
                                @Lazy PasswordEncoder passwordEncoder,
                                EmailService emailService,
                                RoleAssignmentUtil roleAssignmentUtil,
-                               RedisStorageService redisStorageService, CommonUtils commonUtils) {
+                               RedisStorageService redisStorageService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.emailService = emailService;
         this.roleAssignmentUtil = roleAssignmentUtil;
         this.redisStorageService = redisStorageService;
-        this.commonUtils = commonUtils;
     }
 
     /**

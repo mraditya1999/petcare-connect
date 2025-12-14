@@ -2,6 +2,7 @@ package com.petconnect.backend.utils;
 
 import com.petconnect.backend.entity.Role;
 import com.petconnect.backend.entity.User;
+import com.petconnect.backend.exceptions.RoleNotFoundException;
 import com.petconnect.backend.repositories.RoleRepository;
 import com.petconnect.backend.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,7 +39,7 @@ public class RoleAssignmentUtil {
 
     private Role fetchRole(Role.RoleName roleName) {
         return roleRepository.findByRoleName(roleName)
-                .orElseThrow(() -> new RuntimeException(roleName + " role not found"));
+                .orElseThrow(() -> new RoleNotFoundException("Role not found: " + roleName));
     }
 
     public Set<Role.RoleName> determineRolesForUser(boolean isFirstUser, Role.RoleName defaultRole, Role.RoleName additionalRole) {
