@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -39,7 +39,6 @@ const ResetPassword = () => {
         resetPasswordCredentials,
       );
       const token = query.get("token");
-      const email = query.get("email");
       await dispatch(
         resetPassword({
           parsedData: {
@@ -47,7 +46,7 @@ const ResetPassword = () => {
             confirmPassword: "",
           },
           token,
-          email,
+          email: null, // Backend doesn't need email, it gets it from Redis using token
         }),
       ).unwrap();
       ShowToast({
@@ -66,6 +65,42 @@ const ResetPassword = () => {
       });
     }
   };
+
+  // Check if token is missing on mount
+  useEffect(() => {
+    const token = query.get("token");
+    if (!token) {
+      ShowToast({
+        description:
+          "Reset token is missing. Please use the link from your email.",
+        type: "error",
+      });
+    }
+  }, []);
+
+  // Clear success state when component unmounts or navigates away
+  useEffect(() => {
+    return () => {
+      // This will run when component unmounts
+      // Note: We can't dispatch here as component is unmounting
+      // State will be cleared by navigation or by adding a clearSuccess action
+    };
+  }, []);
+
+  const token = query.get("token");
+
+  // Show error if token is missing
+  if (!token) {
+    return (
+      <article className="fixed-width rounded-lg px-8 py-8 shadow-md">
+        <GenericAlert
+          message="Reset token is missing. Please use the link from your email to reset your password."
+          success={false}
+          title="Invalid Reset Link"
+        />
+      </article>
+    );
+  }
 
   return (
     <>

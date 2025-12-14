@@ -33,25 +33,53 @@ public class FileUtils {
      * @return the converted File object in temp directory
      * @throws IOException if an error occurs while converting the file
      */
+    // public File convertMultipartFileToFile(MultipartFile file) throws IOException {
+    //     fileValidator.validateFile(file);
+        
+    //     String originalFilename = Objects.requireNonNull(file.getOriginalFilename());
+    //     File tempFile = File.createTempFile(TEMP_DIR_PREFIX, "_" + originalFilename, new File(TEMP_DIR));
+        
+    //     // Mark for deletion on JVM exit as a safety measure
+    //     tempFile.deleteOnExit();
+        
+    //     try (FileOutputStream fos = new FileOutputStream(tempFile)) {
+    //         fos.write(file.getBytes());
+    //     } catch (IOException e) {
+    //         // Clean up on error
+    //         if (tempFile.exists()) {
+    //             Files.deleteIfExists(tempFile.toPath());
+    //         }
+    //         throw new IOException("Failed to write file to temp directory: " + e.getMessage(), e);
+    //     }
+        
+    //     return tempFile;
+    // }
     public File convertMultipartFileToFile(MultipartFile file) throws IOException {
-        fileValidator.validateFile(file);
-        
+    Objects.requireNonNull(file, "File cannot be null");
+    fileValidator.validateFile(file);
+    
+    File tempDir = new File(TEMP_DIR);
+    if (!tempDir.exists() && !tempDir.mkdirs()) {
+        throw new IOException("Failed to create temp directory: " + tempDir.getAbsolutePath());
+    }
+    
+    File tempFile = null;
+    try {
         String originalFilename = Objects.requireNonNull(file.getOriginalFilename());
-        File tempFile = File.createTempFile(TEMP_DIR_PREFIX, "_" + originalFilename, new File(TEMP_DIR));
-        
-        // Mark for deletion on JVM exit as a safety measure
-        tempFile.deleteOnExit();
+        tempFile = File.createTempFile(TEMP_DIR_PREFIX, "_" + originalFilename, tempDir);
         
         try (FileOutputStream fos = new FileOutputStream(tempFile)) {
             fos.write(file.getBytes());
-        } catch (IOException e) {
-            // Clean up on error
-            if (tempFile.exists()) {
-                Files.deleteIfExists(tempFile.toPath());
-            }
-            throw new IOException("Failed to write file to temp directory: " + e.getMessage(), e);
+            fos.flush();
         }
         
         return tempFile;
+    } catch (IOException e) {
+        // Clean up if file was created but something went wrong
+        if (tempFile != null && tempFile.exists()) {
+            Files.deleteIfExists(tempFile.toPath());
+        }
+        throw new IOException("Failed to process file: " + e.getMessage(), e);
     }
+}
 }

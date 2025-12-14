@@ -1,18 +1,13 @@
 package com.petconnect.backend.dto.specialist;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class SpecialistRegistrationResponseDTO {
     private String message;
-
-    public SpecialistRegistrationResponseDTO(String message) {
-        this.message = message;
-    }
-
-    public String getMessage() {
-        return message;
-    }
-
-    public void setMessage(String message) {
-        this.message = message;
-    }
 }
 

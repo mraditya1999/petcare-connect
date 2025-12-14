@@ -2,8 +2,15 @@ package com.petconnect.backend.dto.appointment;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import java.util.Date;
 
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class AppointmentRequestDTO {
 
     private Long petOwnerId;  
@@ -22,64 +29,4 @@ public class AppointmentRequestDTO {
 
     @NotNull(message = "Duration is required")
     private int duration;
-
-    public AppointmentRequestDTO() {
-    }
-
-    public AppointmentRequestDTO(Long petOwnerId, Long petId, Long specialistId, Date date, String notes, int duration) {
-        this.petOwnerId = petOwnerId;
-        this.petId = petId;
-        this.specialistId = specialistId;
-        this.date = date;
-        this.notes = notes;
-        this.duration = duration;
-    }
-
-    public Long getPetOwnerId() {
-        return petOwnerId;
-    }
-
-    public void setPetOwnerId(Long petOwnerId) {
-        this.petOwnerId = petOwnerId;
-    }
-
-    public Long getPetId() {
-        return petId;
-    }
-
-    public void setPetId(Long petId) {
-        this.petId = petId;
-    }
-
-    public Long getSpecialistId() {
-        return specialistId;
-    }
-
-    public void setSpecialistId(Long specialistId) {
-        this.specialistId = specialistId;
-    }
-
-    public Date getDate() {
-        return date;
-    }
-
-    public void setDate(Date date) {
-        this.date = date;
-    }
-
-    public String getNotes() {
-        return notes;
-    }
-
-    public void setNotes(String notes) {
-        this.notes = notes;
-    }
-
-    public int getDuration() {
-        return duration;
-    }
-
-    public void setDuration(int duration) {
-        this.duration = duration;
-    }
 }

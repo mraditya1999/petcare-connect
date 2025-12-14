@@ -1,39 +1,16 @@
 package com.petconnect.backend.dto.user;
 
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+
+@Getter
+@RequiredArgsConstructor
 public class OAuthProfile {
     private final String providerUserId;
     private final String email;
     private final String firstName;
     private final String lastName;
     private final String avatarUrl;
-
-    public OAuthProfile(String providerUserId, String email, String firstName, String lastName, String avatarUrl) {
-        this.providerUserId = providerUserId;
-        this.email = email;
-        this.firstName = firstName;
-        this.lastName = lastName;
-        this.avatarUrl = avatarUrl;
-    }
-
-    public String getProviderUserId() {
-        return providerUserId;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public String getFirstName() {
-        return firstName;
-    }
-
-    public String getLastName() {
-        return lastName;
-    }
-
-    public String getAvatarUrl() {
-        return avatarUrl;
-    }
 
     public static OAuthProfile fromGoogle(GoogleUserDTO g) {
         String first = g.getGiven_name();

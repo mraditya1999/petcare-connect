@@ -47,6 +47,30 @@ public class UserService {
 
     @Autowired
     public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, RoleAssignmentUtil roleAssignmentUtil, UserMapper userMapper, UploadService uploadService, SpecialistMapper specialistMapper, SpecialistRepository specialistRepository, PetRepository petRepository) {
+        if (userRepository == null) {
+            throw new IllegalArgumentException("UserRepository cannot be null");
+        }
+        if (passwordEncoder == null) {
+            throw new IllegalArgumentException("PasswordEncoder cannot be null");
+        }
+        if (roleAssignmentUtil == null) {
+            throw new IllegalArgumentException("RoleAssignmentUtil cannot be null");
+        }
+        if (userMapper == null) {
+            throw new IllegalArgumentException("UserMapper cannot be null");
+        }
+        if (uploadService == null) {
+            throw new IllegalArgumentException("UploadService cannot be null");
+        }
+        if (specialistMapper == null) {
+            throw new IllegalArgumentException("SpecialistMapper cannot be null");
+        }
+        if (specialistRepository == null) {
+            throw new IllegalArgumentException("SpecialistRepository cannot be null");
+        }
+        if (petRepository == null) {
+            throw new IllegalArgumentException("PetRepository cannot be null");
+        }
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.roleAssignmentUtil = roleAssignmentUtil;
@@ -66,13 +90,17 @@ public class UserService {
      */
     @Transactional
     public UserDTO getUserProfile(String email) {
+        if (email == null || email.isBlank()) {
+            throw new IllegalArgumentException("Email cannot be null or blank");
+        }
+        
         logger.info("Fetching profile for user with email: {}", email);
 
         try {
             User user = userRepository.findDetailedByEmail(email)
                     .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-            if (user.getRoles().stream().anyMatch(role -> role.getRoleName() == Role.RoleName.SPECIALIST)) {
+            if (user.getRoles() != null && user.getRoles().stream().anyMatch(role -> role.getRoleName() == Role.RoleName.SPECIALIST)) {
                 return specialistMapper.toSpecialistResponseDTO((Specialist) user);
             }
 
@@ -80,6 +108,9 @@ public class UserService {
         } catch (ResourceNotFoundException e) {
             logger.error("User not found with email: {}", email, e);
             throw e;
+        } catch (Exception e) {
+            logger.error("Error fetching profile for user with email: {}", email, e);
+            throw new RuntimeException("Failed to fetch user profile", e);
         }
     }
 
@@ -95,6 +126,13 @@ public class UserService {
      */
     @Transactional
     public UserDTO updateUserProfile(String username, UserUpdateDTO userUpdateDTO, MultipartFile profileImage) throws IOException {
+        if (username == null || username.isBlank()) {
+            throw new IllegalArgumentException("Username cannot be null or blank");
+        }
+        if (userUpdateDTO == null) {
+            throw new IllegalArgumentException("UserUpdateDTO cannot be null");
+        }
+        
         logger.info("Updating profile for user with email: {}", username);
 
         try {
@@ -128,6 +166,9 @@ public class UserService {
         } catch (IOException e) {
             logger.error("Error uploading profile image for user with email: {}", username, e);
             throw e;
+        } catch (Exception e) {
+            logger.error("Error updating profile for user with email: {}", username, e);
+            throw new RuntimeException("Failed to update user profile", e);
         }
     }
 
@@ -430,15 +471,38 @@ public class UserService {
      * @param user the user whose address is to be updated
      * @param userUpdateDTO the data transfer object containing updated address information
      */
+    /**
+     * Updates user address from the DTO.
+     *
+     * @param user the user to update (must not be null)
+     * @param userUpdateDTO the update DTO (must not be null)
+     */
     @Transactional
     private void updateAddress(User user, UserUpdateDTO userUpdateDTO) {
+        if (user == null) {
+            throw new IllegalArgumentException("User cannot be null");
+        }
+        if (userUpdateDTO == null) {
+            throw new IllegalArgumentException("UserUpdateDTO cannot be null");
+        }
+        
         Address address = user.getAddress() != null ? user.getAddress() : new Address();
 
-        if (userUpdateDTO.getPincode() != null) address.setPincode(userUpdateDTO.getPincode());
-        if (userUpdateDTO.getCity() != null) address.setCity(userUpdateDTO.getCity());
-        if (userUpdateDTO.getState() != null) address.setState(userUpdateDTO.getState());
-        if (userUpdateDTO.getCountry() != null) address.setCountry(userUpdateDTO.getCountry());
-        if (userUpdateDTO.getLocality() != null) address.setLocality(userUpdateDTO.getLocality());
+        if (userUpdateDTO.getPincode() != null) {
+            address.setPincode(userUpdateDTO.getPincode());
+        }
+        if (userUpdateDTO.getCity() != null && !userUpdateDTO.getCity().isBlank()) {
+            address.setCity(userUpdateDTO.getCity().trim());
+        }
+        if (userUpdateDTO.getState() != null && !userUpdateDTO.getState().isBlank()) {
+            address.setState(userUpdateDTO.getState().trim());
+        }
+        if (userUpdateDTO.getCountry() != null && !userUpdateDTO.getCountry().isBlank()) {
+            address.setCountry(userUpdateDTO.getCountry().trim());
+        }
+        if (userUpdateDTO.getLocality() != null && !userUpdateDTO.getLocality().isBlank()) {
+            address.setLocality(userUpdateDTO.getLocality().trim());
+        }
 
         if (userUpdateDTO.getPincode() != null || userUpdateDTO.getCity() != null || userUpdateDTO.getState() != null ||
                 userUpdateDTO.getCountry() != null || userUpdateDTO.getLocality() != null) {

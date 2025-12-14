@@ -55,8 +55,7 @@ public class PetController {
     public ResponseEntity<ApiResponseDTO<PetResponseDTO>> createPetForUser(
             @AuthenticationPrincipal UserDetails userDetails,
             @Valid @ModelAttribute PetRequestDTO petRequestDTO,
-            @RequestParam(value = "avatarFile", required = false) List<MultipartFile> avatarFiles
-    ) throws IOException {
+            @RequestParam(value = "avatarFile", required = false) List<MultipartFile> avatarFiles) {
 
         logger.info("Received request to create pet for user: {}", userDetails.getUsername());
 

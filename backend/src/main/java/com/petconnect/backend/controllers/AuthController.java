@@ -8,6 +8,7 @@ import com.petconnect.backend.entity.Role;
 import com.petconnect.backend.entity.User;
 import com.petconnect.backend.exceptions.*;
 import com.petconnect.backend.entity.OAuthAccount;
+import com.petconnect.backend.exceptions.IllegalArgumentException;
 import com.petconnect.backend.repositories.UserRepository;
 import com.petconnect.backend.services.AuthService;
 import com.petconnect.backend.services.EmailService;
@@ -113,17 +114,17 @@ public class AuthController {
                 User user = authenticatedUser.get();
                 String token = authService.generateJwtToken(user);
                 List<String> roles = user.getRoles().stream().map(Role::getAuthority).collect(Collectors.toList());
-                boolean isProfileCompleted = user.getIsProfileComplete();
+                boolean isProfileCompleted = user.isProfileComplete();
                 String oauthProvider = user.getOauthAccounts().stream()
                         .findFirst()
                         .map(acc -> acc.getProvider().name())
                         .orElse(OAuthAccount.AuthProvider.LOCAL.name());
 
                 UserLoginResponseDTO userLoginResponseDTO = new UserLoginResponseDTO(
+                        user.getUserId(),
                         user.getEmail(),
                         roles,
                         token,
-                        user.getUserId(),
                         oauthProvider,
                         isProfileCompleted
                 );
@@ -278,12 +279,12 @@ public class AuthController {
                         .map(acc -> acc.getProvider().name())
                         .orElse(OAuthAccount.AuthProvider.LOCAL.name());
 
-                boolean isProfileCompleted = user.getIsProfileComplete();
+                boolean isProfileCompleted = user.isProfileComplete();
                 UserLoginResponseDTO response = new UserLoginResponseDTO(
+                        user.getUserId(),
                         user.getEmail(),
                         roles,
                         jwtToken,
-                        user.getUserId(),
                         oauthProvider,
                         isProfileCompleted
                 );
@@ -334,12 +335,12 @@ public class AuthController {
                             ? OAuthAccount.AuthProvider.GITHUB.name()
                             : OAuthAccount.AuthProvider.LOCAL.name();
 
-            boolean isProfileCompleted = user.getIsProfileComplete();
+            boolean isProfileCompleted = user.isProfileComplete();
             UserLoginResponseDTO response = new UserLoginResponseDTO(
+                    user.getUserId(),
                     user.getEmail(),
                     roles,
                     jwtToken,
-                    user.getUserId(),
                     oauthProvider,
                     isProfileCompleted
             );

@@ -53,6 +53,33 @@ public class SpecialistService {
     public SpecialistService(SpecialistRepository specialistRepository, UserRepository userRepository, RoleAssignmentUtil roleAssignmentUtil,
                              @Lazy PasswordEncoder passwordEncoder,
                              SpecialistMapper specialistMapper, UploadService uploadService, VerificationService verificationService, TempUserStore tempUserStore, TempUserMapper tempUserMapper) {
+        if (specialistRepository == null) {
+            throw new IllegalArgumentException("SpecialistRepository cannot be null");
+        }
+        if (userRepository == null) {
+            throw new IllegalArgumentException("UserRepository cannot be null");
+        }
+        if (roleAssignmentUtil == null) {
+            throw new IllegalArgumentException("RoleAssignmentUtil cannot be null");
+        }
+        if (passwordEncoder == null) {
+            throw new IllegalArgumentException("PasswordEncoder cannot be null");
+        }
+        if (specialistMapper == null) {
+            throw new IllegalArgumentException("SpecialistMapper cannot be null");
+        }
+        if (uploadService == null) {
+            throw new IllegalArgumentException("UploadService cannot be null");
+        }
+        if (verificationService == null) {
+            throw new IllegalArgumentException("VerificationService cannot be null");
+        }
+        if (tempUserStore == null) {
+            throw new IllegalArgumentException("TempUserStore cannot be null");
+        }
+        if (tempUserMapper == null) {
+            throw new IllegalArgumentException("TempUserMapper cannot be null");
+        }
         this.specialistRepository = specialistRepository;
         this.userRepository = userRepository;
         this.roleAssignmentUtil = roleAssignmentUtil;
@@ -88,11 +115,30 @@ public class SpecialistService {
      * @return A SpecialistDTO object
      * @throws ResourceNotFoundException if the specialist is not found
      */
+    /**
+     * Retrieves a specialist by ID.
+     *
+     * @param id the specialist ID (must not be null)
+     * @return the SpecialistResponseDTO
+     * @throws IllegalArgumentException if id is null
+     * @throws ResourceNotFoundException if specialist is not found
+     */
     public SpecialistResponseDTO getSpecialistById(Long id) {
-        Specialist specialist = specialistRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Specialist not found"));
-        logger.info("Fetching specialist with ID: {}", id);
-        return specialistMapper.toDTO(specialist);
+        if (id == null) {
+            throw new IllegalArgumentException("Specialist ID cannot be null");
+        }
+        
+        try {
+            Specialist specialist = specialistRepository.findById(id)
+                    .orElseThrow(() -> new ResourceNotFoundException("Specialist not found"));
+            logger.info("Fetching specialist with ID: {}", id);
+            return specialistMapper.toDTO(specialist);
+        } catch (ResourceNotFoundException e) {
+            throw e;
+        } catch (Exception e) {
+            logger.error("Error fetching specialist with ID: {}", id, e);
+            throw new RuntimeException("Error fetching specialist", e);
+        }
     }
 
     /**
@@ -104,12 +150,43 @@ public class SpecialistService {
      * @return The updated SpecialistDTO object
      * @throws IOException If an error occurs during image upload
      */
+    /**
+     * Updates the current specialist's profile.
+     *
+     * @param specialistUpdateRequestDTO the update data (must not be null)
+     * @param profileImage the profile image file (optional)
+     * @param userDetails the authenticated user's details (must not be null)
+     * @return the updated SpecialistResponseDTO
+     * @throws IllegalArgumentException if userDetails is null or username is blank
+     * @throws ResourceNotFoundException if specialist is not found
+     * @throws IOException if image upload fails
+     */
     @Transactional
     public SpecialistResponseDTO updateSpecialist(SpecialistUpdateRequestDTO specialistUpdateRequestDTO, MultipartFile profileImage, UserDetails userDetails) throws IOException {
-        Specialist specialist = (Specialist) userRepository.findByEmail(userDetails.getUsername())
-                .orElseThrow(() -> new ResourceNotFoundException("Specialist not found with email: " + userDetails.getUsername()));
-        logger.info("Updating specialist profile for user: {}", userDetails.getUsername());
-        return updateSpecialist(specialist, specialistUpdateRequestDTO, profileImage);
+        if (userDetails == null) {
+            throw new IllegalArgumentException("UserDetails cannot be null");
+        }
+        if (userDetails.getUsername() == null || userDetails.getUsername().isBlank()) {
+            throw new IllegalArgumentException("Username cannot be null or blank");
+        }
+        if (specialistUpdateRequestDTO == null) {
+            throw new IllegalArgumentException("SpecialistUpdateRequestDTO cannot be null");
+        }
+        
+        try {
+            Specialist specialist = (Specialist) userRepository.findByEmail(userDetails.getUsername())
+                    .orElseThrow(() -> new ResourceNotFoundException("Specialist not found with email: " + userDetails.getUsername()));
+            logger.info("Updating specialist profile for user: {}", userDetails.getUsername());
+            return updateSpecialist(specialist, specialistUpdateRequestDTO, profileImage);
+        } catch (ResourceNotFoundException e) {
+            throw e;
+        } catch (IOException e) {
+            logger.error("Error uploading image for specialist: {}", userDetails.getUsername(), e);
+            throw e;
+        } catch (Exception e) {
+            logger.error("Error updating specialist: {}", userDetails.getUsername(), e);
+            throw new RuntimeException("Error updating specialist", e);
+        }
     }
 
     //    ADMIN SERVICES
@@ -120,34 +197,63 @@ public class SpecialistService {
      * @param profileImage The profile image file
      * @throws IOException If an error occurs during image upload
      */
+    /**
+     * Creates a new specialist profile by admin.
+     *
+     * @param specialistCreateRequestDTO the creation data (must not be null)
+     * @param profileImage the profile image file (optional)
+     * @throws IllegalArgumentException if specialistCreateRequestDTO is null or invalid
+     * @throws UserAlreadyExistsException if specialist with email already exists
+     * @throws IOException if image upload fails
+     */
     @Transactional
     public void createSpecialistByAdmin(SpecialistCreateRequestDTO specialistCreateRequestDTO, MultipartFile profileImage) throws IOException {
-        if (userRepository.existsByEmail(specialistCreateRequestDTO.getEmail())) {
-            logger.warn("Specialist already exists with email: {}", specialistCreateRequestDTO.getEmail());
-            throw new UserAlreadyExistsException("Specialist already exists with this email.");
+        if (specialistCreateRequestDTO == null) {
+            throw new IllegalArgumentException("SpecialistCreateRequestDTO cannot be null");
         }
+        if (specialistCreateRequestDTO.getEmail() == null || specialistCreateRequestDTO.getEmail().isBlank()) {
+            throw new IllegalArgumentException("Email cannot be null or blank");
+        }
+        if (specialistCreateRequestDTO.getPassword() == null || specialistCreateRequestDTO.getPassword().isBlank()) {
+            throw new IllegalArgumentException("Password cannot be null or blank");
+        }
+        
+        try {
+            if (userRepository.existsByEmail(specialistCreateRequestDTO.getEmail())) {
+                logger.warn("Specialist already exists with email: {}", specialistCreateRequestDTO.getEmail());
+                throw new UserAlreadyExistsException("Specialist already exists with this email.");
+            }
 
-        Specialist specialist = specialistMapper.toSpecialistEntity(specialistCreateRequestDTO);
-        specialist.setPassword(passwordEncoder.encode(specialistCreateRequestDTO.getPassword()));
-        specialist.setVerificationToken(UUID.randomUUID().toString());
-        specialist.setVerified(false);  // Set verified to false for admin-created specialists
+            Specialist specialist = specialistMapper.toSpecialistEntity(specialistCreateRequestDTO);
+            specialist.setPassword(passwordEncoder.encode(specialistCreateRequestDTO.getPassword()));
+            specialist.setVerificationToken(UUID.randomUUID().toString());
+            specialist.setVerified(false);  // Set verified to false for admin-created specialists
 
-        // Since specialist is created by admin, manually assign USER and SPECIALIST roles
-        Set<Role.RoleName> roles = new HashSet<>();
-        roles.add(Role.RoleName.USER);
-        roles.add(Role.RoleName.SPECIALIST);
-        roleAssignmentUtil.assignRoles(specialist, roles);
+            // Since specialist is created by admin, manually assign USER and SPECIALIST roles
+            Set<Role.RoleName> roles = new HashSet<>();
+            roles.add(Role.RoleName.USER);
+            roles.add(Role.RoleName.SPECIALIST);
+            roleAssignmentUtil.assignRoles(specialist, roles);
 
-        // Handle profile image upload if it exists
-        handleProfileImageUpload(profileImage, specialist);
+            // Handle profile image upload if it exists
+            handleProfileImageUpload(profileImage, specialist);
 
-        // Temporarily save the specialist
-        TempUserDTO tempUserDTO = tempUserMapper.toTempUserDTO(specialist);
+            // Temporarily save the specialist
+            TempUserDTO tempUserDTO = tempUserMapper.toTempUserDTO(specialist);
 
-        Duration ttl = Duration.ofHours(verificationTtlHours);
-        tempUserStore.saveTemporaryUser(specialist.getVerificationToken(), tempUserDTO,ttl);
-        verificationService.sendVerificationEmail(specialist);
-        logger.info("Specialist created by admin with email: {}", specialist.getEmail());
+            Duration ttl = Duration.ofHours(verificationTtlHours);
+            tempUserStore.saveTemporaryUser(specialist.getVerificationToken(), tempUserDTO, ttl);
+            verificationService.sendVerificationEmail(specialist);
+            logger.info("Specialist created by admin with email: {}", specialist.getEmail());
+        } catch (UserAlreadyExistsException e) {
+            throw e;
+        } catch (IOException e) {
+            logger.error("Error uploading image for specialist creation", e);
+            throw e;
+        } catch (Exception e) {
+            logger.error("Error creating specialist by admin", e);
+            throw new RuntimeException("Error creating specialist", e);
+        }
     }
 
    /**
@@ -216,21 +322,39 @@ public class SpecialistService {
      * @param specialist The specialist whose address is to be updated
      * @param specialistUpdateRequestDTO DTO containing the address information
      */
+    /**
+     * Updates the address details for a specialist.
+     *
+     * @param specialist the specialist whose address is to be updated (must not be null)
+     * @param specialistUpdateRequestDTO the update data (must not be null)
+     */
     private void updateAddressDetails(Specialist specialist, SpecialistUpdateRequestDTO specialistUpdateRequestDTO) {
+        if (specialist == null) {
+            throw new IllegalArgumentException("Specialist cannot be null");
+        }
+        if (specialistUpdateRequestDTO == null) {
+            throw new IllegalArgumentException("SpecialistUpdateRequestDTO cannot be null");
+        }
+        
+        // Ensure address exists
+        if (specialist.getAddress() == null) {
+            specialist.setAddress(new com.petconnect.backend.entity.Address());
+        }
+        
         if (specialistUpdateRequestDTO.getPincode() != null) {
             specialist.getAddress().setPincode(specialistUpdateRequestDTO.getPincode());
         }
         if (specialistUpdateRequestDTO.getCity() != null) {
-            specialist.getAddress().setCity(specialistUpdateRequestDTO.getCity());
+            specialist.getAddress().setCity(specialistUpdateRequestDTO.getCity().trim());
         }
         if (specialistUpdateRequestDTO.getState() != null) {
-            specialist.getAddress().setState(specialistUpdateRequestDTO.getState());
+            specialist.getAddress().setState(specialistUpdateRequestDTO.getState().trim());
         }
         if (specialistUpdateRequestDTO.getCountry() != null) {
-            specialist.getAddress().setCountry(specialistUpdateRequestDTO.getCountry());
+            specialist.getAddress().setCountry(specialistUpdateRequestDTO.getCountry().trim());
         }
         if (specialistUpdateRequestDTO.getLocality() != null) {
-            specialist.getAddress().setLocality(specialistUpdateRequestDTO.getLocality());
+            specialist.getAddress().setLocality(specialistUpdateRequestDTO.getLocality().trim());
         }
     }
 
@@ -261,10 +385,30 @@ public class SpecialistService {
      * @param pageable Pageable object for pagination
      * @return A page of specialists matching the keyword
      */
+    /**
+     * Searches for specialists based on a keyword.
+     *
+     * @param keyword the search keyword (must not be null or blank)
+     * @param pageable the pagination information (must not be null)
+     * @return a page of specialists matching the keyword
+     * @throws IllegalArgumentException if keyword is null/blank or pageable is null
+     */
     public Page<SpecialistResponseDTO> searchSpecialists(String keyword, Pageable pageable) {
-        Page<Specialist> specialists = specialistRepository.findByFirstNameContainingOrSpecialityContaining(keyword, keyword, pageable);
-        logger.info("Searched specialists with keyword: {}", keyword);
-        return specialists.map(specialistMapper::toDTO);
+        if (keyword == null || keyword.isBlank()) {
+            throw new IllegalArgumentException("Keyword cannot be null or blank");
+        }
+        if (pageable == null) {
+            throw new IllegalArgumentException("Pageable cannot be null");
+        }
+        
+        try {
+            Page<Specialist> specialists = specialistRepository.findByFirstNameContainingOrSpecialityContaining(keyword.trim(), keyword.trim(), pageable);
+            logger.info("Searched specialists with keyword: {}", keyword);
+            return specialists.map(specialistMapper::toDTO);
+        } catch (Exception e) {
+            logger.error("Error searching specialists with keyword: {}", keyword, e);
+            throw new RuntimeException("Error searching specialists", e);
+        }
     }
 
 

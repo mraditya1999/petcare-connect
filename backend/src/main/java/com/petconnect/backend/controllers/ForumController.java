@@ -3,6 +3,7 @@ package com.petconnect.backend.controllers;
 import com.petconnect.backend.dto.*;
 import com.petconnect.backend.services.ForumService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,15 +41,14 @@ public class ForumController {
      */
     @GetMapping
     public ResponseEntity<Page<ForumDTO>> getAllForums(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "10") @Min(1) int size,
             @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "asc") String sortDir) {
 
         Sort sort = Sort.by(sortDir.equalsIgnoreCase("asc") ? Sort.Direction.ASC : Sort.Direction.DESC, sortBy);
         PageRequest pageRequest = PageRequest.of(page, size, sort);
         Page<ForumDTO> forums = forumService.getAllForums(pageRequest);
-        ForumPageDTO response = new ForumPageDTO(forums);
         return ResponseEntity.ok(forums);
     }
 
@@ -87,8 +87,8 @@ public class ForumController {
     @GetMapping("/search")
     public ResponseEntity<Page<ForumDTO>> searchForums(
             @RequestParam String keyword,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "10") @Min(1) int size,
             @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "desc") String sortDir) {
 
@@ -110,8 +110,8 @@ public class ForumController {
     @GetMapping("/search-by-tags")
     public ResponseEntity<Page<ForumDTO>> searchForumsByTags(
             @RequestParam List<String> tags,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "10") @Min(1) int size,
             @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "desc") String sortDir) {
 
@@ -194,8 +194,8 @@ public class ForumController {
     @GetMapping("/my-forums")
     public ResponseEntity<ApiResponseDTO<Page<ForumDTO>>> getMyForums(
             @AuthenticationPrincipal UserDetails userDetails,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "10") @Min(1) int size) {
         String username = userDetails.getUsername();
         if (username == null) {
             ApiResponseDTO<Page<ForumDTO>> apiResponseDTO = new ApiResponseDTO<>("User is not authenticated", null);
