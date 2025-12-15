@@ -22,6 +22,11 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import ShowToast from "../shared/ShowToast";
 import { saveUserToStorage } from "@/utils/helpers";
 import { setUser } from "@/features/auth/authSlice";
+import {
+  InputOTP,
+  InputOTPGroup,
+  InputOTPSlot,
+} from "@/components/ui/input-otp";
 
 interface NewUserInfo {
   firstName: string;
@@ -65,7 +70,6 @@ export default function VerifyOtp() {
     if (verifyOtp.fulfilled.match(res)) {
       const payload = res.payload!;
       if (payload.isNewUser) {
-        // store temporary token & show profile form
         if (payload.tempToken) {
           localStorage.setItem("tempSignupToken", payload.tempToken);
         }
@@ -79,7 +83,6 @@ export default function VerifyOtp() {
           message: "User logged in successfully.",
           data: payload,
         };
-
         saveUserToStorage(userData, true);
         dispatch(setUser(userData));
         navigate("/");
@@ -93,7 +96,6 @@ export default function VerifyOtp() {
   };
 
   const handleCompleteProfile = async (data: NewUserInfo) => {
-    // Use the completeProfile thunk (which posts to /auth/complete-profile)
     const res = await dispatch(
       completeProfile({
         phone,
@@ -104,13 +106,10 @@ export default function VerifyOtp() {
     );
 
     if (completeProfile.fulfilled.match(res)) {
-      // Clear temp token
       localStorage.removeItem("tempSignupToken");
       dispatch(setUser(res.payload.data));
-
       navigate("/");
     } else {
-      // If server returns 401, you should prompt user to resend OTP
       ShowToast({
         description: res.payload || "Failed to complete profile",
         type: "error",
@@ -128,8 +127,8 @@ export default function VerifyOtp() {
   };
 
   return (
-    <div className="flex h-screen items-center justify-center">
-      <Card className="w-[380px] shadow-xl">
+    <div className="flex h-screen w-full items-center justify-center">
+      <Card className="w-full max-w-md shadow-xl">
         <CardHeader>
           <CardTitle className="text-center text-xl font-semibold">
             {isNewUser ? "Complete Your Profile" : "Enter OTP"}
@@ -144,7 +143,6 @@ export default function VerifyOtp() {
                 <div className="text-center text-sm text-muted-foreground">
                   OTP sent to <b>{phone}</b>
                 </div>
-
                 <FormField
                   control={otpForm.control}
                   name="otp"
@@ -152,15 +150,27 @@ export default function VerifyOtp() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>OTP</FormLabel>
-                      <Input
-                        type="number"
-                        placeholder="Enter 6-digit OTP"
-                        {...field}
-                      />
+                      <div className="flex w-full justify-center">
+                        <InputOTP
+                          maxLength={6}
+                          value={field.value}
+                          onChange={field.onChange}
+                        >
+                          <InputOTPGroup className="flex gap-3">
+                            {Array.from({ length: 6 }).map((_, idx) => (
+                              <InputOTPSlot
+                                key={idx}
+                                index={idx}
+                                className="h-12 w-12 rounded-lg border-2 border-gray-300 bg-white text-center text-lg font-bold shadow-sm transition-all focus:border-blue-500 focus:ring-2 focus:ring-blue-400 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:focus:border-blue-400 dark:focus:ring-blue-500"
+                              />
+                            ))}
+                          </InputOTPGroup>
+                        </InputOTP>
+                      </div>
                       <FormMessage />
                     </FormItem>
                   )}
-                />
+                />{" "}
               </CardContent>
 
               <CardFooter className="flex flex-col space-y-2">

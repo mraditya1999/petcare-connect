@@ -6,6 +6,7 @@ import com.twilio.type.PhoneNumber;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -42,9 +43,14 @@ public class SmsSender {
             ).create();
 
             logger.info("SMS sent. SID: {}", message.getSid());
-        } catch (ApiException e) {
+        } catch (com.twilio.exception.ApiException e) {
             logger.error("Twilio API error: {}", e.getMessage());
-            throw new RuntimeException("Failed to send SMS: " + e.getMessage());
+            throw new com.petconnect.backend.exceptions.ApiException(
+                    "Failed to send SMS: " + e.getMessage(),
+                    HttpStatus.BAD_REQUEST,
+                    "TWILIO_ERROR",
+                    e
+            );
         }
     }
 }
