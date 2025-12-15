@@ -533,17 +533,20 @@ const SingleForumPage = () => {
         ) : null}
 
         {/* Comments */}
-        <div className="mt-4 rounded-lg bg-card p-6 shadow-md">
-          <h2 className="text-lg font-semibold text-foreground">Comments</h2>
-          <></>
+        <div className="mt-4 rounded-lg bg-card p-6 px-2 shadow-md">
+          <h2 className="mb-3 text-lg font-semibold text-foreground">
+            Comments
+          </h2>
+
           {comments.length ? (
             comments.map((comment) => (
               <div
                 key={comment.commentId}
-                className="mb-3 flex justify-between rounded-xl border border-border bg-card p-4 shadow"
+                className="mb-3 flex flex-col gap-3 rounded-xl border border-border bg-card p-4 shadow sm:flex-row sm:justify-between"
               >
-                <div className="flex w-full items-start space-x-3">
-                  <Avatar className="h-10 w-10">
+                {/* LEFT CONTENT */}
+                <div className="flex w-full items-start gap-3 overflow-hidden">
+                  <Avatar className="h-10 w-10 shrink-0">
                     <AvatarImage
                       src={comment?.firstName || ""}
                       alt="User Avatar"
@@ -553,8 +556,8 @@ const SingleForumPage = () => {
                     </AvatarFallback>
                   </Avatar>
 
-                  <div className="w-full">
-                    <p className="text-sm font-semibold text-foreground">
+                  <div className="w-full overflow-hidden">
+                    <p className="break-words text-sm font-semibold text-foreground">
                       {`${comment?.firstName || ""} ${comment?.lastName || ""}`}
                     </p>
 
@@ -575,7 +578,7 @@ const SingleForumPage = () => {
                             {updateCommentError}
                           </p>
                         )}
-                        <div className="mt-3 flex gap-2">
+                        <div className="mt-3 flex flex-wrap gap-2">
                           <Button
                             size="sm"
                             onClick={() => handleSaveEdit(comment.commentId)}
@@ -593,12 +596,12 @@ const SingleForumPage = () => {
                       </div>
                     ) : (
                       <div
-                        className="prose mt-1 max-w-none text-sm text-foreground"
+                        className="prose mt-1 max-w-none overflow-hidden break-words text-sm text-foreground"
                         dangerouslySetInnerHTML={{ __html: comment.text }}
                       />
                     )}
 
-                    <p className="mt-1 text-xs text-muted-foreground">
+                    <p className="mt-1 break-words text-xs text-muted-foreground">
                       {comment?.createdAt
                         ? formatRelativeTime(comment.createdAt)
                         : "Just now"}
@@ -606,10 +609,10 @@ const SingleForumPage = () => {
                   </div>
                 </div>
 
+                {/* ACTION BUTTONS */}
                 {comment.userId === Number(currentUserId) &&
                   editingCommentId !== comment.commentId && (
-                    <div className="flex w-fit space-x-1">
-                      {/* 💡 DEBUGGING FIX: Direct Edit Button */}
+                    <div className="flex w-full justify-end gap-1 sm:w-fit sm:justify-start">
                       <Button
                         variant="ghost"
                         size="icon"
@@ -623,7 +626,6 @@ const SingleForumPage = () => {
                         <FaPenToSquare className="h-4 w-4" />
                       </Button>
 
-                      {/* 💡 DEBUGGING FIX: Direct Delete Button */}
                       <Button
                         variant="ghost"
                         size="icon"
@@ -672,7 +674,7 @@ const SingleForumPage = () => {
 
         {/* Add Comment */}
         {user && (
-          <div className="mt-4 rounded-lg bg-card p-6 shadow-md">
+          <div className="mt-4 rounded-lg bg-card p-6 px-2  shadow-md">
             <h2 className="mb-2 text-lg font-semibold text-foreground">
               Add a Comment
             </h2>
