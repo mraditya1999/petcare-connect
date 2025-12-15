@@ -4,6 +4,7 @@ import com.petconnect.backend.dto.user.UserDTO;
 import com.petconnect.backend.dto.user.UserUpdateDTO;
 import com.petconnect.backend.dto.user.UpdatePasswordRequestDTO;
 import com.petconnect.backend.entity.*;
+import com.petconnect.backend.exceptions.DuplicateResourceException;
 import com.petconnect.backend.exceptions.ImageDeletionException;
 import com.petconnect.backend.exceptions.ResourceNotFoundException;
 import com.petconnect.backend.mappers.SpecialistMapper;
@@ -162,6 +163,9 @@ public class UserService {
             return updatedUserDTO;
         } catch (ResourceNotFoundException e) {
             logger.error("User not found with email: {}", username, e);
+            throw e;
+        }catch (DuplicateResourceException e) {
+            logger.error("Phone Number already exist: {}", username, e);
             throw e;
         } catch (IOException e) {
             logger.error("Error uploading profile image for user with email: {}", username, e);
@@ -452,6 +456,13 @@ public class UserService {
 
         if (userUpdateDTO.getMobileNumber() != null) {
             String normalizedPhone = PhoneUtils.normalizeToE164(userUpdateDTO.getMobileNumber());
+
+            boolean alreadyUsed = userRepository
+                    .existsByMobileNumberAndUserIdNot(normalizedPhone, user.getUserId());
+
+            if (alreadyUsed) {
+                throw new DuplicateResourceException("Mobile number already in use");
+            }
 
             if (normalizedPhone == null) {
                 throw new IllegalArgumentException("Invalid phone number format");

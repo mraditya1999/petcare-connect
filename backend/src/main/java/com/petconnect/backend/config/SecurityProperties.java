@@ -1,6 +1,6 @@
 package com.petconnect.backend.config;
 
-import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.validation.annotation.Validated;
 
@@ -13,8 +13,8 @@ import java.util.List;
 @ConfigurationProperties(prefix = "security")
 @Validated
 public record SecurityProperties(
-        @NotEmpty List<String> authWhitelist,
-        @NotEmpty List<String> getRequestWhitelist,
-        @NotEmpty List<String> jwtExemptPaths
+        @NotNull List<String> authWhitelist,
+        @NotNull List<String> getRequestWhitelist,
+        @NotNull List<String> jwtExemptPaths
 ) {}
 

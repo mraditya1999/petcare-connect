@@ -4,7 +4,7 @@ import com.petconnect.backend.dto.pet.PetRequestDTO;
 import com.petconnect.backend.dto.pet.PetResponseDTO;
 import com.petconnect.backend.entity.Pet;
 import com.petconnect.backend.entity.User;
-import com.petconnect.backend.exceptions.DuplicatePetNameException;
+import com.petconnect.backend.exceptions.DuplicateResourceException;
 import com.petconnect.backend.exceptions.ImageDeletionException;
 import com.petconnect.backend.exceptions.ResourceNotFoundException;
 import com.petconnect.backend.exceptions.UnauthorizedAccessException;
@@ -95,7 +95,7 @@ public class PetService {
             if (petRequestDTO.getPetName() != null && 
                 petRepository.existsByPetOwnerAndPetName(petOwner, petRequestDTO.getPetName())) {
                 logger.error("Duplicate pet name: {} for user: {}", petRequestDTO.getPetName(), username);
-                throw new DuplicatePetNameException("A pet with the same name already exists for this user");
+                throw new DuplicateResourceException("A pet with the same name already exists for this user");
             }
 
             Pet pet = petMapper.toEntity(petRequestDTO);
@@ -122,7 +122,7 @@ public class PetService {
             }
 
             return petMapper.toDTO(savedPet);
-        } catch (ResourceNotFoundException | DuplicatePetNameException | IllegalArgumentException e) {
+        } catch (ResourceNotFoundException | DuplicateResourceException | IllegalArgumentException e) {
             throw e;
         } catch (IOException e) {
             logger.error("Error uploading avatar for pet creation for user: {}", username, e);

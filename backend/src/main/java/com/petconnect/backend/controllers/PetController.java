@@ -3,7 +3,7 @@ package com.petconnect.backend.controllers;
 import com.petconnect.backend.dto.ApiResponseDTO;
 import com.petconnect.backend.dto.pet.PetRequestDTO;
 import com.petconnect.backend.dto.pet.PetResponseDTO;
-import com.petconnect.backend.exceptions.DuplicatePetNameException;
+import com.petconnect.backend.exceptions.DuplicateResourceException;
 import com.petconnect.backend.exceptions.FileValidationException;
 import com.petconnect.backend.exceptions.ResourceNotFoundException;
 import com.petconnect.backend.exceptions.UnauthorizedAccessException;
@@ -75,7 +75,7 @@ public class PetController {
         } catch (ResourceNotFoundException e) {
             logger.error("User not found: {}", e.getMessage());
             return ResponseEntityUtil.notFound("User not found");
-        } catch (DuplicatePetNameException e) {
+        } catch (DuplicateResourceException e) {
             logger.error("Duplicate pet name: {}", e.getMessage());
             return ResponseEntityUtil.badRequest("Duplicate pet name");
         } catch (IOException e) {

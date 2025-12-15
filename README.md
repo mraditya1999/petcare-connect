@@ -21,18 +21,21 @@ A modern community platform for pet owners to connect, share knowledge, and disc
 ## ✨ Features
 
 - **User Authentication**
+
   - Secure JWT-based authentication
   - Social login (Google, GitHub)
   - Email verification
   - Password reset functionality
 
 - **Forum System**
+
   - Create and manage discussion threads
   - Comment on posts
   - Like and interact with content
   - Categorize discussions
 
 - **User Profiles**
+
   - Personal information management
   - Pet information tracking
   - Forum activity history
@@ -46,6 +49,7 @@ A modern community platform for pet owners to connect, share knowledge, and disc
 ## 🚀 Tech Stack
 
 ### Frontend
+
 - **Framework**: React 18 with TypeScript
 - **State Management**: Redux Toolkit
 - **Styling**: Tailwind CSS + shadcn/ui
@@ -55,6 +59,7 @@ A modern community platform for pet owners to connect, share knowledge, and disc
 - **Icons**: Lucide React
 
 ### Backend
+
 - **Framework**: Spring Boot 3.4.1 (Java 17)
 - **Security**: Spring Security with JWT
 - **Database**:
@@ -81,32 +86,34 @@ A modern community platform for pet owners to connect, share knowledge, and disc
 ### Using Docker (Recommended)
 
 1. Clone the repository:
+
    ```bash
    git clone https://github.com/mraditya1999/petcare-connect.git
    cd petcare-connect
    ```
 
 2. Copy the example environment files:
+
    ```bash
    cp backend/.env.example backend/.env
    cp frontend/.env.example frontend/.env
    ```
 
 3. Start the application stack:
+
    ```bash
    docker-compose up --build -d
    ```
 
 4. Access the application:
-   - Frontend: http://localhost:5173
-   - Backend API: http://localhost:8080
-   - API Documentation: http://localhost:8080/swagger-ui.html
-
-### Manual Setup
+   - Frontend: https://petcareconnect.netlify.app
+   - Backend API: https://petcare-connect-production.up.railway.app
+   - API Documentation: https://petcare-connect-production.up.railway.app/api/v1/swagger-ui/index.html
 
 #### Backend
 
 1. Navigate to the backend directory:
+
    ```bash
    cd backend
    ```
@@ -122,11 +129,13 @@ A modern community platform for pet owners to connect, share knowledge, and disc
 #### Frontend
 
 1. Navigate to the frontend directory:
+
    ```bash
    cd frontend
    ```
 
 2. Install dependencies:
+
    ```bash
    npm install
    ```
