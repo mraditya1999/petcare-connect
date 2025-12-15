@@ -112,6 +112,7 @@ export const updatePasswordSchemaGoogle = z
 export const profileFormSchema = z.object({
   firstName: z.string().nonempty("First name is required"),
   lastName: z.string().nonempty("Last name is required"),
+
   email: z
     .string()
     .email("Invalid email address")
@@ -119,21 +120,27 @@ export const profileFormSchema = z.object({
 
   mobileNumber: z
     .string()
-    .nonempty("Mobile number is required")
+    .optional()
     .refine(
-      (val) => /^\d+$/.test(val),
+      (val) => !val || /^\d+$/.test(val),
       "Mobile number must contain only digits",
     )
     .refine(
-      (val) => val.length === 10,
+      (val) => !val || val.length === 10,
       "Mobile number must be exactly 10 digits",
     ),
 
   pincode: z
     .string()
-    .nonempty("Pincode is required")
-    .refine((val) => /^\d+$/.test(val), "Pincode must contain only digits")
-    .refine((val) => val.length === 6, "Pincode must be exactly 6 digits"),
+    .optional()
+    .refine(
+      (val) => !val || /^\d+$/.test(val),
+      "Pincode must contain only digits",
+    )
+    .refine(
+      (val) => !val || val.length === 6,
+      "Pincode must be exactly 6 digits",
+    ),
 
   city: z.string().optional(),
   state: z.string().optional(),

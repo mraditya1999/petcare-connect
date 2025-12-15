@@ -11,6 +11,7 @@ import com.petconnect.backend.dto.user.OAuthProfile;
 import com.petconnect.backend.entity.OAuthAccount;
 import com.petconnect.backend.entity.Role;
 import com.petconnect.backend.entity.User;
+import com.petconnect.backend.exceptions.ApiException;
 import com.petconnect.backend.exceptions.AuthenticationException;
 import com.petconnect.backend.exceptions.UserAlreadyExistsException;
 import com.petconnect.backend.mappers.TempUserMapper;
@@ -575,18 +576,18 @@ public class AuthService implements UserDetailsService {
         if (phone == null || phone.isBlank()) {
             throw new IllegalArgumentException("Phone number cannot be null or blank");
         }
-        
+
         try {
             String normalizedPhone = PhoneUtils.normalizeToE164(phone);
             if (normalizedPhone == null) {
                 throw new IllegalArgumentException("Invalid phone number format");
             }
-            
+
             if (otpRedisService.isPhoneBlocked(normalizedPhone)) {
                 logger.warn("OTP send attempt for blocked phone: {}", normalizedPhone);
                 throw new IllegalStateException("Phone number is temporarily blocked. Please try again later.");
             }
-            
+
             if (otpRedisService.isInCooldown(normalizedPhone)) {
                 logger.warn("OTP send attempt during cooldown for phone: {}", normalizedPhone);
                 throw new IllegalStateException("Please wait before requesting another code.");
@@ -607,7 +608,12 @@ public class AuthService implements UserDetailsService {
             throw e;
         } catch (Exception e) {
             logger.error("Error sending OTP to phone: {}", phone, e);
-            throw new RuntimeException("Failed to send OTP", e);
+            throw new ApiException(
+                    "Failed to send OTP: " + e.getMessage(),
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    "OTP_SEND_ERROR",
+                    e
+            );
         }
     }
 

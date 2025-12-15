@@ -1,5 +1,6 @@
 package com.petconnect.backend.exceptions;
 
+import lombok.Getter;
 import org.springframework.http.HttpStatus;
 
 /**
@@ -7,6 +8,7 @@ import org.springframework.http.HttpStatus;
  * Subclass existing custom exceptions from this class to carry an HTTP status and
  * produce a consistent response shape via the global exception handler.
  */
+@Getter
 public class ApiException extends RuntimeException {
 
     private final HttpStatus status;
@@ -34,11 +36,4 @@ public class ApiException extends RuntimeException {
         this.code = code;
     }
 
-    public HttpStatus getStatus() {
-        return status;
-    }
-
-    public String getCode() {
-        return code;
-    }
 }
