@@ -233,14 +233,14 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Handles DuplicatePetNameException.
+     * Handles DuplicateResourceException.
      *
      * @param ex the exception
      * @param request the web request
      * @return the ResponseEntity containing the exception message
      */
-    @ExceptionHandler(DuplicatePetNameException.class)
-    public ResponseEntity<ApiResponseDTO<String>> handleDuplicatePetNameException(DuplicatePetNameException ex, WebRequest request) {
+    @ExceptionHandler(DuplicateResourceException.class)
+    public ResponseEntity<ApiResponseDTO<String>> handleDuplicateResourceException(DuplicateResourceException ex, WebRequest request) {
         logger.error("DuplicatePetNameException: {}", ex.getMessage(), ex);
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponseDTO<>(ex.getMessage(), null));
     }

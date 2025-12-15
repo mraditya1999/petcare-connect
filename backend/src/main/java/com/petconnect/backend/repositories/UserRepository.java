@@ -39,4 +39,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     @EntityGraph(value = "User.withRolesAndAddress", type = EntityGraph.EntityGraphType.LOAD)
     Optional<User> findByMobileNumber(String mobileNumber);
+
+    boolean existsByMobileNumberAndUserIdNot(String mobileNumber, Long userId);
 }
