@@ -10,12 +10,12 @@ import com.petconnect.backend.exceptions.ResourceNotFoundException;
 import com.petconnect.backend.exceptions.UnauthorizedAccessException;
 import com.petconnect.backend.repositories.UserRepository;
 import com.petconnect.backend.services.AppointmentService;
+import com.petconnect.backend.utils.ResponseEntityUtil;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -42,7 +42,7 @@ public class AppointmentController {
         String username = userDetails.getUsername();
         Long userId = userRepository.findByEmail(username).orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + username)).getUserId();
         Page<AppointmentResponseDTO> appointments = appointmentService.getAppointmentsByPetOwner(userId, page, size);
-        return ResponseEntity.ok(new ApiResponseDTO<>("Fetched appointments for pet owner successfully", appointments));
+        return ResponseEntityUtil.page(appointments, "Fetched appointments for pet owner successfully");
     }
 
     @GetMapping("/pet/{petId}")
@@ -55,15 +55,13 @@ public class AppointmentController {
             String username = userDetails.getUsername();
             Page<AppointmentResponseDTO> appointments = appointmentService.getAppointmentsByPet(petId, page, size, username);
             logger.info("Fetched appointments for pet ID: {} by user: {}", petId, username);
-            return ResponseEntity.ok(new ApiResponseDTO<>("Fetched appointments for pet successfully", appointments));
+            return ResponseEntityUtil.page(appointments, "Fetched appointments for pet successfully");
         } catch (ResourceNotFoundException e) {
-            logger.error("Resource not found: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new ApiResponseDTO<>(e.getMessage(), null));
+            logger.error("Resource not found", e);
+            return ResponseEntityUtil.notFound(e.getMessage());
         } catch (UnauthorizedAccessException e) {
-            logger.error("Unauthorized access: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(new ApiResponseDTO<>(e.getMessage(), null));
+            logger.error("Unauthorized access", e);
+            return ResponseEntityUtil.forbidden(e.getMessage());
         }
     }
 
@@ -78,11 +76,10 @@ public class AppointmentController {
             String username = userDetails.getUsername();
             Page<AppointmentResponseDTO> appointments = appointmentService.getAppointmentsByStatusForUser(status, page, size, username);
             logger.info("Fetched appointments by status: {} for user: {}", status, username);
-            return ResponseEntity.ok(new ApiResponseDTO<>("Fetched appointments by status successfully", appointments));
+            return ResponseEntityUtil.page(appointments, "Fetched appointments by status successfully");
         } catch (ResourceNotFoundException e) {
-            logger.error("User not found: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new ApiResponseDTO<>("User not found", null));
+            logger.error("User not found", e);
+            return ResponseEntityUtil.notFound("User not found");
         }
     }
 
@@ -94,12 +91,10 @@ public class AppointmentController {
             String username = userDetails.getUsername();
             AppointmentResponseDTO createdAppointment = appointmentService.createAppointment(username, appointmentRequestDTO);
             logger.info("Created appointment for user: {}", username);
-            return ResponseEntity.status(HttpStatus.CREATED)
-                    .body(new ApiResponseDTO<>("Appointment created successfully", createdAppointment));
+            return ResponseEntityUtil.created("Appointment created successfully", createdAppointment);
         } catch (ResourceNotFoundException e) {
             logger.error("Resource not found: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new ApiResponseDTO<>(e.getMessage(), null));
+            return ResponseEntityUtil.notFound(e.getMessage());
         }
     }
 
@@ -112,15 +107,13 @@ public class AppointmentController {
             String username = userDetails.getUsername();
             AppointmentResponseDTO updatedAppointment = appointmentService.updateAppointment(appointmentId, username, updatedAppointmentDTO);
             logger.info("Updated appointment ID: {} for user: {}", appointmentId, username);
-            return ResponseEntity.ok(new ApiResponseDTO<>("Appointment updated successfully", updatedAppointment));
+            return ResponseEntityUtil.ok("Appointment updated successfully", updatedAppointment);
         } catch (ResourceNotFoundException e) {
-            logger.error("Resource not found: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new ApiResponseDTO<>(e.getMessage(), null));
+            logger.error("Resource not found", e);
+            return ResponseEntityUtil.notFound(e.getMessage());
         } catch (UnauthorizedAccessException e) {
-            logger.error("Unauthorized access: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(new ApiResponseDTO<>(e.getMessage(), null));
+            logger.error("Unauthorized access", e);
+            return ResponseEntityUtil.forbidden(e.getMessage());
         }
     }
 
@@ -134,15 +127,13 @@ public class AppointmentController {
             String username = userDetails.getUsername();
             appointmentService.submitFeedback(username, appointmentId, feedbackDTO);
             logger.info("Submitted feedback for appointment ID: {} by user: {}", appointmentId, username);
-            return ResponseEntity.ok(new ApiResponseDTO<>("Feedback submitted successfully", null));
+            return ResponseEntityUtil.ok("Feedback submitted successfully", null);
         } catch (ResourceNotFoundException e) {
-            logger.error("Resource not found: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new ApiResponseDTO<>(e.getMessage(), null));
+            logger.error("Resource not found", e);
+            return ResponseEntityUtil.notFound(e.getMessage());
         } catch (UnauthorizedAccessException e) {
-            logger.error("Unauthorized access: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(new ApiResponseDTO<>(e.getMessage(), null));
+            logger.error("Unauthorized access", e);
+            return ResponseEntityUtil.forbidden(e.getMessage());
         }
     }
 
@@ -155,11 +146,10 @@ public class AppointmentController {
             String username = userDetails.getUsername();
             Page<AppointmentResponseDTO> appointments = appointmentService.getAppointmentHistory(username, page, size);
             logger.info("Fetched appointment history for user: {}", username);
-            return ResponseEntity.ok(new ApiResponseDTO<>("Fetched appointment history successfully", appointments));
+            return ResponseEntityUtil.page(appointments, "Fetched appointment history successfully");
         } catch (ResourceNotFoundException e) {
-            logger.error("User not found: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new ApiResponseDTO<>("User not found", null));
+            logger.error("User not found", e);
+            return ResponseEntityUtil.notFound("User not found");
         }
     }
 
@@ -172,11 +162,10 @@ public class AppointmentController {
             String username = userDetails.getUsername();
             Page<AppointmentResponseDTO> appointments = appointmentService.getAppointmentsForSpecialist(username, page, size);
             logger.info("Fetched appointments for specialist: {}", username);
-            return ResponseEntity.ok(new ApiResponseDTO<>("Fetched appointments for specialist successfully", appointments));
+            return ResponseEntityUtil.page(appointments, "Fetched appointments for specialist successfully");
         } catch (ResourceNotFoundException e) {
             logger.error("Specialist not found: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new ApiResponseDTO<>("Specialist not found", null));
+            return ResponseEntityUtil.notFound("Specialist not found");
         }
     }
 

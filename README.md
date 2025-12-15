@@ -1,79 +1,172 @@
-# 🐾 PetCareConnect (Pet Forum Application)
+# 🐾 PetCareConnect
 
-[![PetCareConnect Screenshot 1](./design/petcareconnect-01-home.jpeg)](YOUR_DEPLOYED_LINK)
+[![PetCareConnect Screenshot 1](./design/petcareconnect-01-home.jpeg)](https://petcareconnect.netlify.app)
 
-[![PetCareConnect Screenshot 2](./design/petcareconnect-02-about.jpeg)](YOUR_DEPLOYED_LINK)
+[![PetCareConnect Screenshot 2](./design/petcareconnect-02-about.jpeg)](https://petcareconnect.netlify.app)
 
-[![PetCareConnect Screenshot 3](./design/petcareconnect-03-forum.jpeg)](YOUR_DEPLOYED_LINK)
+[![PetCareConnect Screenshot 3](./design/petcareconnect-03-forum.jpeg)](https://petcareconnect.netlify.app)
 
-[![PetCareConnect Screenshot 5](./design/petcareconnect-05-authentication.jpeg)](YOUR_DEPLOYED_LINK)
+[![PetCareConnect Screenshot 5](./design/petcareconnect-05-authentication.jpeg)](https://petcareconnect.netlify.app)
 
 This project, **PetCareConnect**, is a modern forum application where pet owners connect, share thoughts, suggestions, and advice regarding their pets. It is built with a scalable **Microservices** architecture.
 
-The frontend uses **React**, **TypeScript**, **Tailwind CSS**, and **shadcn/ui**. The backend utilizes **Spring Boot**, **Spring Security**, with **MySQL** (for user data), **MongoDB** (for posts/comments), and **Redis** (for caching). The future scope includes an appointment system for pets.
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![Java](https://img.shields.io/badge/Java-17-orange.svg)](https://www.oracle.com/java/)
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.4.1-brightgreen.svg)](https://spring.io/projects/spring-boot)
+[![React](https://img.shields.io/badge/React-18-61DAFB.svg)](https://reactjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.2.2-3178C6.svg)](https://www.typescriptlang.org/)
 
-## Features
+A modern community platform for pet owners to connect, share knowledge, and discuss pet care topics. Built with a microservices architecture for scalability and performance.
 
-- **Forum Posting**: Users can create, view, and comment on discussion posts.
-- **Secure Auth**: Robust security implemented using **Spring Security** and JWTs.
-- **Microservices**: Decoupled architecture for high availability and independent scaling.
-- **Search & Filter**: Allows users to find relevant topics by keywords or categories.
+## ✨ Features
 
-### Frontend (from `/frontend` directory)
+- **User Authentication**
+  - Secure JWT-based authentication
+  - Social login (Google, GitHub)
+  - Email verification
+  - Password reset functionality
 
-- **React 18** with **TypeScript**
-- **Redux Toolkit**: State Management.
-- **Tailwind CSS + shadcn/ui**: Styling and design system.
-- **Vite**: Build Tool.
+- **Forum System**
+  - Create and manage discussion threads
+  - Comment on posts
+  - Like and interact with content
+  - Categorize discussions
 
-### Backend (from `/backend` directory)
+- **User Profiles**
+  - Personal information management
+  - Pet information tracking
+  - Forum activity history
+  - Appointment scheduling (future)
 
-- **Spring Boot 3.4.1** with **Java 17**.
-- **MySQL**: Relational data (Users, Appointments, Pets).
-- **MongoDB**: Unstructured data (Forums, Comments).
-- **Redis**: Caching (OTPs, sessions).
-- **Spring Security**: JWT authentication and role-based access control.
-- **Twilio & Cloudinary**: External integrations (SMS, Image uploads).
+- **Admin Dashboard**
+  - User management
+  - Content moderation
+  - System monitoring
 
-## Getting Started
+## 🚀 Tech Stack
 
-These instructions will get you a copy of the project up and running on your local machine for development and testing purposes.
+### Frontend
+- **Framework**: React 18 with TypeScript
+- **State Management**: Redux Toolkit
+- **Styling**: Tailwind CSS + shadcn/ui
+- **Build Tool**: Vite
+- **Form Handling**: React Hook Form with Zod validation
+- **Routing**: React Router v6
+- **Icons**: Lucide React
 
-## How to Run Locally
+### Backend
+- **Framework**: Spring Boot 3.4.1 (Java 17)
+- **Security**: Spring Security with JWT
+- **Database**:
+  - MySQL: User data, profiles
+  - MongoDB: Forum posts, comments
+  - Redis: Caching, rate limiting
+- **APIs**: RESTful architecture
+- **External Services**:
+  - Cloudinary: Image upload and management
+  - Twilio: SMS notifications
+  - Email service: Transactional emails
 
-### 1. Setup Infrastructure (Docker Recommended)
+## 🛠️ Prerequisites
 
-From the root directory, start the required database and caching services:
+- Java 17 or higher
+- Node.js 18+ and npm 9+
+- Docker and Docker Compose
+- MySQL 8.0+
+- MongoDB 6.0+
+- Redis 7.0+
 
-```powershell
-# Start MySQL, MongoDB, Redis, Backend, and Frontend services
-docker-compose up --build
+## 🚀 Quick Start
 
-2. Manual Startup (Without Docker)
-Start your local MySQL (3306), MongoDB (27017), and Redis (6379) instances.
+### Using Docker (Recommended)
 
-Backend: Navigate to /backend, ensure all environment variables are set in .env, and run:
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/mraditya1999/petcare-connect.git
+   cd petcare-connect
+   ```
 
-mvn spring-boot:run
+2. Copy the example environment files:
+   ```bash
+   cp backend/.env.example backend/.env
+   cp frontend/.env.example frontend/.env
+   ```
 
-Frontend: Navigate to /frontend, ensure API URLs are configured, and run:
-npm install
-npm run dev
+3. Start the application stack:
+   ```bash
+   docker-compose up --build -d
+   ```
 
-Open https://petcareconnect.netlify.app to view the app in your browser.
+4. Access the application:
+   - Frontend: http://localhost:5173
+   - Backend API: http://localhost:8080
+   - API Documentation: http://localhost:8080/swagger-ui.html
 
-Command,Directory,Description
-npm install,/frontend,Install dependencies
-npm run dev,/frontend,Start development server
-mvn spring-boot:run,/backend,Run Spring Boot application
-mvn clean install -DskipTests,/backend,Build project (skipping tests)
-docker-compose up -d,/ (root),Start all services in detached mode
-```
+### Manual Setup
 
-## Author
+#### Backend
 
-- Portfolio - [@mraditya1999](https://adityayadav-dev.netlify.app)
-- Twitter - [@mraditya1999](https://twitter.com/mraditya1999)
-- Linkedin - [@mraditya1999](https://www.linkedin.com/in/mraditya1999/)
-- Medium - [@mraditya1999](https://medium.com/@mraditya1999)
-- Frontend Mentor - [@mraditya1999](https://www.frontendmentor.io/profile/Aditya-oss-creator)
+1. Navigate to the backend directory:
+   ```bash
+   cd backend
+   ```
+
+2. Configure environment variables in `.env` file
+
+3. Build and run:
+   ```bash
+   mvn clean install
+   mvn spring-boot:run
+   ```
+
+#### Frontend
+
+1. Navigate to the frontend directory:
+   ```bash
+   cd frontend
+   ```
+
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+3. Configure environment variables in `.env` file
+
+4. Start the development server:
+   ```bash
+   npm run dev
+   ```
+
+## 📚 Documentation
+
+- [API Documentation](http://localhost:8080/swagger-ui.html) (available when running locally)
+- [Database Schema](./docs/DATABASE.md)
+- [API Endpoints](./docs/API.md)
+- [Deployment Guide](./docs/DEPLOYMENT.md)
+
+## 🤝 Contributing
+
+Contributions are welcome! Please read our [contributing guidelines](CONTRIBUTING.md) to get started.
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 👨‍💻 Author
+
+- **Aditya Yadav** - [@mraditya1999](https://github.com/mraditya1999)
+  - [Portfolio](https://adityayadav-dev.netlify.app)
+  - [LinkedIn](https://www.linkedin.com/in/mraditya1999/)
+  - [Twitter](https://twitter.com/mraditya1999)
+
+## 🙏 Acknowledgments
+
+- Thanks to all contributors who have helped shape this project
+- Built with amazing open source technologies

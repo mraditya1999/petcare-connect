@@ -1,12 +1,13 @@
 export interface IUser {
   message: string;
   data: {
-    userId: string;
-    email: string;
+    userId: string | number;
+    email: string | null;
     roles: ("USER" | "ADMIN" | "SPECIALIST")[];
-    token: string;
-    oauthProvider: "GOOGLE" | "LOCAL" | "GITHUB" | "MOBILE";
+    token: string | null;
+    oauthProvider: "GOOGLE" | "LOCAL" | "GITHUB" | "MOBILE" | null;
     isNewUser: boolean;
+    isProfileComplete: boolean;
     tempToken?: string | null;
   };
 }

@@ -393,8 +393,7 @@ public class AuthService implements UserDetailsService {
             oauthAccountRepository.findByUser(user).forEach(acc -> {
                 if (acc.getProvider() == provider && !acc.getProviderUserId().equals(providerUserId)) {
                     String msg = "Email already linked with another " + provider + " account.";
-                    logger.warn(msg + " userEmail={}, existingProviderUserId={}, newProviderUserId={}",
-                            email, acc.getProviderUserId(), providerUserId);
+                    logger.warn("{} userEmail={}, existingProviderUserId={}, newProviderUserId={}", msg, email, acc.getProviderUserId(), providerUserId);
                     throw new IllegalStateException(msg);
                 }
             });

@@ -14,7 +14,7 @@ import {
   RegisterUserResponse,
   ResetPasswordParams,
   ResetPasswordResponse,
-  UserLoginResponseDTO,
+  SendOtpResponse,
   VerifyEmailParams,
   VerifyEmailResponse,
 } from "@/types/auth-thunk-types";
@@ -208,7 +208,9 @@ export const sendOtp = createAsyncThunk<
   { rejectValue: string }
 >("auth/sendOtp", async ({ phone }, { rejectWithValue }) => {
   try {
-    const response = await customFetch.post("/auth/send-otp", { phone });
+    const response = await customFetch.post<SendOtpResponse>("/auth/send-otp", {
+      phone,
+    });
     ShowToast({ description: response.data.message, type: "success" });
     return response.data.message; // "OTP sent"
   } catch (err) {
@@ -242,14 +244,7 @@ export const verifyOtp = createAsyncThunk<
 
 // Step 2: Complete Profile (for new users)
 export const completeProfile = createAsyncThunk<
-  {
-    message: string;
-    data: UserLoginResponseDTO & {
-      isNewUser: boolean;
-      userId?: string;
-      tempToken?: string;
-    };
-  },
+  IUser,
   { phone: string; firstName: string; lastName: string; email: string },
   { rejectValue: string }
 >("auth/completeProfile", async (payload, { rejectWithValue }) => {
@@ -259,7 +254,7 @@ export const completeProfile = createAsyncThunk<
       ? { headers: { Authorization: `Bearer ${tempToken}` } }
       : {};
 
-    const response = await customFetch.post(
+    const response = await customFetch.post<IUser>(
       "/auth/complete-profile",
       payload,
       config,

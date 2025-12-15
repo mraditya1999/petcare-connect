@@ -13,6 +13,8 @@ import org.springframework.stereotype.Service;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.security.SecureRandom;
 import java.time.Duration;
 import java.util.Base64;
@@ -208,10 +210,9 @@ public class EmailService {
             return false;
         }
         try {
-            java.net.URI uri = new java.net.URI(url);
-            uri.toURL();
+            new URI(url);
             return true;
-        } catch (java.net.MalformedURLException | java.net.URISyntaxException e) {
+        } catch (URISyntaxException e) {
             logger.debug("Invalid URL format: {}", url);
             return false;
         }

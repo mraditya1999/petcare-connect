@@ -4,6 +4,7 @@ import { customFetch } from "@/utils/customFetch";
 import { handleError } from "@/utils/helpers";
 import {
   IDeleteProfileResponse,
+  IUpdateProfileResponse,
   IUpdatePasswordRequest,
   IUpdatePasswordResponse,
 } from "@/types/profile-thunk-types";
@@ -32,12 +33,15 @@ export const updateProfile = createAsyncThunk<
   { rejectValue: string }
 >("user/updateProfile", async (formData: FormData, { rejectWithValue }) => {
   try {
-    const response = await customFetch.put<IProfileData>("/profile", formData);
+    const response = await customFetch.put<IUpdateProfileResponse>(
+      "/profile",
+      formData,
+    );
     ShowToast({
       description: "Profile updated successfully!",
       type: "success",
     });
-    return response.data;
+    return response.data.data;
   } catch (error) {
     const errMsg = handleError(error);
     ShowToast({ description: errMsg, type: "error" });

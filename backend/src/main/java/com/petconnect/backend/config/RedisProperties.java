@@ -22,8 +22,8 @@ public record RedisProperties(
         if (password == null) {
             password = "";
         }
-        if (timeout == 0) {
-            timeout = 2000; // Default 2 seconds
+        if (timeout <= 0) {
+            timeout = 2000;
         }
     }
 }

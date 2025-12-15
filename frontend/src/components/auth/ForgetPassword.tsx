@@ -13,7 +13,9 @@ import ShowToast from "../shared/ShowToast";
 
 const ForgetPassword = () => {
   const dispatch = useAppDispatch();
-  const { loading, success } = useAppSelector((state) => state.auth);
+  const { loading } = useAppSelector((state) => state.auth);
+
+  const [showSuccess, setShowSuccess] = useState(false);
   const [forgetPasswordCredentials, setForgetPasswordCredentials] =
     useState<IForgetPasswordCredentials>({ email: "" });
 
@@ -30,7 +32,14 @@ const ForgetPassword = () => {
       const parsedData = forgetPasswordFormSchema.parse(
         forgetPasswordCredentials,
       );
+
       await dispatch(forgetPassword({ parsedData })).unwrap();
+
+      setShowSuccess(true);
+      setTimeout(() => {
+        setShowSuccess(false);
+      }, 3000);
+
       ShowToast({
         description: "Please check your email to reset your password.",
         type: "success",
@@ -46,7 +55,7 @@ const ForgetPassword = () => {
 
   return (
     <>
-      {!success ? (
+      {!showSuccess ? (
         <article className="fixed-width rounded-lg px-8 py-8 shadow-md transition-all duration-300 hover:shadow-lg">
           <header className="mb-8 flex flex-col items-center gap-1">
             <h2 className="text-lg font-semibold md:text-2xl lg:text-3xl">

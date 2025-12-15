@@ -118,7 +118,7 @@ public class OtpRedisService {
         }
         
         try {
-            return Boolean.TRUE.equals(redisTemplate.hasKey(blockKey(phone)));
+            return redisTemplate.hasKey(blockKey(phone));
         } catch (Exception e) {
             logger.error("Error checking if phone is blocked: {}", phone, e);
             throw new RuntimeException("Failed to check phone block status", e);
@@ -139,7 +139,7 @@ public class OtpRedisService {
         }
         
         try {
-            return Boolean.TRUE.equals(redisTemplate.hasKey(cooldownKey(phone)));
+            return redisTemplate.hasKey(cooldownKey(phone));
         } catch (Exception e) {
             logger.error("Error checking cooldown for phone: {}", phone, e);
             throw new RuntimeException("Failed to check cooldown", e);

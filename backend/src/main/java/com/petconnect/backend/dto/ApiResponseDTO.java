@@ -1,12 +1,13 @@
 package com.petconnect.backend.dto;
 
-import lombok.AllArgsConstructor;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
 @NoArgsConstructor
 public class ApiResponseDTO<T> {
+    @NotNull
     private String message;
     private T data;
 

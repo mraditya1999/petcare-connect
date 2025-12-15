@@ -37,22 +37,38 @@ export interface LoginUserResponse {
 
 export interface RegisterUserResponse {
   message: string;
+  data: {
+    message: string;
+  };
 }
 
 export interface LogoutUserResponse {
   message: string;
+  data: {
+    message: string;
+  };
 }
 
 export interface VerifyEmailResponse {
   message: string;
+  data: {
+    message: string;
+    success: boolean;
+  };
 }
 
 export interface ForgetPasswordResponse {
   message: string;
+  data: {
+    message: string;
+  };
 }
 
 export interface ResetPasswordResponse {
   message: string;
+  data: {
+    message: string;
+  };
 }
 
 // ======================================================
@@ -66,7 +82,9 @@ export interface SendOtpParams {
 
 export interface SendOtpResponse {
   message: string;
-  success: boolean;
+  data: {
+    phone: string;
+  };
 }
 
 // VERIFY OTP
@@ -89,11 +107,11 @@ export interface VerifyOtpResponse {
 }
 
 export interface IOtpLoginResponse {
-  userId: string;
-  email: string;
+  userId: string | number;
+  email: string | null;
   roles: Array<"USER" | "ADMIN" | "SPECIALIST">;
-  token: string;
-  oauthProvider: "GOOGLE" | "LOCAL" | "GITHUB" | "MOBILE";
+  token: string | null;
+  oauthProvider: "GOOGLE" | "LOCAL" | "GITHUB" | "MOBILE" | null;
   isNewUser: boolean;
   isProfileComplete: boolean;
   tempToken?: string | null;

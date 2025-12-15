@@ -1,3 +1,5 @@
+import { SpringPage } from "./api";
+
 export interface IForum {
   forumId: string;
   title: string;
@@ -62,6 +64,7 @@ export interface IForumDetailState {
   comments: IComment[];
   commentPage: number;
   totalCommentPages: number;
+  totalCommentElements: number;
   loading: boolean;
   error: string | null;
   likeProcessing: boolean;
@@ -70,13 +73,5 @@ export interface IForumDetailState {
 
 export interface IFetchMyForumsResponse {
   message: string;
-  data: {
-    content: IForum[];
-    page: {
-      size: number;
-      number: number;
-      totalElements: number;
-      totalPages: number;
-    };
-  };
+  data: SpringPage<IForum>;
 }

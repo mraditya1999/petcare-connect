@@ -540,8 +540,12 @@ public class UserService {
     @Transactional
     private Map<String, String> uploadProfileImage(MultipartFile profileImage) throws IOException {
         Map<String, Object> uploadResult = uploadService.uploadImage(profileImage, UploadService.ProfileType.USER);
+        String avatarUrl = (String) uploadResult.get("secure_url");
+        if (avatarUrl == null || avatarUrl.isBlank()) {
+            avatarUrl = (String) uploadResult.get("url");
+        }
         return Map.of(
-                "avatarUrl", (String) uploadResult.get("url"),
+                "avatarUrl", avatarUrl,
                 "avatarPublicId", (String) uploadResult.get("public_id")
         );
     }

@@ -35,7 +35,7 @@ public class Forum {
     private String title;
 
     @NotBlank(message = "Content is required")
-    @Size(min = 20, max = 5000, message = "Content must be between 20 and 5000 characters")
+    @Size(min = 200, max = 5000, message = "Content must be between 200 and 5000 characters")
     private String content;
 
     @CreatedDate

@@ -6,6 +6,7 @@ import com.petconnect.backend.dto.user.UserDTO;
 import com.petconnect.backend.dto.user.UserUpdateDTO;
 import com.petconnect.backend.services.UserService;
 import com.petconnect.backend.utils.FileUtils;
+import com.petconnect.backend.utils.ResponseEntityUtil;
 import com.petconnect.backend.validators.FileValidator;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
@@ -50,7 +51,7 @@ public class UserController {
         logger.info("Fetching profile for user: {}", userDetails.getUsername());
         UserDTO userProfile = userService.getUserProfile(userDetails.getUsername());
         logger.info("Profile fetched successfully for user: {}", userDetails.getUsername());
-        return ResponseEntity.ok(new ApiResponseDTO<>("Profile fetched successfully", userProfile));
+        return ResponseEntityUtil.ok("Profile fetched successfully", userProfile);
     }
 
     /**
@@ -76,7 +77,7 @@ public class UserController {
         String username = userDetails.getUsername();
         UserDTO updatedUserDTO = userService.updateUserProfile(username, userUpdateDTO, profileImage);
         logger.info("User profile updated successfully: {}", updatedUserDTO);
-        return ResponseEntity.ok(new ApiResponseDTO<>("Profile updated successfully", updatedUserDTO));
+        return ResponseEntityUtil.ok("Profile updated successfully", updatedUserDTO);
     }
 
 
@@ -93,7 +94,7 @@ public class UserController {
         userService.deleteUserProfile(userDetails);
         String successMessage = "Profile deleted successfully for user: " + userDetails.getUsername();
         logger.info(successMessage);
-        return ResponseEntity.ok(new ApiResponseDTO<>("Profile deleted successfully", successMessage));
+        return ResponseEntityUtil.ok("Profile deleted successfully", successMessage);
     }
 
     /**
@@ -111,6 +112,6 @@ public class UserController {
         userService.updatePassword(userDetails.getUsername(), updatePasswordRequestDTO, userDetails);
         String successMessage = "Password has been updated successfully for user:  " + userDetails.getUsername();
         logger.info(successMessage);
-        return ResponseEntity.ok(new ApiResponseDTO<>("Password updated successfully", successMessage));
+        return ResponseEntityUtil.ok("Password updated successfully", successMessage);
     }
 }

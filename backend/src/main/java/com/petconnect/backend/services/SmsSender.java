@@ -12,7 +12,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class SmsSender {
 
-    private static final Logger logger = LoggerFactory.getLogger(AuthService.class);
+    private static final Logger logger = LoggerFactory.getLogger(SmsSender.class);
 
     private final String accountSid;
     private final String authToken;
@@ -53,4 +53,5 @@ public class SmsSender {
             );
         }
     }
+
 }
