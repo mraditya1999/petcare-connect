@@ -1,3 +1,4 @@
+import { ApiResponse } from "@/types/api";
 import { IProfileData } from "@/types/profile-types";
 
 export interface FetchProfileResponse {
@@ -5,17 +6,9 @@ export interface FetchProfileResponse {
   data: IProfileData;
 }
 
-export interface IUpdateProfileResponse {
-  profile: IProfileData;
-}
+export type IUpdateProfileResponse = ApiResponse<IProfileData>;
 
-export interface IDeleteProfileResponse {
-  message: string;
-}
-
-export interface IDeleteProfileResponse {
-  message: string;
-}
+export type IDeleteProfileResponse = ApiResponse<string>;
 
 export interface IUpdatePasswordRequest {
   currentPassword: string;
@@ -23,9 +16,7 @@ export interface IUpdatePasswordRequest {
   confirmPassword: string;
 }
 
-export interface IUpdatePasswordResponse {
-  message: string;
-}
+export type IUpdatePasswordResponse = ApiResponse<string>;
 
 export interface IUpdateProfile {
   firstName: string;

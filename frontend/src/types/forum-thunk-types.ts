@@ -1,4 +1,5 @@
-import { IForum, IPaginationInfo } from "./forum-types";
+import { SpringPage } from "./api";
+import { IForum } from "./forum-types";
 
 // ---------- Request Params ----------
 export interface IFetchSingleForumParams {
@@ -97,7 +98,7 @@ export interface ICommentListData {
 
 export interface IFetchCommentsResponse {
   message: string;
-  data: ICommentListData;
+  data: SpringPage<IComment>;
 }
 
 export interface ICreateCommentResponse {
@@ -139,8 +140,8 @@ export interface IToggleLikeResponse {
 }
 
 export interface IFetchForumsResponse {
-  content: IForum[];
-  page: IPaginationInfo;
+  message: string;
+  data: SpringPage<IForum>;
 }
 
 export interface IFetchFeaturedForumsResponse {

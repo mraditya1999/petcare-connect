@@ -14,6 +14,7 @@ import com.petconnect.backend.services.AuthService;
 import com.petconnect.backend.services.EmailService;
 import com.petconnect.backend.services.UserService;
 import com.petconnect.backend.utils.PhoneUtils;
+import com.petconnect.backend.utils.ResponseEntityUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,7 +22,6 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -78,7 +78,7 @@ public class AuthController {
         data.put("redirectUri", redirectUri);
         data.put("state", state);
         logger.info("Generated GitHub auth URL for client_id={} redirectUri={}", clientId, redirectUri);
-        return ResponseEntity.ok(new ApiResponseDTO<>("OK", data));
+        return ResponseEntityUtil.ok("OK", data);
     }
 
     /**
@@ -92,10 +92,10 @@ public class AuthController {
         try {
             authService.registerUser(userRequest);
             UserRegistrationResponseDTO response = new UserRegistrationResponseDTO("User registered successfully. Please check your email for the verification link.");
-            return ResponseEntity.status(HttpStatus.CREATED).body(new ApiResponseDTO<>("User registered successfully.", response));
+            return ResponseEntityUtil.created("User registered successfully.", response);
         } catch (UserAlreadyExistsException e) {
             logger.error("User registration failed: ", e);
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(new ApiResponseDTO<>(e.getMessage()));
+            return ResponseEntityUtil.conflict(e.getMessage());
         }
     }
 
@@ -129,14 +129,14 @@ public class AuthController {
                         isProfileCompleted
                 );
 
-                return ResponseEntity.ok(new ApiResponseDTO<>("User logged in successfully.", userLoginResponseDTO));
+                return ResponseEntityUtil.ok("User logged in successfully.", userLoginResponseDTO);
             } else {
                 logger.warn("Failed login attempt for email: {}", loginRequest.getEmail());
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponseDTO<>("Invalid email or password"));
+                return ResponseEntityUtil.unauthorized("Invalid email or password");
             }
         } catch (AuthenticationException e) {
             logger.warn("Authentication failed for email: {}: {}", loginRequest.getEmail(), e.getMessage());
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponseDTO<>("Invalid email or password"));
+            return ResponseEntityUtil.unauthorized("Invalid email or password");
         }
     }
 
@@ -156,7 +156,7 @@ public class AuthController {
         response.addCookie(cookie);
         logger.info("User logged out successfully");
         LogoutResponseDTO logoutResponse = new LogoutResponseDTO("User logged out successfully");
-        return ResponseEntity.ok(new ApiResponseDTO<>("User logged out successfully", logoutResponse));
+        return ResponseEntityUtil.ok("User logged out successfully", logoutResponse);
     }
 
     /**
@@ -175,15 +175,13 @@ public class AuthController {
             VerifyEmailResponseDTO body =
                     new VerifyEmailResponseDTO("User verified and registered successfully.", true);
 
-            return ResponseEntity.ok(
-                    new ApiResponseDTO<>("User verified successfully.", body));
+            return ResponseEntityUtil.ok("User verified successfully.", body);
         }  catch (ResourceNotFoundException ex) {
 
             VerifyEmailResponseDTO body =
                 new VerifyEmailResponseDTO(ex.getMessage(), false);
 
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(new ApiResponseDTO<>(ex.getMessage(), body));
+            return ResponseEntityUtil.notFound(ex.getMessage(), body);
 
         }
     }
@@ -207,7 +205,7 @@ public class AuthController {
                 emailService.sendResetEmail(user);
                 logger.info("Password reset email sent successfully to: {}", email);
                 ForgetPasswordResponseDTO forgetPasswordResponse = new ForgetPasswordResponseDTO("Password reset email sent successfully");
-                return ResponseEntity.ok(new ApiResponseDTO<>("Password reset email sent successfully", forgetPasswordResponse));
+                return ResponseEntityUtil.ok("Password reset email sent successfully", forgetPasswordResponse);
             } else {
                 logger.warn("Email address not found: {}", email);
                 throw new ResourceNotFoundException("Email address not found");
@@ -215,7 +213,7 @@ public class AuthController {
         } catch (ResourceNotFoundException e) {
             logger.error("Password reset request failed: ", e);
             ForgetPasswordResponseDTO forgetPasswordResponse = new ForgetPasswordResponseDTO(e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiResponseDTO<>(e.getMessage(), forgetPasswordResponse));
+            return ResponseEntityUtil.notFound(e.getMessage(), forgetPasswordResponse);
         }
     }
 
@@ -236,12 +234,11 @@ public class AuthController {
         if (isReset) {
             ResetPasswordResponseDTO resetPasswordResponse =
                     new ResetPasswordResponseDTO("Password reset successfully");
-            return ResponseEntity.ok(new ApiResponseDTO<>("Password reset successfully", resetPasswordResponse));
+            return ResponseEntityUtil.ok("Password reset successfully", resetPasswordResponse);
         } else {
             ResetPasswordResponseDTO resetPasswordResponse =
                     new ResetPasswordResponseDTO("New password cannot be the same as the old password.");
-            return ResponseEntity.badRequest()
-                    .body(new ApiResponseDTO<>("New password cannot be the same as the old password.", resetPasswordResponse));
+            return ResponseEntityUtil.badRequest("New password cannot be the same as the old password.", resetPasswordResponse);
         }
     }
 
@@ -289,12 +286,11 @@ public class AuthController {
                         isProfileCompleted
                 );
 
-                return ResponseEntity.ok(new ApiResponseDTO<>("User logged in successfully.", response));
+                return ResponseEntityUtil.ok("User logged in successfully.", response);
 
             } catch (AuthenticationException e) {
                 logger.warn("Google login failed: {}", e.getMessage());
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body(new ApiResponseDTO<>("Invalid Google token"));
+                return ResponseEntityUtil.unauthorized("Invalid Google token");
             }
         }
     /**
@@ -311,7 +307,7 @@ public class AuthController {
         // validate state
         if (state == null || state.isBlank() || redisStorageService.getOAuthState(state) == null) {
             logger.warn("Invalid or missing OAuth state during GitHub login");
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponseDTO<>("Invalid OAuth state"));
+            return ResponseEntityUtil.badRequest("Invalid OAuth state");
         }
 
         try {
@@ -345,14 +341,14 @@ public class AuthController {
                     isProfileCompleted
             );
 
-            return ResponseEntity.ok(new ApiResponseDTO<>("User logged in successfully.", response));
+            return ResponseEntityUtil.ok("User logged in successfully.", response);
 
         } catch (IllegalStateException e) {
             logger.warn("GitHub exchange failed: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponseDTO<>("GitHub OAuth failed: " + e.getMessage()));
+            return ResponseEntityUtil.badRequest("GitHub OAuth failed: " + e.getMessage());
         } catch (Exception e) {
             logger.error("Unexpected error during GitHub login", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponseDTO<>("Internal error during GitHub login"));
+            return ResponseEntityUtil.internalServerError("Internal error during GitHub login");
         }
     }
 
@@ -369,8 +365,7 @@ public class AuthController {
         String phone = PhoneUtils.normalizeToE164(rawPhone);
 
         if (phone == null) {
-            return ResponseEntity.badRequest()
-                    .body(new ApiResponseDTO<>("Invalid phone format", null));
+            return ResponseEntityUtil.badRequest("Invalid phone format");
         }
 
         try {
@@ -378,11 +373,10 @@ public class AuthController {
 
             // Returning phone in data for consistency
             Map<String, String> data = Map.of("phone", phone);
-            return ResponseEntity.ok(new ApiResponseDTO<>("OTP sent successfully", data));
+            return ResponseEntityUtil.ok("OTP sent successfully", data);
         } catch (IllegalStateException ex) {
             // e.g., cooldown active
-            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
-                    .body(new ApiResponseDTO<>(ex.getMessage(), Map.of("phone", phone)));
+            return ResponseEntityUtil.tooManyRequests(ex.getMessage(), Map.of("phone", phone));
         }
     }
 
@@ -400,9 +394,7 @@ public class AuthController {
         if (phone == null || otp == null) {
             Map<String, Object> errorData = new HashMap<>();
             errorData.put("message", "Phone and OTP required");
-            ApiResponseDTO<Map<String, Object>> response =
-                    new ApiResponseDTO<>("Invalid input", errorData);
-            return ResponseEntity.badRequest().body(response);
+            return ResponseEntityUtil.badRequest("Invalid input", errorData);
         }
 
         try {
@@ -431,28 +423,22 @@ public class AuthController {
             }
 
             String message = result.isNewUser() ? "New user. Complete profile." : "User logged in successfully.";
-            return ResponseEntity.ok(new ApiResponseDTO<>(message, data));
+            return ResponseEntityUtil.ok(message, data);
 
         } catch (InvalidOtpException ex) {
             Map<String, Object> errorData = new HashMap<>();
             errorData.put("message", ex.getMessage());
-            ApiResponseDTO<Map<String, Object>> response =
-                    new ApiResponseDTO<>("Invalid OTP", errorData);
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+            return ResponseEntityUtil.unauthorized("Invalid OTP", errorData);
 
         } catch (OtpExpiredException ex) {
             Map<String, Object> errorData = new HashMap<>();
             errorData.put("message", ex.getMessage());
-            ApiResponseDTO<Map<String, Object>> response =
-                    new ApiResponseDTO<>("OTP expired", errorData);
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+            return ResponseEntityUtil.conflict("OTP expired", errorData);
 
         } catch (UserNotFoundException ex) {
             Map<String, Object> errorData = new HashMap<>();
             errorData.put("message", ex.getMessage());
-            ApiResponseDTO<Map<String, Object>> response =
-                    new ApiResponseDTO<>("User not found", errorData);
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+            return ResponseEntityUtil.notFound("User not found", errorData);
         }
     }
 
@@ -473,8 +459,7 @@ public class AuthController {
         String normalizedPhone = PhoneUtils.normalizeToE164(dto.getPhone());
 
         if (token == null || !authService.validateTempTokenForPhone(token, normalizedPhone)) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(new ApiResponseDTO<>("Invalid or expired token", null));
+            return ResponseEntityUtil.unauthorized("Invalid or expired token");
         }
 
         try {
@@ -492,17 +477,15 @@ public class AuthController {
             data.put("isNewUser", false);   // profile completed
             data.put("tempToken", null);    // temp token no longer needed
 
-            return ResponseEntity.ok(new ApiResponseDTO<>("Profile completed successfully.", data));
+            return ResponseEntityUtil.ok("Profile completed successfully.", data);
 
         } catch (IllegalArgumentException ex) {
-            return ResponseEntity.badRequest().body(new ApiResponseDTO<>(ex.getMessage(), null));
+            return ResponseEntityUtil.badRequest(ex.getMessage());
         } catch (DataIntegrityViolationException ex) {
-            return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body(new ApiResponseDTO<>("Data integrity error (possible duplicate email)", null));
+            return ResponseEntityUtil.conflict("Data integrity error (possible duplicate email)");
         } catch (Exception ex) {
             logger.error("complete-profile error", ex);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ApiResponseDTO<>("Server error", null));
+            return ResponseEntityUtil.internalServerError("Server error");
         }
     }
 

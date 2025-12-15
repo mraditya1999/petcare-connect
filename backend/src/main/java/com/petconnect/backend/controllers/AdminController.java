@@ -15,6 +15,7 @@ import com.petconnect.backend.mappers.CommentMapper;
 import com.petconnect.backend.mappers.LikeMapper;
 import com.petconnect.backend.services.*;
 import com.petconnect.backend.utils.FileUtils;
+import com.petconnect.backend.utils.ResponseEntityUtil;
 import com.petconnect.backend.validators.FileValidator;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
@@ -87,7 +88,7 @@ public class AdminController {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.fromString(sortDir), sortBy));
         Page<UserDTO> users = userService.getAllUsers(pageable);
         logger.info("Fetched all users with pagination and sorting");
-        return ResponseEntity.ok(new ApiResponseDTO<>("Fetched all users", users));
+        return ResponseEntityUtil.page(users, "Fetched all users");
     }
 
     /**
@@ -101,11 +102,10 @@ public class AdminController {
         try {
             UserDTO user = userService.getUserById(userId);
             logger.info("Fetched user with ID: {}", userId);
-            return ResponseEntity.ok(new ApiResponseDTO<>("Fetched user successfully", user));
+            return ResponseEntityUtil.ok("Fetched user successfully", user);
         } catch (ResourceNotFoundException e) {
             logger.error("User not found with ID: {}", userId, e);
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new ApiResponseDTO<>("User not found", null));
+            return ResponseEntityUtil.notFound("User not found");
         }
     }
 
@@ -134,19 +134,19 @@ public class AdminController {
 
             UserDTO updatedUser = userService.updateUserById(id, userUpdateDTO, profileImage);
             logger.info("Updated user profile with ID: {}", id);
-            return ResponseEntity.ok(new ApiResponseDTO<>("Updated user profile", updatedUser));
+            return ResponseEntityUtil.ok("Updated user profile", updatedUser);
         } catch (FileValidationException e) {
             logger.error(e.getMessage());
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponseDTO<>(e.getMessage(), null));
+            return ResponseEntityUtil.badRequest(e.getMessage());
         } catch (ResourceNotFoundException e) {
             logger.error("User not found with ID: {}", id, e);
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiResponseDTO<>("User not found", null));
+            return ResponseEntityUtil.notFound("User not found");
         } catch (IOException e) {
             logger.error("IO Error: {}", e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponseDTO<>("Error updating user profile", null));
+            return ResponseEntityUtil.internalServerError("Error updating user profile");
         } catch (Exception e) {
             logger.error("Unexpected error: {}", e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponseDTO<>("Error updating user profile", null));
+            return ResponseEntityUtil.internalServerError("Error updating user profile");
         }
     }
 
@@ -162,13 +162,13 @@ public class AdminController {
         try {
             userService.deleteUserById(id);
             logger.info("Deleted user with ID: {}", id);
-            return ResponseEntity.ok(new ApiResponseDTO<>("User profile deleted successfully"));
+            return ResponseEntityUtil.ok("User profile deleted successfully", "User profile deleted successfully");
         } catch (UserNotFoundException e) {
             logger.error("User not found: {}", e.getMessage());
-            return new ResponseEntity<>(new ApiResponseDTO<>("User not found"), HttpStatus.NOT_FOUND);
+            return ResponseEntityUtil.notFound("User not found");
         } catch (Exception e) {
             logger.error("Error deleting user: {}", e.getMessage(), e);
-            return new ResponseEntity<>(new ApiResponseDTO<>("Error deleting user"), HttpStatus.INTERNAL_SERVER_ERROR);
+            return ResponseEntityUtil.internalServerError("Error deleting user");
         }
     }
 
@@ -193,10 +193,10 @@ public class AdminController {
             Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.fromString(sortDir), sortBy));
             Page<UserDTO> users = userService.searchUsers(keyword, pageable);
             logger.info("Searched users with keyword: {}", keyword);
-            return ResponseEntity.ok(new ApiResponseDTO<>("Searched users", users));
+            return ResponseEntityUtil.page(users, "Searched users");
         } catch (Exception e) {
             logger.error("Error searching users: {}", e.getMessage(), e);
-            return new ResponseEntity<>(new ApiResponseDTO<>("Error searching users"), HttpStatus.INTERNAL_SERVER_ERROR);
+            return ResponseEntityUtil.internalServerError("Error searching users");
         }
     }
 
@@ -223,15 +223,15 @@ public class AdminController {
 
             userService.updateUserRoles(id, validRoleNames);
             logger.info("Roles updated for user with ID: {}", id);
-            return ResponseEntity.ok(new ApiResponseDTO<>("Roles updated successfully"));
+            return ResponseEntityUtil.ok("Roles updated successfully", (Map<String, String>) null);
         } catch (UserNotFoundException e) {
             logger.error("User not found: {}", e.getMessage());
-            return new ResponseEntity<>(new ApiResponseDTO<>("User not found"), HttpStatus.NOT_FOUND);
+            return ResponseEntityUtil.notFound("User not found");
         } catch (InvalidRoleNameException e) {
             logger.error("Invalid role name: {}", e.getMessage());
             Map<String, String> errorData = new HashMap<>();
             errorData.put("message", e.getMessage());
-            return new ResponseEntity<>(new ApiResponseDTO<>("Invalid input", errorData), HttpStatus.BAD_REQUEST);
+            return ResponseEntityUtil.badRequest("Invalid input", errorData);
         }
     }
 
@@ -256,13 +256,12 @@ public class AdminController {
             // Additional logging for debugging
             logger.info("Fetching users with role: {} (page: {}, size: {}, sortBy: {}, sortDir: {})", roleName, page, size, sortBy, sortDir);
             Page<UserDTO> usersPage = userService.getAllUsersByRole(roleName, page, size, sortBy, sortDir);
-            return ResponseEntity.ok(new ApiResponseDTO<>("Fetched users successfully", usersPage));
+            return ResponseEntityUtil.page(usersPage, "Fetched users successfully");
 
         } catch (IllegalArgumentException e) {
             // Handle invalid page/size values
             logger.error("Invalid pagination parameters: page={}, size={}", page, size, e);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(new ApiResponseDTO<>("Invalid pagination parameters", null));
+            return ResponseEntityUtil.badRequest("Invalid pagination parameters");
         }
     }
 

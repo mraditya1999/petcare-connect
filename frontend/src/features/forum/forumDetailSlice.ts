@@ -28,6 +28,7 @@ const initialState: IForumDetailState = {
   comments: [],
   commentPage: 0,
   totalCommentPages: 1,
+  totalCommentElements: 0,
   loading: false,
   error: null,
   likeProcessing: false,
@@ -74,8 +75,27 @@ const forumDetailSlice = createSlice({
         (state, action: PayloadAction<IFetchCommentsResponse>) => {
           state.loading = false;
           state.comments = action.payload.data.content ?? [];
-          const rawPages = action.payload.data.page?.totalPages ?? 1;
-          state.totalCommentPages = Math.max(rawPages, 1);
+
+          const totalElements =
+            (action.payload.data as unknown as {
+              totalElements?: number;
+              page?: { totalElements?: number };
+            }).totalElements ??
+            (action.payload.data as unknown as { page?: { totalElements?: number } }).page
+              ?.totalElements ??
+            0;
+
+          const totalPages =
+            (action.payload.data as unknown as {
+              totalPages?: number;
+              page?: { totalPages?: number };
+            }).totalPages ??
+            (action.payload.data as unknown as { page?: { totalPages?: number } }).page
+              ?.totalPages ??
+            1;
+
+          state.totalCommentElements = totalElements;
+          state.totalCommentPages = Math.max(totalPages, 1);
         },
       )
       .addCase(fetchComments.rejected, (state, action) => {
@@ -189,6 +209,7 @@ const forumDetailSlice = createSlice({
         state.forum = null;
         state.comments = [];
         state.totalCommentPages = 1;
+        state.totalCommentElements = 0;
       })
       .addCase(deleteForum.rejected, (state, action) => {
         state.loading = false;

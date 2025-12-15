@@ -2,6 +2,7 @@ import { createAsyncThunk } from "@reduxjs/toolkit";
 import { customFetch } from "@/utils/customFetch";
 import { handleError } from "@/utils/helpers";
 import { IFetchMyForumsResponse, IForum } from "@/types/forum-types";
+import { RootState } from "@/app/store";
 import {
   IFetchForumsParams,
   IFetchForumsResponse,
@@ -63,20 +64,22 @@ export const fetchFeaturedForums = createAsyncThunk<
 export const createForum = createAsyncThunk<
   ICreateForumResponse,
   ICreateForumParams,
-  { rejectValue: string }
->("forumList/createForum", async (payload, { dispatch, rejectWithValue }) => {
+  { rejectValue: string; state: RootState }
+>("forumList/createForum", async (payload, { dispatch, rejectWithValue, getState }) => {
   try {
     await customFetch.post("/forums", payload);
 
-    // auto-refresh list & featured
+    // auto-refresh list & featured using current list settings
+    const state = getState();
+    const { size, sortBy, sortDir, searchTerm, tagSearchTerm } = state.forumList;
     dispatch(
       fetchForums({
         page: 0,
-        size: 10,
-        sortBy: "createdAt",
-        sortDir: "desc",
-        searchTerm: "",
-        tagSearchTerm: "",
+        size,
+        sortBy,
+        sortDir,
+        searchTerm,
+        tagSearchTerm,
       }),
     );
 

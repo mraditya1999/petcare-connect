@@ -9,12 +9,12 @@ import com.petconnect.backend.exceptions.ResourceNotFoundException;
 import com.petconnect.backend.exceptions.UnauthorizedAccessException;
 import com.petconnect.backend.services.PetService;
 import com.petconnect.backend.utils.FileUtils;
+import com.petconnect.backend.utils.ResponseEntityUtil;
 import com.petconnect.backend.validators.FileValidator;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -68,19 +68,19 @@ public class PetController {
             String username = userDetails.getUsername();
             PetResponseDTO createdPet = petService.createPetForUser(petRequestDTO, avatarFile, username);
             logger.info("Pet created for user: {}", username);
-            return ResponseEntity.status(HttpStatus.CREATED).body(new ApiResponseDTO<>("Pet created successfully", createdPet));
+            return ResponseEntityUtil.created("Pet created successfully", createdPet);
         } catch (FileValidationException e) {
             logger.error(e.getMessage());
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponseDTO<>(e.getMessage(), null));
+            return ResponseEntityUtil.badRequest(e.getMessage());
         } catch (ResourceNotFoundException e) {
             logger.error("User not found: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiResponseDTO<>("User not found", null));
+            return ResponseEntityUtil.notFound("User not found");
         } catch (DuplicatePetNameException e) {
             logger.error("Duplicate pet name: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponseDTO<>("Duplicate pet name", null));
+            return ResponseEntityUtil.badRequest("Duplicate pet name");
         } catch (IOException e) {
             logger.error("IO Error: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponseDTO<>("Error creating pet", null));
+            return ResponseEntityUtil.internalServerError("Error creating pet");
         }
     }
 
@@ -93,7 +93,7 @@ public class PetController {
     @GetMapping
     public ResponseEntity<ApiResponseDTO<List<PetResponseDTO>>> getAllPetsForUser(@AuthenticationPrincipal UserDetails userDetails) {
         List<PetResponseDTO> pets = petService.getAllPetsForUser(userDetails.getUsername());
-        return ResponseEntity.ok(new ApiResponseDTO<>("Fetched all pets", pets));
+        return ResponseEntityUtil.ok("Fetched all pets", pets);
     }
 
     /**
@@ -107,13 +107,13 @@ public class PetController {
     public ResponseEntity<ApiResponseDTO<PetResponseDTO>> getPetOfUserById(@PathVariable Long id, @AuthenticationPrincipal UserDetails userDetails) {
         try {
             PetResponseDTO pet = petService.getPetOfUserById(id, userDetails.getUsername());
-            return ResponseEntity.ok(new ApiResponseDTO<>("Fetched pet", pet));
+            return ResponseEntityUtil.ok("Fetched pet", pet);
         } catch (UnauthorizedAccessException e) {
             logger.error("Unauthorized access to pet with ID: {} for user: {}", id, userDetails.getUsername(), e);
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new ApiResponseDTO<>(e.getMessage(), null));
+            return ResponseEntityUtil.forbidden(e.getMessage());
         } catch (ResourceNotFoundException e) {
             logger.error("Pet not found with ID: {} for user: {}", id, userDetails.getUsername(), e);
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiResponseDTO<>(e.getMessage(), null));
+            return ResponseEntityUtil.notFound(e.getMessage());
         }
     }
 
@@ -143,16 +143,16 @@ public class PetController {
 
             PetResponseDTO updatedPet = petService.updatePetForUser(id, petRequestDTO, avatarFile, userDetails.getUsername());
             logger.info("Pet updated for user: {}", userDetails.getUsername());
-            return ResponseEntity.ok(new ApiResponseDTO<>("Pet updated successfully", updatedPet));
+            return ResponseEntityUtil.ok("Pet updated successfully", updatedPet);
         } catch (FileValidationException e) {
             logger.error(e.getMessage());
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponseDTO<>(e.getMessage(), null));
+            return ResponseEntityUtil.badRequest(e.getMessage());
         } catch (UnauthorizedAccessException e) {
             logger.error("Unauthorized access to pet with ID: {} for user: {}", id, userDetails.getUsername(), e);
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new ApiResponseDTO<>(e.getMessage(), null));
+            return ResponseEntityUtil.forbidden(e.getMessage());
         } catch (ResourceNotFoundException e) {
             logger.error("Pet not found with ID: {} for user: {}", id, userDetails.getUsername(), e);
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiResponseDTO<>(e.getMessage(), null));
+            return ResponseEntityUtil.notFound(e.getMessage());
         }
     }
 
@@ -169,6 +169,6 @@ public class PetController {
 
         petService.deletePetForUser(id, userDetails);
         logger.info("Pet deleted with ID: {}", id);
-        return ResponseEntity.ok(new ApiResponseDTO<>("Pet deleted successfully"));
+        return ResponseEntityUtil.ok("Pet deleted successfully", "Pet deleted successfully");
     }
 }

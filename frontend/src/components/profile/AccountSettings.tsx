@@ -468,9 +468,10 @@ const AccountSetting = () => {
       const parsedData = profileFormSchema.parse(normalizedForm);
 
       const formData = new FormData();
-      Object.entries(parsedData).forEach(([key, value]) =>
-        formData.append(key, String(value)),
-      );
+      Object.entries(parsedData).forEach(([key, value]) => {
+        if (value === undefined || value === null) return;
+        formData.append(key, String(value));
+      });
 
       if (profileImage instanceof File) {
         formData.append("profileImage", profileImage);
@@ -478,9 +479,11 @@ const AccountSetting = () => {
 
       await dispatch(updateProfile(formData)).unwrap();
 
-      // ✅ refresh snapshot after save
       const updatedProfile = await dispatch(fetchProfile()).unwrap();
-      originalProfileRef.current = mapProfileToForm(updatedProfile);
+      const mappedUpdatedProfile = mapProfileToForm(updatedProfile);
+      originalProfileRef.current = mappedUpdatedProfile;
+      setProfileForm(mappedUpdatedProfile);
+      setProfileImage(updatedProfile.avatarUrl || null);
 
       setIsEditing(false);
       navigate(ROUTES.PROFILE);

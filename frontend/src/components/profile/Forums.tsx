@@ -6,12 +6,30 @@ import { ForumListContainer } from "@/components";
 
 const ForumsTab: React.FC = () => {
   const dispatch = useAppDispatch();
-  const { myForums, loading, error, myForumsPage, size, myForumsTotalPages } =
+  const {
+    myForums,
+    loading,
+    error,
+    myForumsPage,
+    size,
+    myForumsTotalPages,
+    myForumsTotalElements,
+  } =
     useAppSelector((state) => state.forumList);
 
   useEffect(() => {
     dispatch(fetchMyForums({ page: myForumsPage, size }));
   }, [dispatch, myForumsPage, size]);
+
+  useEffect(() => {
+    if (loading) return;
+    if (error) return;
+    if (myForumsPage <= 0) return;
+    if ((myForums?.length ?? 0) > 0) return;
+    if (myForumsTotalElements <= 0) return;
+
+    dispatch(setMyForumsPage(myForumsPage - 1));
+  }, [dispatch, loading, error, myForumsPage, myForums, myForumsTotalElements]);
 
   return (
     <ForumListContainer

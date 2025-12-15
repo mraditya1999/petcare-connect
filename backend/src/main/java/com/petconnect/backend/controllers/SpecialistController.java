@@ -7,6 +7,7 @@ import com.petconnect.backend.exceptions.FileValidationException;
 import com.petconnect.backend.exceptions.ResourceNotFoundException;
 import com.petconnect.backend.mappers.SpecialistMapper;
 import com.petconnect.backend.services.SpecialistService;
+import com.petconnect.backend.utils.ResponseEntityUtil;
 import com.petconnect.backend.validators.FileValidator;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
@@ -16,7 +17,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -70,7 +70,7 @@ public class SpecialistController {
             String errorMessage = bindingResult.getAllErrors().stream()
                     .map(DefaultMessageSourceResolvable::getDefaultMessage)
                     .collect(Collectors.joining(", "));
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponseDTO<>("Validation error: " + errorMessage, null));
+            return ResponseEntityUtil.badRequest("Validation error: " + errorMessage);
         }
 
         logger.info("Received request to update specialist profile for user: {}", userDetails.getUsername());
@@ -83,16 +83,16 @@ public class SpecialistController {
 
             SpecialistResponseDTO updatedSpecialist = specialistService.updateSpecialist(specialistUpdateRequestDTO, profileImage, userDetails);
             logger.info("Updated specialist profile for user: {}", userDetails.getUsername());
-            return ResponseEntity.ok(new ApiResponseDTO<>("Specialist updated successfully", updatedSpecialist));
+            return ResponseEntityUtil.ok("Specialist updated successfully", updatedSpecialist);
         } catch (FileValidationException e) {
             logger.error(e.getMessage());
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponseDTO<>(e.getMessage(), null));
+            return ResponseEntityUtil.badRequest(e.getMessage());
         } catch (ResourceNotFoundException e) {
             logger.error("Specialist not found for user: {}", userDetails.getUsername(), e);
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiResponseDTO<>("Specialist not found", null));
+            return ResponseEntityUtil.notFound("Specialist not found");
         } catch (IOException e) {
             logger.error("IO Error: {}", e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponseDTO<>("Error updating specialist profile", null));
+            return ResponseEntityUtil.internalServerError("Error updating specialist profile");
         }
     }
 
@@ -118,10 +118,10 @@ public class SpecialistController {
             Page<SpecialistResponseDTO> specialists = specialistService.getAllSpecialists(pageable);
 
             logger.info("Fetched all specialists with pagination and sorting");
-            return ResponseEntity.ok(new ApiResponseDTO<>("Fetched all specialists", specialists));
+            return ResponseEntityUtil.page(specialists, "Fetched all specialists");
         } catch (IllegalArgumentException e) {
             logger.error("Invalid sort direction: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponseDTO<>("Invalid sort direction", null));
+            return ResponseEntityUtil.badRequest("Invalid sort direction");
         }
     }
 
@@ -136,10 +136,10 @@ public class SpecialistController {
         try {
             SpecialistResponseDTO specialist = specialistService.getSpecialistById(id);
             logger.info("Fetched specialist with ID: {}", id);
-            return ResponseEntity.ok(new ApiResponseDTO<>("Fetched specialist", specialist));
+            return ResponseEntityUtil.ok("Fetched specialist", specialist);
         } catch (ResourceNotFoundException e) {
             logger.error("Specialist not found with ID: {}", id, e);
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiResponseDTO<>("Specialist not found", null));
+            return ResponseEntityUtil.notFound("Specialist not found");
         }
     }
 }

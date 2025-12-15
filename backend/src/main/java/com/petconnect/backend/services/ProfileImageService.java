@@ -62,7 +62,7 @@ public class ProfileImageService {
         fileValidator.validateFile(profileImage);
         File uploadedFile = fileUtils.convertMultipartFileToFile(profileImage);
 
-        Map<String, Object> uploadResult = null;
+        Map<String, Object> uploadResult;
         try {
             String folderPath = determineFolderPath(profileType) + "/" + UUID.randomUUID().toString(); // create a new folder for each image
             uploadResult = uploadService.uploadImage(profileImage, profileType); // Ensure correct method call// Ensure correct method call

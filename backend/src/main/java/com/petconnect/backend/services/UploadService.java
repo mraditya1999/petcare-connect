@@ -119,9 +119,7 @@ public class UploadService {
         Map<String, Object> response = new HashMap<>();
         response.put("status", "error");
         response.put("message", "Image upload service is currently unavailable. Please try again later.");
-        if (e != null) {
-            response.put("error", e.getMessage());
-        }
+        response.put("error", e.getMessage());
         return response;
     }
 

@@ -2,6 +2,7 @@ package com.petconnect.backend.controllers;
 
 import com.petconnect.backend.dto.*;
 import com.petconnect.backend.services.ForumService;
+import com.petconnect.backend.utils.ResponseEntityUtil;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import org.slf4j.Logger;
@@ -10,7 +11,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -40,7 +40,7 @@ public class ForumController {
      * @return a page of forums
      */
     @GetMapping
-    public ResponseEntity<Page<ForumDTO>> getAllForums(
+    public ResponseEntity<ApiResponseDTO<Page<ForumDTO>>> getAllForums(
             @RequestParam(defaultValue = "0") @Min(0) int page,
             @RequestParam(defaultValue = "10") @Min(1) int size,
             @RequestParam(defaultValue = "createdAt") String sortBy,
@@ -49,7 +49,7 @@ public class ForumController {
         Sort sort = Sort.by(sortDir.equalsIgnoreCase("asc") ? Sort.Direction.ASC : Sort.Direction.DESC, sortBy);
         PageRequest pageRequest = PageRequest.of(page, size, sort);
         Page<ForumDTO> forums = forumService.getAllForums(pageRequest);
-        return ResponseEntity.ok(forums);
+        return ResponseEntityUtil.page(forums);
     }
 
     /**
@@ -61,8 +61,7 @@ public class ForumController {
     @GetMapping("/{forumId}")
     public ResponseEntity<ApiResponseDTO<ForumDTO>> getForumById(@PathVariable String forumId) {
         ForumDTO forumDTO = forumService.getForumById(forumId);
-        ApiResponseDTO<ForumDTO> apiResponseDTO = new ApiResponseDTO<>("Forum fetched successfully", forumDTO);
-        return ResponseEntity.ok(apiResponseDTO);
+        return ResponseEntityUtil.ok("Forum fetched successfully", forumDTO);
     }
 
     /**
@@ -73,9 +72,7 @@ public class ForumController {
     @GetMapping("/top-featured")
     public ResponseEntity<ApiResponseDTO<List<ForumDTO>>> getTopFeaturedForums() {
         List<ForumDTO> forumDTO = forumService.getTopFeaturedForums();
-        ApiResponseDTO<List<ForumDTO>> apiResponseDTO =
-                new ApiResponseDTO<>("Forum fetched successfully", forumDTO);
-        return ResponseEntity.ok(apiResponseDTO);
+        return ResponseEntityUtil.ok("Top featured forums fetched successfully", forumDTO);
     }
 
     /**
@@ -85,21 +82,19 @@ public class ForumController {
      * @return a list of matching forums
      */
     @GetMapping("/search")
-    public ResponseEntity<Page<ForumDTO>> searchForums(
+    public ResponseEntity<ApiResponseDTO<Page<ForumDTO>>> searchForums(
             @RequestParam String keyword,
             @RequestParam(defaultValue = "0") @Min(0) int page,
             @RequestParam(defaultValue = "10") @Min(1) int size,
             @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "desc") String sortDir) {
 
-
         Sort sort = Sort.by(sortDir.equalsIgnoreCase("asc") ? Sort.Direction.ASC : Sort.Direction.DESC, sortBy);
         PageRequest pageRequest = PageRequest.of(page, size, sort);
 
         Page<ForumDTO> forums = forumService.searchForums(keyword, pageRequest);
-        return ResponseEntity.ok(forums);
+        return ResponseEntityUtil.page(forums);
     }
-
 
     /**
      * Search forums by tags.
@@ -108,7 +103,7 @@ public class ForumController {
      * @return a response containing a list of matching forums
      */
     @GetMapping("/search-by-tags")
-    public ResponseEntity<Page<ForumDTO>> searchForumsByTags(
+    public ResponseEntity<ApiResponseDTO<Page<ForumDTO>>> searchForumsByTags(
             @RequestParam List<String> tags,
             @RequestParam(defaultValue = "0") @Min(0) int page,
             @RequestParam(defaultValue = "10") @Min(1) int size,
@@ -119,7 +114,7 @@ public class ForumController {
         PageRequest pageRequest = PageRequest.of(page, size, sort);
 
         Page<ForumDTO> forums = forumService.searchForumsByTags(tags, pageRequest);
-        return ResponseEntity.ok(forums);
+        return ResponseEntityUtil.page(forums);
     }
 
     /**
@@ -129,15 +124,13 @@ public class ForumController {
      * @return a list of sorted forums
      */
     @GetMapping("/sort")
-    public ResponseEntity<List<ForumDTO>> sortForums(
+    public ResponseEntity<ApiResponseDTO<List<ForumDTO>>> sortForums(
             @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "desc") String sortDir
     ) {
         List<ForumDTO> forums = forumService.sortForums(sortBy, sortDir);
-        return ResponseEntity.ok(forums);
+        return ResponseEntityUtil.ok("Forums sorted successfully", forums);
     }
-
-
 
     /**
      * Create a new forum.
@@ -150,8 +143,7 @@ public class ForumController {
     public ResponseEntity<ApiResponseDTO<ForumDTO>> createForum(@AuthenticationPrincipal UserDetails userDetails, @Valid @RequestBody ForumCreateDTO forumCreateDTO) {
         String username = userDetails.getUsername();
         ForumDTO createdForum = forumService.createForum(username, forumCreateDTO);
-        ApiResponseDTO<ForumDTO> apiResponseDTO = new ApiResponseDTO<>("Forum created successfully", createdForum);
-        return ResponseEntity.status(HttpStatus.CREATED).body(apiResponseDTO);
+        return ResponseEntityUtil.created("Forum created successfully", createdForum);
     }
 
     /**
@@ -163,11 +155,10 @@ public class ForumController {
      * @return the updated forum details
      */
     @PutMapping("/{forumId}")
-    public ResponseEntity<ApiResponseDTO<ForumDTO>> updateForum(@AuthenticationPrincipal UserDetails userDetails, @PathVariable String forumId,@Valid @RequestBody UpdateForumDTO forumDTO) {
+    public ResponseEntity<ApiResponseDTO<ForumDTO>> updateForum(@AuthenticationPrincipal UserDetails userDetails, @PathVariable String forumId, @Valid @RequestBody UpdateForumDTO forumDTO) {
         String username = userDetails.getUsername();
-        ForumDTO updatedForumDTO = forumService.updateForum(username,forumId , forumDTO);
-        ApiResponseDTO<ForumDTO> apiResponseDTO = new ApiResponseDTO<>("Forum updated successfully", updatedForumDTO);
-        return ResponseEntity.ok(apiResponseDTO);
+        ForumDTO updatedForumDTO = forumService.updateForum(username, forumId, forumDTO);
+        return ResponseEntityUtil.ok("Forum updated successfully", updatedForumDTO);
     }
 
     /**
@@ -180,9 +171,8 @@ public class ForumController {
     @DeleteMapping("/{forumId}")
     public ResponseEntity<ApiResponseDTO<Void>> deleteForum(@AuthenticationPrincipal UserDetails userDetails, @PathVariable String forumId) {
         String username = userDetails.getUsername();
-        forumService.deleteForum(username,forumId);
-        ApiResponseDTO<Void> apiResponseDTO = new ApiResponseDTO<>("Forum deleted successfully", null);
-        return ResponseEntity.ok(apiResponseDTO);
+        forumService.deleteForum(username, forumId);
+        return ResponseEntityUtil.ok("Forum deleted successfully", null);
     }
 
     /**
@@ -198,11 +188,9 @@ public class ForumController {
             @RequestParam(defaultValue = "10") @Min(1) int size) {
         String username = userDetails.getUsername();
         if (username == null) {
-            ApiResponseDTO<Page<ForumDTO>> apiResponseDTO = new ApiResponseDTO<>("User is not authenticated", null);
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(apiResponseDTO);
+            return ResponseEntityUtil.unauthorized("User is not authenticated");
         }
         Page<ForumDTO> forums = forumService.getMyForums(username, page, size);
-        ApiResponseDTO<Page<ForumDTO>> apiResponseDTO = new ApiResponseDTO<>("My forums fetched successfully", forums);
-        return ResponseEntity.ok(apiResponseDTO);
+        return ResponseEntityUtil.ok("My forums fetched successfully", forums);
     }
 }

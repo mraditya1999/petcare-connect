@@ -3,17 +3,18 @@ package com.petconnect.backend.controllers;
 import com.petconnect.backend.dto.ApiResponseDTO;
 import com.petconnect.backend.dto.CommentDTO;
 import com.petconnect.backend.services.CommentService;
+import com.petconnect.backend.utils.ResponseEntityUtil;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.Optional;
 
 @RestController
@@ -43,7 +44,7 @@ public class CommentController {
             @RequestParam(defaultValue = "5") @Min(1) int size) {
         logger.debug("Fetching comments for forum ID: {}", forumId);
         Page<CommentDTO> comments = commentService.getAllCommentsByForumId(forumId, page, size);
-        return ResponseEntity.ok(new ApiResponseDTO<>("Comments fetched successfully", comments));
+        return ResponseEntityUtil.page(comments, "Comments fetched successfully");
     }
 
     /**
@@ -61,8 +62,7 @@ public class CommentController {
             @Valid @RequestBody CommentDTO commentDTO) {
         String username = userDetails.getUsername();
         CommentDTO comment = commentService.createComment(username, forumId, commentDTO);
-        ApiResponseDTO<CommentDTO> apiResponseDTO = new ApiResponseDTO<>("Comment added successfully", comment);
-        return ResponseEntity.ok(apiResponseDTO);
+        return ResponseEntityUtil.ok("Comment added successfully", comment);
     }
 
     /**
@@ -76,16 +76,13 @@ public class CommentController {
     @PutMapping("/{commentId}")
     public ResponseEntity<ApiResponseDTO<CommentDTO>> updateComment(@AuthenticationPrincipal UserDetails userDetails, @PathVariable String commentId, @Valid @RequestBody CommentDTO commentDTO) {
         String username = userDetails.getUsername();
-        Optional<CommentDTO> updatedComment = commentService.updateComment(username,commentId, commentDTO);
+        Optional<CommentDTO> updatedComment = commentService.updateComment(username, commentId, commentDTO);
         if (updatedComment.isPresent()) {
-            ApiResponseDTO<CommentDTO> apiResponseDTO = new ApiResponseDTO<>("Comment updated successfully", updatedComment.get());
-            return ResponseEntity.ok(apiResponseDTO);
+            return ResponseEntityUtil.ok("Comment updated successfully", updatedComment.get());
         } else {
-            ApiResponseDTO<CommentDTO> apiResponseDTO = new ApiResponseDTO<>("Comment not found or you are not authorized to update it", null);
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(apiResponseDTO);
+            return ResponseEntityUtil.notFound("Comment not found or you are not authorized to update it");
         }
     }
-
 
     /**
      * Delete a comment by its ID.
@@ -97,13 +94,11 @@ public class CommentController {
     @DeleteMapping("/{commentId}")
     public ResponseEntity<ApiResponseDTO<Void>> deleteComment(@AuthenticationPrincipal UserDetails userDetails, @PathVariable String commentId) {
         String username = userDetails.getUsername();
-        boolean deleted = commentService.deleteComment(username,commentId);
+        boolean deleted = commentService.deleteComment(username, commentId);
         if (deleted) {
-            ApiResponseDTO<Void> apiResponseDTO = new ApiResponseDTO<>("Comment deleted successfully", null);
-            return ResponseEntity.ok(apiResponseDTO);
+            return ResponseEntityUtil.ok("Comment deleted successfully", null);
         } else {
-            ApiResponseDTO<Void> apiResponseDTO = new ApiResponseDTO<>("Comment not found or you are not authorized to delete it", null);
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(apiResponseDTO);
+            return ResponseEntityUtil.notFound("Comment not found or you are not authorized to delete it");
         }
     }
 
@@ -111,7 +106,7 @@ public class CommentController {
     public ResponseEntity<ApiResponseDTO<CommentDTO>> getCommentByIdWithSubcomments(@PathVariable String commentId) {
         logger.debug("Fetching comment with subcomments for ID: {}", commentId);
         CommentDTO comment = commentService.getCommentByIdWithSubcomments(commentId);
-        return ResponseEntity.ok(new ApiResponseDTO<>("Comment fetched successfully", comment));
+        return ResponseEntityUtil.ok("Comment fetched successfully", comment);
     }
 
     /**
@@ -131,14 +126,10 @@ public class CommentController {
             @Valid @RequestBody CommentDTO commentDTO) {
 
         if (userDetails == null) {
-            ApiResponseDTO<CommentDTO> apiResponseDTO = new ApiResponseDTO<>("User is not authenticated", null);
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(apiResponseDTO);
+            return ResponseEntityUtil.unauthorized("User is not authenticated");
         }
 
         CommentDTO reply = commentService.replyToComment(forumId, userDetails.getUsername(), commentDTO, parentId);
-        ApiResponseDTO<CommentDTO> apiResponseDTO = new ApiResponseDTO<>("Reply added successfully", reply);
-        return ResponseEntity.ok(apiResponseDTO);
+        return ResponseEntityUtil.ok("Reply added successfully", reply);
     }
 }
-
-

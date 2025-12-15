@@ -53,6 +53,7 @@ const SingleForumPage = () => {
     comments,
     commentPage,
     totalCommentPages,
+    totalCommentElements,
     loading,
     error,
     likeProcessing,
@@ -113,9 +114,6 @@ const SingleForumPage = () => {
   useEffect(() => {
     if (!forumId) return;
     dispatch(fetchSingleForum(forumId));
-    dispatch(
-      fetchComments({ forumId, page: commentPage, size: COMMENTS_PER_PAGE }),
-    );
     if (user) dispatch(checkLike({ forumId }));
   }, [dispatch, forumId]);
 
@@ -126,6 +124,17 @@ const SingleForumPage = () => {
       fetchComments({ forumId, page: commentPage, size: COMMENTS_PER_PAGE }),
     );
   }, [dispatch, forumId, commentPage]);
+
+  useEffect(() => {
+    if (!forumId) return;
+    if (loading) return;
+    if (error) return;
+    if (commentPage <= 0) return;
+    if ((comments?.length ?? 0) > 0) return;
+    if (totalCommentElements <= 0) return;
+
+    dispatch(setCommentPage(commentPage - 1));
+  }, [dispatch, forumId, loading, error, commentPage, comments, totalCommentElements]);
 
   // CRITICAL FIX: Use useEffect for robust state cleanup after dialog close
   useEffect(() => {

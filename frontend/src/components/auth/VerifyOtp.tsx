@@ -107,7 +107,7 @@ export default function VerifyOtp() {
 
     if (completeProfile.fulfilled.match(res)) {
       localStorage.removeItem("tempSignupToken");
-      dispatch(setUser(res.payload.data));
+      dispatch(setUser(res.payload));
       navigate("/");
     } else {
       ShowToast({

@@ -6,10 +6,10 @@ import com.petconnect.backend.entity.User;
 import com.petconnect.backend.repositories.UserRepository;
 import com.petconnect.backend.services.LikeService;
 import com.petconnect.backend.mappers.LikeMapper;
+import com.petconnect.backend.utils.ResponseEntityUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -53,7 +53,7 @@ public class LikeController {
                 .collect(Collectors.toList());
 
         // Return the response with a success message and the list of likes
-        return ResponseEntity.ok(new ApiResponseDTO<>("Likes fetched successfully", likes));
+        return ResponseEntityUtil.ok("Likes fetched successfully", likes);
     }
 
     /**
@@ -70,8 +70,7 @@ public class LikeController {
     ) {
         // Check if the user is authenticated
         if (userDetails == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(new ApiResponseDTO<>("User is not authenticated", null));
+            return ResponseEntityUtil.unauthorized("User is not authenticated");
         }
 
         // Fetch the user by their email/username
@@ -80,13 +79,12 @@ public class LikeController {
 
         // Check if the user exists
         if (user.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new ApiResponseDTO<>("User not found", null));
+            return ResponseEntityUtil.notFound("User not found");
         }
 
         // Toggle the like status for the forum
         Map<String, String> response = likeService.toggleLikeOnForum(forumId, username);
-        return ResponseEntity.ok(new ApiResponseDTO<>(response.get("message"), null));
+        return ResponseEntityUtil.ok(response.get("message"), (String) null);
     }
 
     /**
@@ -95,12 +93,12 @@ public class LikeController {
      * @param commentId the comment ID
      * @return a response containing a list of likes for the specified comment
      */
-        @GetMapping("/comments/{commentId}")
+    @GetMapping("/comments/{commentId}")
     public ResponseEntity<ApiResponseDTO<List<LikeDTO>>> getAllLikesByCommentId(@PathVariable String commentId) {
         List<LikeDTO> likes = likeService.getAllLikesByCommentId(commentId).stream()
                 .map(likeMapper::toDTO)
                 .collect(Collectors.toList());
-        return ResponseEntity.ok(new ApiResponseDTO<>("Likes fetched successfully", likes));
+        return ResponseEntityUtil.ok("Likes fetched successfully", likes);
     }
 
     /**
@@ -116,8 +114,7 @@ public class LikeController {
             @AuthenticationPrincipal UserDetails userDetails) {
         // Check if the user is authenticated
         if (userDetails == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(new ApiResponseDTO<>("User is not authenticated", null));
+            return ResponseEntityUtil.unauthorized("User is not authenticated");
         }
 
         // Fetch the user by their email/username
@@ -126,13 +123,12 @@ public class LikeController {
 
         // Check if the user exists
         if (user.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new ApiResponseDTO<>("User not found", null));
+            return ResponseEntityUtil.notFound("User not found");
         }
 
         // Toggle the like status for the comment
         Map<String, String> response = likeService.toggleLikeOnComment(commentId, username);
-        return ResponseEntity.ok(new ApiResponseDTO<>(response.get("message"), null));
+        return ResponseEntityUtil.ok(response.get("message"), (String) null);
     }
 
     @GetMapping("/forums/{forumId}/check")
@@ -141,15 +137,13 @@ public class LikeController {
             @PathVariable String forumId) {
 
         if (userDetails == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(new ApiResponseDTO<>("User is not authenticated", null));
+            return ResponseEntityUtil.unauthorized("User is not authenticated");
         }
 
         Optional<User> user = userRepository.findByEmail(userDetails.getUsername());
 
         if (user.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new ApiResponseDTO<>("User not found", null));
+            return ResponseEntityUtil.notFound("User not found");
         }
 
         boolean isLiked = likeService.checkIfUserLikedForum(user.get().getUserId(), forumId);
@@ -158,6 +152,6 @@ public class LikeController {
         Map<String, Boolean> responseData = new HashMap<>();
         responseData.put("isLiked", isLiked);
 
-        return ResponseEntity.ok(new ApiResponseDTO<>(message, responseData));
+        return ResponseEntityUtil.ok(message, responseData);
     }
 }

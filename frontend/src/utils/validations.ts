@@ -163,7 +163,8 @@ export const createForumSchema = z.object({
   content: z
     .string()
     .nonempty("Content is required")
-    .min(100, "Content must be at least 100 characters long"),
+    .min(200, "Content must be at least 200 characters long")
+    .max(5000, "Content must be at most 5000 characters"),
 });
 
 export const updateForumSchema = z.object({

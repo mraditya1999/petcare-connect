@@ -62,6 +62,16 @@ const ForumPage: React.FC = () => {
 
   useDebounce(fetchDebouncedForums, 500, [fetchDebouncedForums]);
 
+  useEffect(() => {
+    if (loading) return;
+    if (error) return;
+    if (page <= 0) return;
+    if ((forums?.length ?? 0) > 0) return;
+    if (totalElements <= 0) return;
+
+    dispatch(setPage(page - 1));
+  }, [dispatch, loading, error, page, forums, totalElements]);
+
   // Fetch featured forums on mount
   useEffect(() => {
     dispatch(fetchFeaturedForums());
