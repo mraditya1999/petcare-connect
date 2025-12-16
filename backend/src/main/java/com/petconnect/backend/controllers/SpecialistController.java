@@ -9,11 +9,6 @@ import com.petconnect.backend.mappers.SpecialistMapper;
 import com.petconnect.backend.services.SpecialistService;
 import com.petconnect.backend.utils.ResponseEntityUtil;
 import com.petconnect.backend.validators.FileValidator;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -64,23 +59,13 @@ public class SpecialistController {
      * @param bindingResult BindingResult for validation errors
      * @return ResponseEntity with ApiResponse containing the updated specialist
      */
-    @Operation(
-            summary = "Update current specialist",
-            description = "Update the authenticated specialist's profile, including optional profile image",
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "Specialist updated successfully",
-                            content = @Content(schema = @Schema(implementation = SpecialistResponseDTO.class))),
-                    @ApiResponse(responseCode = "400", description = "Validation error or file validation error"),
-                    @ApiResponse(responseCode = "404", description = "Specialist not found"),
-                    @ApiResponse(responseCode = "500", description = "Internal server error")
-            }
-    )
     @PutMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseDTO<SpecialistResponseDTO>> updateCurrentSpecialist(
-            @Parameter(description = "Authenticated user details") @AuthenticationPrincipal UserDetails userDetails,
-            @Parameter(description = "Specialist update information") @Valid @ModelAttribute SpecialistUpdateRequestDTO specialistUpdateRequestDTO,
-            @Parameter(description = "Optional profile images") @RequestPart(value = "profileImage", required = false) List<MultipartFile> profileImages,
+            @AuthenticationPrincipal UserDetails userDetails,
+            @Valid @ModelAttribute SpecialistUpdateRequestDTO specialistUpdateRequestDTO,
+            @RequestPart(value = "profileImage", required = false) List<MultipartFile> profileImages,
             BindingResult bindingResult) {
+
         if (bindingResult.hasErrors()) {
             String errorMessage = bindingResult.getAllErrors().stream()
                     .map(DefaultMessageSourceResolvable::getDefaultMessage)
@@ -120,21 +105,12 @@ public class SpecialistController {
      * @param sortDir The direction of sorting: "asc" for ascending, "desc" for descending (default is asc)
      * @return ResponseEntity with ApiResponse containing a paginated list of specialists
      */
-    @Operation(
-            summary = "Get all specialists",
-            description = "Fetch all specialists with pagination and sorting",
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "Specialists fetched successfully",
-                            content = @Content(schema = @Schema(implementation = ApiResponseDTO.class))),
-                    @ApiResponse(responseCode = "400", description = "Invalid sort direction or pagination parameters")
-            }
-    )
     @GetMapping
     public ResponseEntity<ApiResponseDTO<Page<SpecialistResponseDTO>>> getAllSpecialists(
-            @Parameter(description = "Page number (starting from 0)") @RequestParam(defaultValue = "0") @Min(0) int page,
-            @Parameter(description = "Number of records per page") @RequestParam(defaultValue = "10") @Min(1) int size,
-            @Parameter(description = "Field to sort by") @RequestParam(defaultValue = "userId") String sortBy,
-            @Parameter(description = "Sort direction: asc or desc") @RequestParam(defaultValue = "asc") String sortDir) {
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "10") @Min(1) int size,
+            @RequestParam(defaultValue = "userId") String sortBy,
+            @RequestParam(defaultValue = "asc") String sortDir) {
         try {
             // Create pageable object with given page, size, sortBy, and sortDir
             Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.fromString(sortDir), sortBy));
@@ -155,19 +131,8 @@ public class SpecialistController {
      * @param id The ID of the specialist to fetch
      * @return ResponseEntity with ApiResponse containing the specialist details
      */
-
-    @Operation(
-            summary = "Get specialist by ID",
-            description = "Fetch a specialist's details by their ID",
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "Specialist fetched successfully",
-                            content = @Content(schema = @Schema(implementation = SpecialistResponseDTO.class))),
-                    @ApiResponse(responseCode = "404", description = "Specialist not found")
-            }
-    )
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponseDTO<SpecialistResponseDTO>> getSpecialistById(
-            @Parameter(description = "ID of the specialist to fetch") @PathVariable Long id) {
+    public ResponseEntity<ApiResponseDTO<SpecialistResponseDTO>> getSpecialistById(@PathVariable Long id) {
         try {
             SpecialistResponseDTO specialist = specialistService.getSpecialistById(id);
             logger.info("Fetched specialist with ID: {}", id);

@@ -1,13 +1,13 @@
 package com.petconnect.backend.services;
 
-import com.petconnect.backend.dto.auth.CompleteProfileRequestDTO;
-import com.petconnect.backend.dto.auth.TempUserDTO;
-import com.petconnect.backend.dto.auth.VerifyOtpResponseDTO;
+import com.petconnect.backend.dto.CompleteProfileDTO;
+import com.petconnect.backend.dto.TempUserDTO;
+import com.petconnect.backend.dto.VerifyOtpResult;
 import com.petconnect.backend.dto.auth.UserLoginResponseDTO;
 import com.petconnect.backend.dto.auth.UserRegistrationRequestDTO;
-import com.petconnect.backend.dto.auth.GitHubUserDTO;
-import com.petconnect.backend.dto.auth.GoogleUserDTO;
-import com.petconnect.backend.dto.auth.OAuthProfile;
+import com.petconnect.backend.dto.user.GitHubUserDTO;
+import com.petconnect.backend.dto.user.GoogleUserDTO;
+import com.petconnect.backend.dto.user.OAuthProfile;
 import com.petconnect.backend.entity.OAuthAccount;
 import com.petconnect.backend.entity.Role;
 import com.petconnect.backend.entity.User;
@@ -619,14 +619,13 @@ public class AuthService implements UserDetailsService {
 
 
     @Transactional
-    public VerifyOtpResponseDTO verifyOtpAndLogin(String phone, String otp) {
+    public VerifyOtpResult verifyOtpAndLogin(String phone, String otp) {
         String normalizedPhone = PhoneUtils.normalizeToE164(phone);
-        if (normalizedPhone == null) {
+        if (normalizedPhone == null)
             throw new IllegalArgumentException("Invalid phone number format");
-        }
 
         // -----------------------------------------------------
-        // 🔐 1. CHECK IF PHONE IS BLOCKED
+        // 🔐 1. CHECK IF PHONE IS BLOCKED (ADD THIS PART)
         // -----------------------------------------------------
         if (otpRedisService.isPhoneBlocked(normalizedPhone)) {
             throw new IllegalStateException("Too many attempts. Please try again later.");
@@ -636,20 +635,22 @@ public class AuthService implements UserDetailsService {
         // 2. Load OTP hash
         // -----------------------------------------------------
         String storedOtpHash = otpRedisService.getOtpHash(normalizedPhone);
-        if (storedOtpHash == null) {
+        if (storedOtpHash == null)
             throw new IllegalArgumentException("OTP expired or not requested");
-        }
 
         // -----------------------------------------------------
         // 3. Verify OTP
         // -----------------------------------------------------
         if (!passwordEncoder.matches(otp, storedOtpHash)) {
+
             int attempts = otpRedisService.increaseAttempts(normalizedPhone);
 
             if (attempts > maxVerifyAttempts) {
                 otpRedisService.deleteOtp(normalizedPhone);
 
-                // 4. BLOCK PHONE IF TOO MANY FAILED ATTEMPTS
+                // -----------------------------------------------------
+                // 🔐 4. BLOCK PHONE IF TOO MANY FAILED ATTEMPTS (ADD THIS LINE)
+                // -----------------------------------------------------
                 otpRedisService.blockPhone(normalizedPhone, blockSeconds);
 
                 throw new IllegalStateException("Too many invalid OTP attempts");
@@ -672,20 +673,18 @@ public class AuthService implements UserDetailsService {
             User user = found.get();
 
             if (!user.isProfileComplete()) {
-                // Incomplete profile → temp token
                 String tempToken = generateJwtToken(user);
-                return VerifyOtpResponseDTO.forNewUser(user.getUserId(), tempToken);
+                return new VerifyOtpResult(true, null, user.getUserId(), tempToken);
             }
 
-            // Existing user with complete profile → login response
-            return VerifyOtpResponseDTO.forExistingUser(buildLoginResponse(user));
+            return new VerifyOtpResult(false, buildLoginResponse(user));
         }
 
         // -----------------------------------------------------
         // 7. No user → new-user flow
         // -----------------------------------------------------
         String tempToken = generateTempTokenForPhone(normalizedPhone);
-        return VerifyOtpResponseDTO.forNewUser(null, tempToken);
+        return new VerifyOtpResult(true, null, null, tempToken);
     }
 
 
@@ -711,7 +710,7 @@ public class AuthService implements UserDetailsService {
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public UserLoginResponseDTO completeProfile(CompleteProfileRequestDTO dto) {
+    public UserLoginResponseDTO completeProfile(CompleteProfileDTO dto) {
         String phone = PhoneUtils.normalizeToE164(dto.getPhone());
         if (phone == null) throw new IllegalArgumentException("Invalid phone number format");
 

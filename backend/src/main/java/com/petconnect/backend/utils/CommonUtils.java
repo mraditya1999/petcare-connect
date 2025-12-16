@@ -1,7 +1,5 @@
 package com.petconnect.backend.utils;
 
-import jakarta.servlet.http.HttpServletRequest;
-
 import java.security.SecureRandom;
 import java.util.Base64;
 
@@ -47,23 +45,5 @@ public final class CommonUtils {
      */
     public static String generateSecureRandomPassword() {
         return generateSecureToken(DEFAULT_TOKEN_BYTES);
-    }
-
-    /**
-     * Extracts the JWT token from the Authorization header if it uses the Bearer scheme.
-     *
-     * <p>This method checks the "Authorization" header of the given HTTP request.
-     * If the header is present and starts with the "Bearer " prefix, the method
-     * returns the token string after the prefix. Otherwise, it returns {@code null}.
-     *
-     * @param request the incoming {@link HttpServletRequest} containing the Authorization header
-     * @return the JWT token string without the "Bearer " prefix, or {@code null} if not present/invalid
-     */
-    public static String extractBearerToken(HttpServletRequest request) {
-        String authHeader = request.getHeader("Authorization");
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            return authHeader.substring(7);
-        }
-        return null;
     }
 }

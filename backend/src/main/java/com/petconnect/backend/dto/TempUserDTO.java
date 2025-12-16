@@ -1,4 +1,4 @@
-package com.petconnect.backend.dto.auth;
+package com.petconnect.backend.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

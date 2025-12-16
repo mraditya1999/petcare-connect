@@ -11,11 +11,6 @@ import com.petconnect.backend.services.PetService;
 import com.petconnect.backend.utils.FileUtils;
 import com.petconnect.backend.utils.ResponseEntityUtil;
 import com.petconnect.backend.validators.FileValidator;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,23 +49,13 @@ public class PetController {
      * @param petRequestDTO the data transfer object containing pet information
      * @param avatarFiles   the list of uploaded avatar images
      * @return the ResponseEntity containing the ApiResponseDTO with the created pet information
+     * @throws IOException if an I/O error occurs
      */
-    @Operation(
-            summary = "Create a new pet",
-            description = "Creates a new pet for the authenticated user. Accepts optional avatar images.",
-            responses = {
-                    @ApiResponse(responseCode = "201", description = "Pet created successfully",
-                            content = @Content(schema = @Schema(implementation = PetResponseDTO.class))),
-                    @ApiResponse(responseCode = "400", description = "Validation error or duplicate pet name"),
-                    @ApiResponse(responseCode = "404", description = "User not found"),
-                    @ApiResponse(responseCode = "500", description = "Internal server error")
-            }
-    )
     @PostMapping(consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
     public ResponseEntity<ApiResponseDTO<PetResponseDTO>> createPetForUser(
-            @Parameter(description = "Authenticated user details") @AuthenticationPrincipal UserDetails userDetails,
-            @Parameter(description = "Pet creation data") @Valid @ModelAttribute PetRequestDTO petRequestDTO,
-            @Parameter(description = "Optional avatar images") @RequestParam(value = "avatarFile", required = false) List<MultipartFile> avatarFiles) {
+            @AuthenticationPrincipal UserDetails userDetails,
+            @Valid @ModelAttribute PetRequestDTO petRequestDTO,
+            @RequestParam(value = "avatarFile", required = false) List<MultipartFile> avatarFiles) {
 
         logger.info("Received request to create pet for user: {}", userDetails.getUsername());
 
@@ -105,17 +90,8 @@ public class PetController {
      * @param userDetails user details of the authenticated user
      * @return ResponseEntity containing a list of pet data
      */
-    @Operation(
-            summary = "Get all pets for user",
-            description = "Fetches all pets for the authenticated user",
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "Pets fetched successfully",
-                            content = @Content(schema = @Schema(implementation = PetResponseDTO.class)))
-            }
-    )
     @GetMapping
-    public ResponseEntity<ApiResponseDTO<List<PetResponseDTO>>> getAllPetsForUser(
-            @Parameter(description = "Authenticated user details") @AuthenticationPrincipal UserDetails userDetails) {
+    public ResponseEntity<ApiResponseDTO<List<PetResponseDTO>>> getAllPetsForUser(@AuthenticationPrincipal UserDetails userDetails) {
         List<PetResponseDTO> pets = petService.getAllPetsForUser(userDetails.getUsername());
         return ResponseEntityUtil.ok("Fetched all pets", pets);
     }
@@ -127,20 +103,8 @@ public class PetController {
      * @param userDetails the authenticated user details
      * @return the ResponseEntity containing the ApiResponseDTO with the pet information
      */
-    @Operation(
-            summary = "Get pet by ID",
-            description = "Fetch a pet by ID for the authenticated user",
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "Pet fetched successfully",
-                            content = @Content(schema = @Schema(implementation = PetResponseDTO.class))),
-                    @ApiResponse(responseCode = "403", description = "Unauthorized access"),
-                    @ApiResponse(responseCode = "404", description = "Pet not found")
-            }
-    )
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponseDTO<PetResponseDTO>> getPetOfUserById(
-            @Parameter(description = "Pet ID") @PathVariable Long id,
-            @Parameter(description = "Authenticated user details") @AuthenticationPrincipal UserDetails userDetails) {
+    public ResponseEntity<ApiResponseDTO<PetResponseDTO>> getPetOfUserById(@PathVariable Long id, @AuthenticationPrincipal UserDetails userDetails) {
         try {
             PetResponseDTO pet = petService.getPetOfUserById(id, userDetails.getUsername());
             return ResponseEntityUtil.ok("Fetched pet", pet);
@@ -164,10 +128,10 @@ public class PetController {
      */
     @PutMapping(value = "/{id}", consumes = { "multipart/form-data" })
     public ResponseEntity<ApiResponseDTO<PetResponseDTO>> updatePetForUser(
-            @Parameter(description = "Pet ID") @PathVariable Long id,
-            @Parameter(description = "Authenticated user details") @AuthenticationPrincipal UserDetails userDetails,
-            @Parameter(description = "Pet update data") @Valid @ModelAttribute PetRequestDTO petRequestDTO,
-            @Parameter(description = "Optional avatar images") @RequestParam(value = "avatarFile", required = false) List<MultipartFile> avatarFiles) throws IOException {
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserDetails userDetails,
+            @Valid @ModelAttribute PetRequestDTO petRequestDTO,
+            @RequestParam(value = "avatarFile", required = false) List<MultipartFile> avatarFiles) throws IOException {
 
         logger.info("Received request to update pet for user: {}", userDetails.getUsername());
 
@@ -200,9 +164,7 @@ public class PetController {
      * @return the ResponseEntity containing the ApiResponseDTO with the deletion status
      */
     @DeleteMapping("/{id}")
-    public ResponseEntity<ApiResponseDTO<String>> deletePetForUser(
-            @Parameter(description = "Pet ID") @PathVariable Long id,
-            @Parameter(description = "Authenticated user details") @AuthenticationPrincipal UserDetails userDetails) {
+    public ResponseEntity<ApiResponseDTO<String>> deletePetForUser(@PathVariable Long id, @AuthenticationPrincipal UserDetails userDetails) {
         logger.info("Received request to delete pet with ID: {} for user: {}", id, userDetails.getUsername());
 
         petService.deletePetForUser(id, userDetails);

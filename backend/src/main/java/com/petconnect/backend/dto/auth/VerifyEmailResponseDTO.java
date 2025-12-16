@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class VerifyEmailResponseDTO {
+
     private String message;
     private boolean isVerified;
 }

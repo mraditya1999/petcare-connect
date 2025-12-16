@@ -1,6 +1,6 @@
 package com.petconnect.backend.mappers;
 
-import com.petconnect.backend.dto.forum.CommentDTO;
+import com.petconnect.backend.dto.CommentDTO;
 import com.petconnect.backend.entity.Comment;
 import com.petconnect.backend.entity.User;
 import com.petconnect.backend.repositories.CommentRepository;

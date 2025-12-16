@@ -1,6 +1,6 @@
 package com.petconnect.backend.mappers;
 
-import com.petconnect.backend.dto.forum.LikeDTO;
+import com.petconnect.backend.dto.LikeDTO;
 import com.petconnect.backend.entity.Like;
 import org.mapstruct.Mapper;
 

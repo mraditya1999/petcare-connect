@@ -8,12 +8,6 @@ import com.petconnect.backend.services.UserService;
 import com.petconnect.backend.utils.FileUtils;
 import com.petconnect.backend.utils.ResponseEntityUtil;
 import com.petconnect.backend.validators.FileValidator;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,19 +46,8 @@ public class UserController {
      * @param userDetails the authenticated user's details
      * @return the response entity containing the user profile
      */
-    @Operation(
-            summary = "Get user profile",
-            description = "Fetches the profile details of the authenticated user"
-    )
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Profile fetched successfully",
-                    content = @Content(schema = @Schema(implementation = UserDTO.class))),
-            @ApiResponse(responseCode = "401", description = "Unauthorized")
-    })
     @GetMapping
-    public ResponseEntity<ApiResponseDTO<UserDTO>> getUserProfile(
-            @Parameter(hidden = true)
-            @AuthenticationPrincipal UserDetails userDetails) {
+    public ResponseEntity<ApiResponseDTO<UserDTO>> getUserProfile(@AuthenticationPrincipal UserDetails userDetails) {
         logger.info("Fetching profile for user: {}", userDetails.getUsername());
         UserDTO userProfile = userService.getUserProfile(userDetails.getUsername());
         logger.info("Profile fetched successfully for user: {}", userDetails.getUsername());
@@ -79,28 +62,11 @@ public class UserController {
      * @param profileImages the list of uploaded profile images
      * @return the ResponseEntity containing the ApiResponseDTO with the updated user information
      */
-    @Operation(
-            summary = "Update user profile",
-            description = "Updates user profile details and optionally uploads a profile image"
-    )
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Profile updated successfully"),
-            @ApiResponse(responseCode = "400", description = "Invalid input"),
-            @ApiResponse(responseCode = "401", description = "Unauthorized")
-    })
-    @PutMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PutMapping(consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
     public ResponseEntity<ApiResponseDTO<UserDTO>> updateUserProfile(
-            @Parameter(hidden = true)
             @AuthenticationPrincipal UserDetails userDetails,
-            @Valid
-            @ModelAttribute UserUpdateDTO userUpdateDTO,
-            @Parameter(
-                    description = "Profile image file (optional)",
-                    content = @Content(mediaType = MediaType.MULTIPART_FORM_DATA_VALUE)
-            )
-            @RequestParam(value = "profileImage", required = false)
-            List<MultipartFile> profileImages
-    ) throws IOException {
+            @Valid @ModelAttribute UserUpdateDTO userUpdateDTO,
+            @RequestParam(value = "profileImage", required = false) List<MultipartFile> profileImages) throws IOException {
 
         logger.info("Received request to update user profile for: {}", userDetails.getUsername());
         MultipartFile profileImage = fileValidator.getSingleFile(profileImages);
@@ -122,18 +88,8 @@ public class UserController {
      * @param userDetails the authenticated user's details
      * @return the response entity indicating the deletion status
      */
-    @Operation(
-            summary = "Delete user profile",
-            description = "Deletes the authenticated user's profile permanently"
-    )
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Profile deleted successfully"),
-            @ApiResponse(responseCode = "401", description = "Unauthorized")
-    })
     @DeleteMapping
-    public ResponseEntity<ApiResponseDTO<String>> deleteUserProfile(
-            @Parameter(hidden = true)
-            @AuthenticationPrincipal UserDetails userDetails) {
+    public ResponseEntity<ApiResponseDTO<String>> deleteUserProfile(@AuthenticationPrincipal UserDetails userDetails) {
         logger.info("Received request to delete profile for user: {}", userDetails.getUsername());
         userService.deleteUserProfile(userDetails);
         String successMessage = "Profile deleted successfully for user: " + userDetails.getUsername();
@@ -148,15 +104,6 @@ public class UserController {
      * @param userDetails the authenticated user's details
      * @return the response entity indicating the password update status
      */
-    @Operation(
-            summary = "Update password",
-            description = "Updates the authenticated user's password"
-    )
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Password updated successfully"),
-            @ApiResponse(responseCode = "400", description = "Validation error"),
-            @ApiResponse(responseCode = "401", description = "Unauthorized")
-    })
     @PutMapping("/update-password")
     public ResponseEntity<ApiResponseDTO<String>> updatePassword(
             @Valid @RequestBody UpdatePasswordRequestDTO updatePasswordRequestDTO,

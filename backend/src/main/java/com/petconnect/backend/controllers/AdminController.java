@@ -1,10 +1,6 @@
 package com.petconnect.backend.controllers;
 
 import com.petconnect.backend.dto.*;
-import com.petconnect.backend.dto.forum.CommentDTO;
-import com.petconnect.backend.dto.forum.ForumDTO;
-import com.petconnect.backend.dto.forum.LikeDTO;
-import com.petconnect.backend.dto.forum.UpdateForumDTO;
 import com.petconnect.backend.dto.pet.PetRequestDTO;
 import com.petconnect.backend.dto.pet.PetResponseDTO;
 import com.petconnect.backend.dto.specialist.*;
@@ -21,12 +17,6 @@ import com.petconnect.backend.services.*;
 import com.petconnect.backend.utils.FileUtils;
 import com.petconnect.backend.utils.ResponseEntityUtil;
 import com.petconnect.backend.validators.FileValidator;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import org.slf4j.Logger;
@@ -50,7 +40,6 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/admin")
-@Tag(name = "Admin Controller", description = "Admin operations for Users, Pets, Specialists, Forum, Comments, and Likes")
 public class AdminController {
     private final UserService userService;
     private final PetService petService;
@@ -80,6 +69,7 @@ public class AdminController {
     }
 
 //    ############################################################# USER #########################################################
+
     /**
      * Get all users with pagination and sorting.
      *
@@ -89,18 +79,12 @@ public class AdminController {
      * @param sortDir the sort direction (default is "asc")
      * @return a response entity containing a page of users
      */
-    @Operation(summary = "Get all users", description = "Fetch all users with pagination and sorting",
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "Users fetched successfully",
-                            content = @Content(schema = @Schema(implementation = ApiResponseDTO.class))),
-                    @ApiResponse(responseCode = "400", description = "Invalid pagination parameters")
-            })
     @GetMapping("/users")
     public ResponseEntity<ApiResponseDTO<Page<UserDTO>>> getAllUsers(
-            @Parameter(description = "Page number (starting from 0)") @RequestParam(defaultValue = "0") @Min(0) int page,
-            @Parameter(description = "Number of items per page") @RequestParam(defaultValue = "10") @Min(1) int size,
-            @Parameter(description = "Field to sort by") @RequestParam(defaultValue = "userId") String sortBy,
-            @Parameter(description = "Sort direction (asc/desc)") @RequestParam(defaultValue = "asc") String sortDir) {
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "10") @Min(1) int size,
+            @RequestParam(defaultValue = "userId") String sortBy,
+            @RequestParam(defaultValue = "asc") String sortDir) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.fromString(sortDir), sortBy));
         Page<UserDTO> users = userService.getAllUsers(pageable);
         logger.info("Fetched all users with pagination and sorting");
@@ -113,15 +97,8 @@ public class AdminController {
      * @param userId the ID of the user to retrieve
      * @return a response entity containing the user data
      */
-    @Operation(summary = "Get user by ID", description = "Fetch a user by their ID",
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "User fetched successfully",
-                            content = @Content(schema = @Schema(implementation = ApiResponseDTO.class))),
-                    @ApiResponse(responseCode = "404", description = "User not found")
-            })
     @GetMapping("/users/{userId}")
-    public ResponseEntity<ApiResponseDTO<UserDTO>> getUserById(
-            @Parameter(description = "ID of the user to fetch") @PathVariable Long userId) {
+    public ResponseEntity<ApiResponseDTO<UserDTO>> getUserById(@PathVariable Long userId) {
         try {
             UserDTO user = userService.getUserById(userId);
             logger.info("Fetched user with ID: {}", userId);
@@ -141,22 +118,11 @@ public class AdminController {
      * @return the ResponseEntity containing the ApiResponseDTO with the updated user information
      * @throws IOException if an I/O error occurs
      */
-    @Operation(
-            summary = "Update user by ID",
-            description = "Update a user's profile including optional profile image",
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "User profile updated successfully",
-                            content = @Content(schema = @Schema(implementation = UserDTO.class))),
-                    @ApiResponse(responseCode = "400", description = "Bad request, invalid input or file validation error"),
-                    @ApiResponse(responseCode = "404", description = "User not found"),
-                    @ApiResponse(responseCode = "500", description = "Internal server error")
-            }
-    )
     @PutMapping(value = "/users/{id}", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
     public ResponseEntity<ApiResponseDTO<UserDTO>> updateUserById(
-            @Parameter(description = "ID of the user to update") @PathVariable Long id,
-            @Parameter(description = "User update details") @Valid @ModelAttribute UserUpdateDTO userUpdateDTO,
-            @Parameter(description = "Optional profile image") @RequestParam(value = "profileImage", required = false) List<MultipartFile> profileImages) throws IOException {
+            @PathVariable Long id,
+            @Valid @ModelAttribute UserUpdateDTO userUpdateDTO,
+            @RequestParam(value = "profileImage", required = false) List<MultipartFile> profileImages) throws IOException {
 
         logger.info("Received request to update user profile for ID: {}", id);
 
@@ -191,18 +157,8 @@ public class AdminController {
      * @param id the user ID
      * @return a response entity with a deletion status
      */
-    @Operation(
-            summary = "Delete user by ID",
-            description = "Delete a user by their ID",
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "User deleted successfully"),
-                    @ApiResponse(responseCode = "404", description = "User not found"),
-                    @ApiResponse(responseCode = "500", description = "Error deleting user")
-            }
-    )
     @DeleteMapping("/users/{id}")
-    public ResponseEntity<ApiResponseDTO<String>> deleteUserById(
-            @Parameter(description = "ID of the user to delete") @PathVariable Long id) {
+    public ResponseEntity<ApiResponseDTO<String>> deleteUserById(@PathVariable Long id) {
         try {
             userService.deleteUserById(id);
             logger.info("Deleted user with ID: {}", id);
@@ -228,11 +184,11 @@ public class AdminController {
      */
     @GetMapping("/users/search")
     public ResponseEntity<ApiResponseDTO<Page<UserDTO>>> searchUsers(
-            @Parameter(description = "Keyword to search") @RequestParam String keyword,
-            @Parameter(description = "Page number") @RequestParam(defaultValue = "0") @Min(0) int page,
-            @Parameter(description = "Number of items per page") @RequestParam(defaultValue = "10") @Min(1) int size,
-            @Parameter(description = "Field to sort by") @RequestParam(defaultValue = "userId") String sortBy,
-            @Parameter(description = "Sort direction (asc/desc)") @RequestParam(defaultValue = "asc") String sortDir) {
+            @RequestParam String keyword,
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "10") @Min(1) int size,
+            @RequestParam(defaultValue = "userId") String sortBy,
+            @RequestParam(defaultValue = "asc") String sortDir) {
         try {
             Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.fromString(sortDir), sortBy));
             Page<UserDTO> users = userService.searchUsers(keyword, pageable);
@@ -251,19 +207,9 @@ public class AdminController {
      * @param roleNames the new roles
      * @return a response entity with an update status
      */
-    @Operation(
-            summary = "Update user roles",
-            description = "Update roles for a user by their ID",
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "Roles updated successfully"),
-                    @ApiResponse(responseCode = "400", description = "Invalid role names provided"),
-                    @ApiResponse(responseCode = "404", description = "User not found")
-            }
-    )
     @PostMapping("/users/{id}/roles")
     public ResponseEntity<ApiResponseDTO<Map<String, String>>> updateUserRoles(
-            @Parameter(description = "ID of the user") @PathVariable Long id,
-            @Parameter(description = "Set of role names") @RequestBody Set<String> roleNames) {
+            @PathVariable Long id, @RequestBody Set<String> roleNames) {
         try {
             Set<Role.RoleName> validRoleNames = roleNames.stream()
                     .map(roleName -> {
@@ -298,22 +244,13 @@ public class AdminController {
      * @param size the number of records per page
      * @return a response entity containing a page of users
      */
-    @Operation(
-            summary = "Get all users by role",
-            description = "Fetch all users with a specific role, with pagination and sorting",
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "Users fetched successfully",
-                            content = @Content(schema = @Schema(implementation = ApiResponseDTO.class))),
-                    @ApiResponse(responseCode = "400", description = "Invalid pagination parameters")
-            }
-    )
     @GetMapping("/users/role/{roleName}")
     public ResponseEntity<ApiResponseDTO<Page<UserDTO>>> getAllUsersByRole(
-            @Parameter(description = "Role name (case-insensitive)") @PathVariable String roleName,
-            @Parameter(description = "Page number") @RequestParam(defaultValue = "0") @Min(0) int page,
-            @Parameter(description = "Number of records per page") @RequestParam(defaultValue = "10") @Min(1) int size,
-            @Parameter(description = "Field to sort by") @RequestParam(defaultValue = "userId") String sortBy,
-            @Parameter(description = "Sort direction (asc/desc)") @RequestParam(defaultValue = "asc") String sortDir) {
+            @PathVariable String roleName,
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "10") @Min(1) int size,
+            @RequestParam(defaultValue = "userId") String sortBy,
+            @RequestParam(defaultValue = "asc") String sortDir) {
 
         try {
             // Additional logging for debugging
@@ -339,17 +276,12 @@ public class AdminController {
      * @param sortDir the sort direction (default is "asc")
      * @return ResponseEntity with ApiResponseDTO containing a page of pets
      */
-    @Operation(summary = "Get all pets", description = "Fetch all pets with pagination and sorting",
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "Pets fetched successfully",
-                            content = @Content(schema = @Schema(implementation = ApiResponseDTO.class))),
-            })
     @GetMapping("/pets")
     public ResponseEntity<ApiResponseDTO<Page<PetResponseDTO>>> getAllPets(
-            @Parameter(description = "Page number (starting from 0)") @RequestParam(defaultValue = "0") @Min(0) int page,
-            @Parameter(description = "Number of items per page") @RequestParam(defaultValue = "10") @Min(1) int size,
-            @Parameter(description = "Field to sort by") @RequestParam(defaultValue = "petId") String sortBy,
-            @Parameter(description = "Sort direction (asc/desc)") @RequestParam(defaultValue = "asc") String sortDir) {
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "10") @Min(1) int size,
+            @RequestParam(defaultValue = "petId") String sortBy,
+            @RequestParam(defaultValue = "asc") String sortDir) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.fromString(sortDir), sortBy));
         Page<PetResponseDTO> pets = petService.getAllPets(pageable);
         logger.info("Fetched all pets with pagination and sorting");
@@ -362,18 +294,8 @@ public class AdminController {
      * @param id the pet ID
      * @return ResponseEntity with ApiResponseDTO containing the pet
      */
-    @Operation(
-            summary = "Get pet by ID",
-            description = "Fetch a pet by its ID",
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "Pet fetched successfully",
-                            content = @Content(schema = @Schema(implementation = PetResponseDTO.class))),
-                    @ApiResponse(responseCode = "404", description = "Pet not found")
-            }
-    )
     @GetMapping("/pets/{id}")
-    public ResponseEntity<ApiResponseDTO<PetResponseDTO>> getPetById(
-            @Parameter(description = "ID of the pet to fetch") @PathVariable Long id) {
+    public ResponseEntity<ApiResponseDTO<PetResponseDTO>> getPetById(@PathVariable Long id) {
         try {
             PetResponseDTO pet = petService.getPetById(id);
             logger.info("Fetched pet with ID: {}", id);
@@ -392,22 +314,12 @@ public class AdminController {
      * @param petRequestDTO     the pet details to update
      * @param avatarFile the avatar file to update (optional)
      * @return ResponseEntity with ApiResponseDTO containing the updated pet
+     * @throws IOException if there's an error processing the avatar file
      */
-    @Operation(
-            summary = "Update pet by ID",
-            description = "Update a pet's information, including optional avatar image",
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "Pet updated successfully",
-                            content = @Content(schema = @Schema(implementation = PetResponseDTO.class))),
-                    @ApiResponse(responseCode = "404", description = "Pet not found"),
-                    @ApiResponse(responseCode = "500", description = "Error updating pet")
-            }
-    )
     @PutMapping(value = "/pets/{id}", consumes = "multipart/form-data")
-    public ResponseEntity<ApiResponseDTO<PetResponseDTO>> updatePetById(
-            @Parameter(description = "ID of the pet to update") @PathVariable Long id,
-            @Parameter(description = "Pet update data") @Valid @ModelAttribute PetRequestDTO petRequestDTO,
-            @Parameter(description = "Optional avatar file") @RequestPart(required = false) MultipartFile avatarFile) {
+    public ResponseEntity<ApiResponseDTO<PetResponseDTO>> updatePetById(@PathVariable Long id,
+                                                                        @Valid @ModelAttribute PetRequestDTO petRequestDTO,
+                                                                        @RequestPart(required = false) MultipartFile avatarFile) {
         try {
             PetResponseDTO updatedPet = petService.updatePetById(id, petRequestDTO, avatarFile);
             logger.info("Updated pet with ID: {}", id);
@@ -427,17 +339,8 @@ public class AdminController {
      * @param id the pet ID
      * @return ResponseEntity with ApiResponse containing the deletion status
      */
-    @Operation(
-            summary = "Delete pet by ID",
-            description = "Delete a pet by its ID",
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "Pet deleted successfully"),
-                    @ApiResponse(responseCode = "404", description = "Pet not found")
-            }
-    )
     @DeleteMapping("/pets/{id}")
-    public ResponseEntity<ApiResponseDTO<String>> deletePetById(
-            @Parameter(description = "ID of the pet to delete") @PathVariable Long id) {
+    public ResponseEntity<ApiResponseDTO<String>> deletePetById(@PathVariable Long id) {
         try {
             petService.deletePetById(id);
             logger.info("Deleted pet with ID: {}", id);
@@ -460,15 +363,8 @@ public class AdminController {
      * @param bindingResult BindingResult for validation errors
      * @return ResponseEntity with ApiResponseDTO containing the created specialist's details
      */
-    @Operation(summary = "Create a specialist", description = "Create a new specialist with optional profile image",
-            responses = {
-                    @ApiResponse(responseCode = "201", description = "Specialist created successfully",
-                            content = @Content(schema = @Schema(implementation = SpecialistRegistrationResponseDTO.class))),
-                    @ApiResponse(responseCode = "400", description = "Validation error"),
-                    @ApiResponse(responseCode = "409", description = "Specialist already exists")
-            })
     @PostMapping(value = "/specialists", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-        public ResponseEntity<ApiResponseDTO<SpecialistRegistrationResponseDTO>> createSpecialist(
+    public ResponseEntity<ApiResponseDTO<SpecialistRegistrationResponseDTO>> createSpecialist(
             @Valid @ModelAttribute SpecialistCreateRequestDTO specialistCreateRequestDTO,
             @RequestPart(value = "profileImage", required = false) MultipartFile profileImage,
             BindingResult bindingResult) {
@@ -511,23 +407,11 @@ public class AdminController {
      * @param bindingResult BindingResult for validation errors
      * @return ResponseEntity with ApiResponse containing the updated specialist
      */
-    @Operation(
-            summary = "Update specialist by admin",
-            description = "Update an existing specialist's profile by admin, including optional profile image",
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "Specialist updated successfully",
-                            content = @Content(schema = @Schema(implementation = SpecialistResponseDTO.class))),
-                    @ApiResponse(responseCode = "400", description = "Validation error or file validation error"),
-                    @ApiResponse(responseCode = "404", description = "Specialist not found"),
-                    @ApiResponse(responseCode = "401", description = "Unauthorized access"),
-                    @ApiResponse(responseCode = "500", description = "Internal server error")
-            }
-    )
     @PutMapping(value = "/specialists/{id}", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
     public ResponseEntity<ApiResponseDTO<SpecialistResponseDTO>> updateSpecialistByAdmin(
-            @Parameter(description = "ID of the specialist to update") @PathVariable Long id,
-            @Parameter(description = "Specialist update details") @Valid @ModelAttribute SpecialistUpdateRequestDTO specialistUpdateRequestDTO,
-            @Parameter(description = "Optional profile image") @RequestPart(value = "profileImage", required = false) List<MultipartFile> profileImages,
+            @PathVariable Long id,
+            @Valid @ModelAttribute SpecialistUpdateRequestDTO specialistUpdateRequestDTO,
+            @RequestPart(value = "profileImage", required = false) List<MultipartFile> profileImages,
             BindingResult bindingResult) {
 
         if (bindingResult.hasErrors()) {
@@ -579,23 +463,13 @@ public class AdminController {
      * @param sortDir the sort direction (default is "asc")
      * @return ResponseEntity with ApiResponse containing a page of specialists
      */
-    @Operation(
-            summary = "Search specialists",
-            description = "Search for specialists by keyword with pagination and sorting",
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "Specialists fetched successfully",
-                            content = @Content(schema = @Schema(implementation = ApiResponseDTO.class))),
-                    @ApiResponse(responseCode = "404", description = "No specialists found"),
-                    @ApiResponse(responseCode = "401", description = "Unauthorized access")
-            }
-    )
     @GetMapping("/specialists/search")
     public ResponseEntity<ApiResponseDTO<Page<SpecialistResponseDTO>>> searchSpecialists(
-            @Parameter(description = "Keyword to search") @RequestParam String keyword,
-            @Parameter(description = "Page number") @RequestParam(defaultValue = "0") @Min(0) int page,
-            @Parameter(description = "Number of items per page") @RequestParam(defaultValue = "10") @Min(1) int size,
-            @Parameter(description = "Field to sort by") @RequestParam(defaultValue = "specialistId") String sortBy,
-            @Parameter(description = "Sort direction (asc/desc)") @RequestParam(defaultValue = "asc") String sortDir) {
+            @RequestParam String keyword,
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "10") @Min(1) int size,
+            @RequestParam(defaultValue = "specialistId") String sortBy,
+            @RequestParam(defaultValue = "asc") String sortDir) {
         try {
             Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.fromString(sortDir), sortBy));
             Page<SpecialistResponseDTO> specialists = specialistService.searchSpecialists(keyword, pageable);
@@ -616,19 +490,8 @@ public class AdminController {
      * @param id the specialist ID
      * @return ResponseEntity with ApiResponse containing the deletion status
      */
-    @Operation(
-            summary = "Delete specialist by admin",
-            description = "Delete a specialist profile by admin",
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "Specialist deleted successfully"),
-                    @ApiResponse(responseCode = "404", description = "Specialist not found"),
-                    @ApiResponse(responseCode = "401", description = "Unauthorized access"),
-                    @ApiResponse(responseCode = "500", description = "IO error or internal server error")
-            }
-    )
     @DeleteMapping("/specialists/{id}")
-    public ResponseEntity<ApiResponseDTO<String>> deleteSpecialistByAdmin(
-            @Parameter(description = "ID of the specialist to delete") @PathVariable Long id) {
+    public ResponseEntity<ApiResponseDTO<String>> deleteSpecialistByAdmin(@PathVariable Long id) {
         try {
             specialistService.deleteSpecialistByAdmin(id);
             logger.info("Deleted specialist with ID: {}", id);
@@ -655,15 +518,8 @@ public class AdminController {
      * @param updateForumDTO the forum update data
      * @return the updated forum details
      */
-    @Operation(summary = "Update forum", description = "Update a forum by its ID",
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "Forum updated successfully"),
-                    @ApiResponse(responseCode = "404", description = "Forum not found")
-            })
     @PutMapping("/forums/{forumId}")
-    public ResponseEntity<ApiResponseDTO<ForumDTO>> updateForumById(
-            @Parameter(description = "ID of the forum to update") @PathVariable String forumId,
-            @Parameter(description = "Forum update data") @RequestBody UpdateForumDTO updateForumDTO) {
+    public ResponseEntity<ApiResponseDTO<ForumDTO>> updateForumById(@PathVariable String forumId, @RequestBody UpdateForumDTO updateForumDTO) {
         try {
             ForumDTO updatedForum = forumService.updateForumById(forumId, updateForumDTO);
             ApiResponseDTO<ForumDTO> apiResponseDTO = new ApiResponseDTO<>("Forum updated successfully", updatedForum);
@@ -680,17 +536,8 @@ public class AdminController {
      * @param forumId the forum ID
      * @return a response indicating the result of the deletion
      */
-    @Operation(
-            summary = "Delete forum by ID",
-            description = "Delete a forum by its ID",
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "Forum deleted successfully"),
-                    @ApiResponse(responseCode = "404", description = "Forum not found")
-            }
-    )
     @DeleteMapping("/forums/{forumId}")
-    public ResponseEntity<ApiResponseDTO<Void>> deleteForumById(
-            @Parameter(description = "ID of the forum to delete") @PathVariable String forumId) {
+    public ResponseEntity<ApiResponseDTO<Void>> deleteForumById(@PathVariable String forumId) {
         try {
             forumService.deleteForumById(forumId);
             ApiResponseDTO<Void> apiResponseDTO = new ApiResponseDTO<>("Forum deleted successfully", null);
