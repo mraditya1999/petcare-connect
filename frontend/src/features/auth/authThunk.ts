@@ -70,9 +70,8 @@ export const logoutUser = createAsyncThunk<
 >("auth/logoutUser", async (_, { rejectWithValue }) => {
   try {
     ShowToast({ description: "Logging out...", type: "success" });
-    const response = await customFetch.delete<LogoutUserResponse>(
-      "/auth/logout",
-    );
+    const response =
+      await customFetch.delete<LogoutUserResponse>("/auth/logout");
     localStorage.removeItem("user");
     sessionStorage.removeItem("user");
     ShowToast({ description: "Logged out successfully!", type: "success" });
@@ -234,19 +233,18 @@ export const sendOtp = createAsyncThunk<
 
 export const verifyOtp = createAsyncThunk<
   { message: string; data: IOtpLoginResponse },
-  { phone: string; otp: string },
+  { email: string; phone: string; otp: string },
   { rejectValue: string }
->("auth/verifyOtp", async ({ phone, otp }, { rejectWithValue }) => {
+>("auth/verifyOtp", async ({ email, phone, otp }, { rejectWithValue }) => {
   try {
     const response = await customFetch.post<{
       message: string;
       data: IOtpLoginResponse;
-    }>("/auth/verify-otp", { phone, otp });
+    }>("/auth/verify-otp", { email, phone, otp });
 
     const { data, message } = response.data;
-
     // Save temp token only for new users
-    if (data.isNewUser && data.tempToken) {
+    if (data.newUser && data.tempToken) {
       localStorage.setItem("tempSignupToken", data.tempToken);
     }
 

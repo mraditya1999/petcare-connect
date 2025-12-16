@@ -32,7 +32,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
+import com.petconnect.backend.exceptions.IllegalArgumentException;
 
 @Service
 public class UserService {
@@ -476,12 +476,6 @@ public class UserService {
         }
     }
 
-    /**
-     * Updates the address of a user based on the provided UserUpdateDTO.
-     *
-     * @param user the user whose address is to be updated
-     * @param userUpdateDTO the data transfer object containing updated address information
-     */
     /**
      * Updates user address from the DTO.
      *

@@ -39,6 +39,7 @@ export default function VerifyOtp() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const phone = params.get("phone") || "";
+  const email = params.get("email") || "";
 
   const [timer, setTimer] = useState(30);
   const [isNewUser, setIsNewUser] = useState(false);
@@ -66,10 +67,10 @@ export default function VerifyOtp() {
   }, []);
 
   const handleVerifyOtp = async (data: { otp: string }) => {
-    const res = await dispatch(verifyOtp({ phone, otp: data.otp }));
+    const res = await dispatch(verifyOtp({ email, phone, otp: data.otp }));
     if (verifyOtp.fulfilled.match(res)) {
       const { data: payload, message } = res.payload;
-      if (payload.isNewUser) {
+      if (payload.newUser) {
         if (payload.tempToken) {
           localStorage.setItem("tempSignupToken", payload.tempToken);
         }
@@ -83,7 +84,7 @@ export default function VerifyOtp() {
           message: message,
           data: payload,
         };
-        saveUserToStorage(userData, true);
+        saveUserToStorage(userData, false);
         dispatch(setUser(userData));
         navigate("/");
       }

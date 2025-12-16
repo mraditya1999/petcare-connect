@@ -1,8 +1,16 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { IProfileState, IProfileData } from "@/types/profile-types";
 import { ApiResponse } from "@/types/api";
-import { fetchProfile, updateProfile, deleteProfile } from "./userThunk";
-import { IDeleteProfileResponse } from "@/types/profile-thunk-types";
+import {
+  fetchProfile,
+  updateProfile,
+  deleteProfile,
+  updatePassword,
+} from "./userThunk";
+import {
+  IDeleteProfileResponse,
+  IUpdatePasswordResponse,
+} from "@/types/profile-thunk-types";
 
 const initialState: IProfileState = {
   profile: null,
@@ -61,6 +69,21 @@ export const profileSlice = createSlice({
         },
       )
       .addCase(deleteProfile.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+      .addCase(updatePassword.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(
+        updatePassword.fulfilled,
+        (state, action: PayloadAction<IUpdatePasswordResponse>) => {
+          state.loading = false;
+          state.success = action.payload.message;
+        },
+      )
+      .addCase(updatePassword.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       });

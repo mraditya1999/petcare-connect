@@ -75,7 +75,7 @@ public class VerificationService {
 
             user.setVerified(true);
 
-            boolean isFirstVerifiedUser = userRepository.countByIsVerified(true) == 0;
+            boolean isFirstVerifiedUser = userRepository.countByVerified(true) == 0;
             Set<Role.RoleName> roles;
             if (user.getRoles().stream().anyMatch(role -> role.getRoleName() == Role.RoleName.SPECIALIST)) {
                 roles = Set.of(Role.RoleName.USER, Role.RoleName.SPECIALIST);

@@ -101,7 +101,7 @@ public class User {
     private Set<Role> roles = new HashSet<>();
 
     @Column(nullable = false)
-    private boolean isVerified = false;
+    private boolean verified = false;
 
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
@@ -126,7 +126,7 @@ public class User {
     private List<OAuthAccount> oauthAccounts = new ArrayList<>();
 
     @Column(nullable = false)
-    private boolean isProfileComplete = false;
+    private boolean profileComplete = false;
 
     // Custom setter for email to ensure lowercase
     public void setEmail(String email) {
