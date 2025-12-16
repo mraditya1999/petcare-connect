@@ -11,6 +11,11 @@ import com.petconnect.backend.exceptions.UnauthorizedAccessException;
 import com.petconnect.backend.repositories.UserRepository;
 import com.petconnect.backend.services.AppointmentService;
 import com.petconnect.backend.utils.ResponseEntityUtil;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import org.slf4j.Logger;
@@ -34,23 +39,42 @@ public class AppointmentController {
         this.userRepository = userRepository;
     }
 
+    @Operation(
+            summary = "Get appointments by pet owner",
+            description = "Fetches paginated appointments for the authenticated pet owner",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Appointments fetched successfully",
+                            content = @Content(schema = @Schema(implementation = AppointmentResponseDTO.class))),
+                    @ApiResponse(responseCode = "404", description = "User not found")
+            }
+    )
     @GetMapping("/petOwner")
     public ResponseEntity<ApiResponseDTO<Page<AppointmentResponseDTO>>> getAppointmentsByPetOwner(
-            @AuthenticationPrincipal UserDetails userDetails,
-            @RequestParam(defaultValue = "0") @Min(0) int page,
-            @RequestParam(defaultValue = "10") @Min(1) int size) {
+            @Parameter(description = "Authenticated user details") @AuthenticationPrincipal UserDetails userDetails,
+            @Parameter(description = "Page number") @RequestParam(defaultValue = "0") @Min(0) int page,
+            @Parameter(description = "Page size") @RequestParam(defaultValue = "10") @Min(1) int size) {
         String username = userDetails.getUsername();
         Long userId = userRepository.findByEmail(username).orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + username)).getUserId();
         Page<AppointmentResponseDTO> appointments = appointmentService.getAppointmentsByPetOwner(userId, page, size);
         return ResponseEntityUtil.page(appointments, "Fetched appointments for pet owner successfully");
     }
 
+    @Operation(
+            summary = "Get appointments by pet ID",
+            description = "Fetches paginated appointments for a specific pet, only accessible to authorized users",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Appointments fetched successfully",
+                            content = @Content(schema = @Schema(implementation = AppointmentResponseDTO.class))),
+                    @ApiResponse(responseCode = "403", description = "Unauthorized access"),
+                    @ApiResponse(responseCode = "404", description = "Resource not found")
+            }
+    )
     @GetMapping("/pet/{petId}")
     public ResponseEntity<ApiResponseDTO<Page<AppointmentResponseDTO>>> getAppointmentsByPet(
-            @PathVariable Long petId,
-            @RequestParam(defaultValue = "0") @Min(0) int page,
-            @RequestParam(defaultValue = "10") @Min(1) int size,
-            @AuthenticationPrincipal UserDetails userDetails) {
+            @Parameter(description = "Pet ID") @PathVariable Long petId,
+            @Parameter(description = "Page number") @RequestParam(defaultValue = "0") @Min(0) int page,
+            @Parameter(description = "Page size") @RequestParam(defaultValue = "10") @Min(1) int size,
+            @Parameter(description = "Authenticated user details") @AuthenticationPrincipal UserDetails userDetails) {
         try {
             String username = userDetails.getUsername();
             Page<AppointmentResponseDTO> appointments = appointmentService.getAppointmentsByPet(petId, page, size, username);
@@ -66,12 +90,21 @@ public class AppointmentController {
     }
 
 
+    @Operation(
+            summary = "Get appointments by status",
+            description = "Fetches paginated appointments for the authenticated user filtered by appointment status",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Appointments fetched successfully",
+                            content = @Content(schema = @Schema(implementation = AppointmentResponseDTO.class))),
+                    @ApiResponse(responseCode = "404", description = "User not found")
+            }
+    )
     @GetMapping("/status/{status}")
     public ResponseEntity<ApiResponseDTO<Page<AppointmentResponseDTO>>> getAppointmentsByStatus(
-            @PathVariable Appointment.AppointmentStatus status,
-            @RequestParam(defaultValue = "0") @Min(0) int page,
-            @RequestParam(defaultValue = "10") @Min(1) int size,
-            @AuthenticationPrincipal UserDetails userDetails) {
+            @Parameter(description = "Appointment status") @PathVariable Appointment.AppointmentStatus status,
+            @Parameter(description = "Page number") @RequestParam(defaultValue = "0") @Min(0) int page,
+            @Parameter(description = "Page size") @RequestParam(defaultValue = "10") @Min(1) int size,
+            @Parameter(description = "Authenticated user details") @AuthenticationPrincipal UserDetails userDetails) {
         try {
             String username = userDetails.getUsername();
             Page<AppointmentResponseDTO> appointments = appointmentService.getAppointmentsByStatusForUser(status, page, size, username);
@@ -83,10 +116,19 @@ public class AppointmentController {
         }
     }
 
+    @Operation(
+            summary = "Create a new appointment",
+            description = "Creates a new appointment for the authenticated user",
+            responses = {
+                    @ApiResponse(responseCode = "201", description = "Appointment created successfully",
+                            content = @Content(schema = @Schema(implementation = AppointmentResponseDTO.class))),
+                    @ApiResponse(responseCode = "404", description = "Resource not found")
+            }
+    )
     @PostMapping
     public ResponseEntity<ApiResponseDTO<AppointmentResponseDTO>> createAppointment(
-            @AuthenticationPrincipal UserDetails userDetails,
-            @RequestBody @Valid AppointmentRequestDTO appointmentRequestDTO) {
+            @Parameter(description = "Authenticated user details") @AuthenticationPrincipal UserDetails userDetails,
+            @Parameter(description = "Appointment creation data") @RequestBody @Valid AppointmentRequestDTO appointmentRequestDTO) {
         try {
             String username = userDetails.getUsername();
             AppointmentResponseDTO createdAppointment = appointmentService.createAppointment(username, appointmentRequestDTO);
@@ -98,11 +140,21 @@ public class AppointmentController {
         }
     }
 
+    @Operation(
+            summary = "Update an appointment",
+            description = "Updates an appointment by ID for the authenticated user",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Appointment updated successfully",
+                            content = @Content(schema = @Schema(implementation = AppointmentResponseDTO.class))),
+                    @ApiResponse(responseCode = "403", description = "Unauthorized access"),
+                    @ApiResponse(responseCode = "404", description = "Resource not found")
+            }
+    )
     @PutMapping("/{appointmentId}")
     public ResponseEntity<ApiResponseDTO<AppointmentResponseDTO>> updateAppointment(
-            @AuthenticationPrincipal UserDetails userDetails,
-            @PathVariable Long appointmentId,
-            @RequestBody @Valid AppointmentUpdateRequestDTO updatedAppointmentDTO) {
+            @Parameter(description = "Authenticated user details") @AuthenticationPrincipal UserDetails userDetails,
+            @Parameter(description = "Appointment ID") @PathVariable Long appointmentId,
+            @Parameter(description = "Updated appointment data") @RequestBody @Valid AppointmentUpdateRequestDTO updatedAppointmentDTO) {
         try {
             String username = userDetails.getUsername();
             AppointmentResponseDTO updatedAppointment = appointmentService.updateAppointment(appointmentId, username, updatedAppointmentDTO);
@@ -118,11 +170,20 @@ public class AppointmentController {
     }
 
 
+    @Operation(
+            summary = "Submit feedback for appointment",
+            description = "Submits feedback for a specific appointment by the authenticated user",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Feedback submitted successfully"),
+                    @ApiResponse(responseCode = "403", description = "Unauthorized access"),
+                    @ApiResponse(responseCode = "404", description = "Resource not found")
+            }
+    )
     @PostMapping("/{appointmentId}/feedback")
     public ResponseEntity<ApiResponseDTO<Void>> submitFeedback(
-            @AuthenticationPrincipal UserDetails userDetails,
-            @PathVariable Long appointmentId,
-            @RequestBody @Valid FeedbackDTO feedbackDTO) {
+            @Parameter(description = "Authenticated user details") @AuthenticationPrincipal UserDetails userDetails,
+            @Parameter(description = "Appointment ID") @PathVariable Long appointmentId,
+            @Parameter(description = "Feedback data") @RequestBody @Valid FeedbackDTO feedbackDTO) {
         try {
             String username = userDetails.getUsername();
             appointmentService.submitFeedback(username, appointmentId, feedbackDTO);
@@ -137,11 +198,20 @@ public class AppointmentController {
         }
     }
 
+    @Operation(
+            summary = "Get appointment history",
+            description = "Fetches paginated appointment history for the authenticated user",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Appointment history fetched successfully",
+                            content = @Content(schema = @Schema(implementation = AppointmentResponseDTO.class))),
+                    @ApiResponse(responseCode = "404", description = "User not found")
+            }
+    )
     @GetMapping("/history")
     public ResponseEntity<ApiResponseDTO<Page<AppointmentResponseDTO>>> getAppointmentHistory(
-            @AuthenticationPrincipal UserDetails userDetails,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @Parameter(description = "Authenticated user details") @AuthenticationPrincipal UserDetails userDetails,
+            @Parameter(description = "Page number") @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "Page size") @RequestParam(defaultValue = "10") int size) {
         try {
             String username = userDetails.getUsername();
             Page<AppointmentResponseDTO> appointments = appointmentService.getAppointmentHistory(username, page, size);
@@ -153,11 +223,20 @@ public class AppointmentController {
         }
     }
 
+    @Operation(
+            summary = "Get appointments for specialist",
+            description = "Fetches paginated appointments for the authenticated specialist",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Appointments fetched successfully",
+                            content = @Content(schema = @Schema(implementation = AppointmentResponseDTO.class))),
+                    @ApiResponse(responseCode = "404", description = "Specialist not found")
+            }
+    )
     @GetMapping("/specialist")
     public ResponseEntity<ApiResponseDTO<Page<AppointmentResponseDTO>>> getAppointmentsForSpecialist(
-            @AuthenticationPrincipal UserDetails userDetails,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @Parameter(description = "Authenticated user details") @AuthenticationPrincipal UserDetails userDetails,
+            @Parameter(description = "Page number") @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "Page size") @RequestParam(defaultValue = "10") int size) {
         try {
             String username = userDetails.getUsername();
             Page<AppointmentResponseDTO> appointments = appointmentService.getAppointmentsForSpecialist(username, page, size);

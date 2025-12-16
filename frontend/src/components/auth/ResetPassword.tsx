@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "@/app/hooks";
@@ -11,6 +10,7 @@ import { handleError } from "@/utils/helpers";
 import GenericAlert from "../shared/GenericAlert";
 import { resetPasswordFormSchema } from "@/utils/validations";
 import ShowToast from "../shared/ShowToast";
+import { PasswordInput } from "@/components/ui/PasswordInput";
 
 const ResetPassword = () => {
   const dispatch = useAppDispatch();
@@ -80,16 +80,11 @@ const ResetPassword = () => {
 
   // Clear success state when component unmounts or navigates away
   useEffect(() => {
-    return () => {
-      // This will run when component unmounts
-      // Note: We can't dispatch here as component is unmounting
-      // State will be cleared by navigation or by adding a clearSuccess action
-    };
+    return () => {};
   }, []);
 
   const token = query.get("token");
 
-  // Show error if token is missing
   if (!token) {
     return (
       <article className="fixed-width rounded-lg px-8 py-8 shadow-md">
@@ -118,7 +113,7 @@ const ResetPassword = () => {
               <Label htmlFor="password" className="">
                 Password
               </Label>
-              <Input
+              <PasswordInput
                 id="password"
                 placeholder="Enter your password"
                 type="password"
@@ -132,7 +127,7 @@ const ResetPassword = () => {
               <Label htmlFor="confirmPassword" className="">
                 Confirm Password
               </Label>
-              <Input
+              <PasswordInput
                 id="confirmPassword"
                 placeholder="Confirm your password"
                 type="password"
