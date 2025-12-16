@@ -92,12 +92,12 @@ export interface VerifyOtpResponse {
 }
 
 export interface IOtpLoginResponse {
-  userId: string | number;
+  userId: string | number | null;
   email: string | null;
   roles: Array<"USER" | "ADMIN" | "SPECIALIST">;
   token: string | null;
   oauthProvider: "GOOGLE" | "LOCAL" | "GITHUB" | "MOBILE" | null;
-  isNewUser: boolean;
-  isProfileComplete: boolean;
+  newUser: boolean;
+  profileComplete: boolean;
   tempToken?: string | null;
 }

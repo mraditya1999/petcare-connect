@@ -1,18 +1,19 @@
 package com.petconnect.backend.services;
 
-import com.petconnect.backend.dto.CompleteProfileDTO;
-import com.petconnect.backend.dto.TempUserDTO;
-import com.petconnect.backend.dto.VerifyOtpResult;
+import com.petconnect.backend.dto.auth.CompleteProfileRequestDTO;
+import com.petconnect.backend.dto.auth.TempUserDTO;
+import com.petconnect.backend.dto.auth.VerifyOtpResponseDTO;
 import com.petconnect.backend.dto.auth.UserLoginResponseDTO;
 import com.petconnect.backend.dto.auth.UserRegistrationRequestDTO;
-import com.petconnect.backend.dto.user.GitHubUserDTO;
-import com.petconnect.backend.dto.user.GoogleUserDTO;
-import com.petconnect.backend.dto.user.OAuthProfile;
+import com.petconnect.backend.dto.auth.GitHubUserDTO;
+import com.petconnect.backend.dto.auth.GoogleUserDTO;
+import com.petconnect.backend.dto.auth.OAuthProfile;
 import com.petconnect.backend.entity.OAuthAccount;
 import com.petconnect.backend.entity.Role;
 import com.petconnect.backend.entity.User;
 import com.petconnect.backend.exceptions.ApiException;
 import com.petconnect.backend.exceptions.AuthenticationException;
+import com.petconnect.backend.exceptions.IllegalArgumentException;
 import com.petconnect.backend.exceptions.UserAlreadyExistsException;
 import com.petconnect.backend.mappers.TempUserMapper;
 import com.petconnect.backend.mappers.UserMapper;
@@ -188,7 +189,7 @@ public class AuthService implements UserDetailsService {
         user.setPassword(passwordEncoder.encode(rawPassword));
         user.setVerified(false);
 
-        boolean isFirstVerifiedUser  = userRepository.countByIsVerified(true) == 0;
+        boolean isFirstVerifiedUser  = userRepository.countByVerified(true) == 0;
         Set<Role.RoleName> roles = roleAssignmentUtil.determineRolesForUser(isFirstVerifiedUser );
         roleAssignmentUtil.assignRoles(user, roles);
 
@@ -207,14 +208,6 @@ public class AuthService implements UserDetailsService {
         logger.info("User registered with email: {}", user.getEmail());
     }
 
-    /**
-     * Authenticates a user.
-     *
-     * @param email    the user's email
-     * @param password the user's password
-     * @return an Optional containing the authenticated user, if found
-     * @throws AuthenticationException if authentication fails
-     */
     /**
      * Authenticates a user with email and password.
      *
@@ -282,10 +275,9 @@ public class AuthService implements UserDetailsService {
      * Verifies a user using a verification token.
      *
      * @param verificationToken the verification token
-     * @return true if the user is verified, false otherwise
      */
-    public boolean verifyUser(String verificationToken) {
-        return verificationService.verifyUser(verificationToken);
+    public void verifyUser(String verificationToken) {
+        verificationService.verifyUser(verificationToken);
     }
 
     /**
@@ -449,7 +441,7 @@ public class AuthService implements UserDetailsService {
         String randomPassword = CommonUtils.generateSecureRandomPassword();
         user.setPassword(passwordEncoder.encode(randomPassword));
 
-        boolean isFirstVerifiedUser = userRepository.countByIsVerified(true) == 0;
+        boolean isFirstVerifiedUser = userRepository.countByVerified(true) == 0;
         Set<Role.RoleName> roles = roleAssignmentUtil.determineRolesForUser(isFirstVerifiedUser);
         roleAssignmentUtil.assignRoles(user, roles);
 
@@ -619,13 +611,14 @@ public class AuthService implements UserDetailsService {
 
 
     @Transactional
-    public VerifyOtpResult verifyOtpAndLogin(String phone, String otp) {
+    public VerifyOtpResponseDTO verifyOtpAndLogin(String phone, String otp) {
         String normalizedPhone = PhoneUtils.normalizeToE164(phone);
-        if (normalizedPhone == null)
+        if (normalizedPhone == null) {
             throw new IllegalArgumentException("Invalid phone number format");
+        }
 
         // -----------------------------------------------------
-        // 🔐 1. CHECK IF PHONE IS BLOCKED (ADD THIS PART)
+        // 🔐 1. CHECK IF PHONE IS BLOCKED
         // -----------------------------------------------------
         if (otpRedisService.isPhoneBlocked(normalizedPhone)) {
             throw new IllegalStateException("Too many attempts. Please try again later.");
@@ -635,22 +628,20 @@ public class AuthService implements UserDetailsService {
         // 2. Load OTP hash
         // -----------------------------------------------------
         String storedOtpHash = otpRedisService.getOtpHash(normalizedPhone);
-        if (storedOtpHash == null)
+        if (storedOtpHash == null) {
             throw new IllegalArgumentException("OTP expired or not requested");
+        }
 
         // -----------------------------------------------------
         // 3. Verify OTP
         // -----------------------------------------------------
         if (!passwordEncoder.matches(otp, storedOtpHash)) {
-
             int attempts = otpRedisService.increaseAttempts(normalizedPhone);
 
             if (attempts > maxVerifyAttempts) {
                 otpRedisService.deleteOtp(normalizedPhone);
 
-                // -----------------------------------------------------
-                // 🔐 4. BLOCK PHONE IF TOO MANY FAILED ATTEMPTS (ADD THIS LINE)
-                // -----------------------------------------------------
+                // 4. BLOCK PHONE IF TOO MANY FAILED ATTEMPTS
                 otpRedisService.blockPhone(normalizedPhone, blockSeconds);
 
                 throw new IllegalStateException("Too many invalid OTP attempts");
@@ -673,18 +664,20 @@ public class AuthService implements UserDetailsService {
             User user = found.get();
 
             if (!user.isProfileComplete()) {
+                // Incomplete profile → temp token
                 String tempToken = generateJwtToken(user);
-                return new VerifyOtpResult(true, null, user.getUserId(), tempToken);
+                return VerifyOtpResponseDTO.forNewUser(user.getUserId(), tempToken);
             }
 
-            return new VerifyOtpResult(false, buildLoginResponse(user));
+            // Existing user with complete profile → login response
+            return VerifyOtpResponseDTO.forExistingUser(buildLoginResponse(user));
         }
 
         // -----------------------------------------------------
         // 7. No user → new-user flow
         // -----------------------------------------------------
         String tempToken = generateTempTokenForPhone(normalizedPhone);
-        return new VerifyOtpResult(true, null, null, tempToken);
+        return VerifyOtpResponseDTO.forNewUser(null, tempToken);
     }
 
 
@@ -710,7 +703,7 @@ public class AuthService implements UserDetailsService {
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public UserLoginResponseDTO completeProfile(CompleteProfileDTO dto) {
+    public UserLoginResponseDTO completeProfile(CompleteProfileRequestDTO dto) {
         String phone = PhoneUtils.normalizeToE164(dto.getPhone());
         if (phone == null) throw new IllegalArgumentException("Invalid phone number format");
 
@@ -753,7 +746,7 @@ public class AuthService implements UserDetailsService {
             user.setPassword(passwordEncoder.encode(CommonUtils.generateSecureRandomPassword()));
             user.setProfileComplete(true);
 
-            boolean isFirstVerifiedUser = userRepository.countByIsVerified(true) == 0;
+            boolean isFirstVerifiedUser = userRepository.countByVerified(true) == 0;
             Set<Role.RoleName> roles = roleAssignmentUtil.determineRolesForUser(isFirstVerifiedUser);
             roleAssignmentUtil.assignRoles(user, roles);
 

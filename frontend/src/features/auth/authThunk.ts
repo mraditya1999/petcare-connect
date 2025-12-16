@@ -70,9 +70,8 @@ export const logoutUser = createAsyncThunk<
 >("auth/logoutUser", async (_, { rejectWithValue }) => {
   try {
     ShowToast({ description: "Logging out...", type: "success" });
-    const response = await customFetch.delete<LogoutUserResponse>(
-      "/auth/logout",
-    );
+    const response =
+      await customFetch.delete<LogoutUserResponse>("/auth/logout");
     localStorage.removeItem("user");
     sessionStorage.removeItem("user");
     ShowToast({ description: "Logged out successfully!", type: "success" });
@@ -241,12 +240,11 @@ export const verifyOtp = createAsyncThunk<
     const response = await customFetch.post<{
       message: string;
       data: IOtpLoginResponse;
-    }>("/auth/verify-otp", { phone, otp });
+    }>("/auth/verify-otp", {email, phone, otp });
 
     const { data, message } = response.data;
-
     // Save temp token only for new users
-    if (data.isNewUser && data.tempToken) {
+    if (data.newUser && data.tempToken) {
       localStorage.setItem("tempSignupToken", data.tempToken);
     }
 

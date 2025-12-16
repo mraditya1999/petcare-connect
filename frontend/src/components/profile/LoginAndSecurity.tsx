@@ -12,10 +12,12 @@ import {
 } from "@/utils/validations";
 import { ShowToast } from "@/components";
 import { Label } from "../ui/label";
+import { LoadingSpinner } from "../ui/LoadingSpinner";
 
 const LoginAndSecurity: React.FC = () => {
   const dispatch = useAppDispatch();
   const user = useAppSelector((state) => state.auth.user);
+  const { loading } = useAppSelector((state) => state.user);
 
   const isOAuthUser = ["GOOGLE", "GITHUB", "MOBILE"].includes(
     user?.data.oauthProvider ?? "",
@@ -74,7 +76,13 @@ const LoginAndSecurity: React.FC = () => {
             </div>
           ))}
           <Button type="submit" className="w-full">
-            {isOAuthUser ? "Set Password" : "Change Password"}
+            {loading ? (
+              <LoadingSpinner />
+            ) : isOAuthUser ? (
+              "Set Password"
+            ) : (
+              "Change Password"
+            )}
           </Button>
         </form>
       </CardContent>

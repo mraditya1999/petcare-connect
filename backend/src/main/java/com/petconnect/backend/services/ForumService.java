@@ -1,6 +1,8 @@
 package com.petconnect.backend.services;
 
-import com.petconnect.backend.dto.*;
+import com.petconnect.backend.dto.forum.ForumCreateDTO;
+import com.petconnect.backend.dto.forum.ForumDTO;
+import com.petconnect.backend.dto.forum.UpdateForumDTO;
 import com.petconnect.backend.entity.Comment;
 import com.petconnect.backend.entity.Forum;
 import com.petconnect.backend.entity.User;

@@ -167,15 +167,12 @@ export const authSlice = createSlice({
       })
       .addCase(verifyOtp.fulfilled, (state, action) => {
         state.loading = false;
-
         const { data: payload, message } = action.payload;
-        if (payload.isNewUser) {
+        if (payload.newUser) {
           return;
         }
-        state.user = {
-          message: message,
-          data: payload,
-        };
+        state.success = message;
+        state.user = { data: payload, message };
       })
       .addCase(verifyOtp.rejected, (state, action) => {
         state.loading = false;
@@ -184,6 +181,7 @@ export const authSlice = createSlice({
   },
 });
 
-export const { setUser, clearUser, clearSuccess, clearError } = authSlice.actions;
+export const { setUser, clearUser, clearSuccess, clearError } =
+  authSlice.actions;
 
 export default authSlice.reducer;

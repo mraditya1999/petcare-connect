@@ -12,7 +12,7 @@ import java.util.Optional;
 
 public interface UserRepository extends JpaRepository<User, Long> {
 
-    long countByIsVerified(boolean isVerified);
+    long countByVerified(boolean isVerified);
 
     // Fetch user with roles + address (common for authentication/profile)
     @EntityGraph(value = "User.withRolesAndAddress", type = EntityGraph.EntityGraphType.LOAD)

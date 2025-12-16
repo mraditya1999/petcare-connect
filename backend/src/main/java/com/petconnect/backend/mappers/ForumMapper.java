@@ -1,6 +1,6 @@
 package com.petconnect.backend.mappers;
 
-import com.petconnect.backend.dto.ForumDTO;
+import com.petconnect.backend.dto.forum.ForumDTO;
 import com.petconnect.backend.entity.Forum;
 import org.mapstruct.Mapper;
 
