@@ -233,14 +233,14 @@ export const sendOtp = createAsyncThunk<
 
 export const verifyOtp = createAsyncThunk<
   { message: string; data: IOtpLoginResponse },
-  { phone: string; otp: string },
+  { email: string; phone: string; otp: string },
   { rejectValue: string }
->("auth/verifyOtp", async ({ phone, otp }, { rejectWithValue }) => {
+>("auth/verifyOtp", async ({ email, phone, otp }, { rejectWithValue }) => {
   try {
     const response = await customFetch.post<{
       message: string;
       data: IOtpLoginResponse;
-    }>("/auth/verify-otp", {email, phone, otp });
+    }>("/auth/verify-otp", { email, phone, otp });
 
     const { data, message } = response.data;
     // Save temp token only for new users
