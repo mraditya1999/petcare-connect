@@ -68,7 +68,7 @@ export default function VerifyOtp() {
   const handleVerifyOtp = async (data: { otp: string }) => {
     const res = await dispatch(verifyOtp({ phone, otp: data.otp }));
     if (verifyOtp.fulfilled.match(res)) {
-      const payload = res.payload!;
+      const { data: payload, message } = res.payload;
       if (payload.isNewUser) {
         if (payload.tempToken) {
           localStorage.setItem("tempSignupToken", payload.tempToken);
@@ -80,7 +80,7 @@ export default function VerifyOtp() {
         });
       } else {
         const userData = {
-          message: "User logged in successfully.",
+          message: message,
           data: payload,
         };
         saveUserToStorage(userData, true);
@@ -89,7 +89,7 @@ export default function VerifyOtp() {
       }
     } else {
       ShowToast({
-        description: res.payload || "OTP verification failed",
+        description: (res.payload as string) || "OTP verification failed",
         type: "error",
       });
     }

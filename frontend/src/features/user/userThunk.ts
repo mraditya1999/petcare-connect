@@ -9,16 +9,19 @@ import {
   IUpdatePasswordResponse,
 } from "@/types/profile-thunk-types";
 import ShowToast from "@/components/shared/ShowToast";
+import { ApiResponse } from "@/types/api";
 
 // Fetch Profile
 export const fetchProfile = createAsyncThunk<
-  IProfileData,
+  ApiResponse<IProfileData>,
   void,
   { rejectValue: string }
 >("user/fetchProfile", async (_, { rejectWithValue }) => {
   try {
-    const response = await customFetch.get("/profile");
-    return response.data.data;
+    const response = await customFetch.get<ApiResponse<IProfileData>>(
+      "/profile",
+    );
+    return response.data;
   } catch (error) {
     const errMsg = handleError(error);
     ShowToast({ description: errMsg, type: "error" });
@@ -28,7 +31,7 @@ export const fetchProfile = createAsyncThunk<
 
 // Update Profile
 export const updateProfile = createAsyncThunk<
-  IProfileData,
+  IUpdateProfileResponse,
   FormData,
   { rejectValue: string }
 >("user/updateProfile", async (formData: FormData, { rejectWithValue }) => {
@@ -41,7 +44,7 @@ export const updateProfile = createAsyncThunk<
       description: "Profile updated successfully!",
       type: "success",
     });
-    return response.data.data;
+    return response.data;
   } catch (error) {
     const errMsg = handleError(error);
     ShowToast({ description: errMsg, type: "error" });

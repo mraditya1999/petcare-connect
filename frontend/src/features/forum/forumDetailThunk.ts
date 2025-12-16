@@ -99,8 +99,10 @@ export const deleteComment = createAsyncThunk<
   { rejectValue: string }
 >("forumDetail/deleteComment", async ({ commentId }, { rejectWithValue }) => {
   try {
-    await customFetch.delete(`/comments/${commentId}`);
-    return { commentId };
+    const res = await customFetch.delete<IDeleteCommentResponse>(
+      `/comments/${commentId}`,
+    );
+    return res.data;
   } catch (err) {
     return rejectWithValue(handleError(err));
   }

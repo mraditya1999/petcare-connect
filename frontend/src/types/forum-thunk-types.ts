@@ -1,4 +1,4 @@
-import { SpringPage } from "./api";
+import { SpringPage, ApiResponse } from "./api";
 import { IForum } from "./forum-types";
 
 // ---------- Request Params ----------
@@ -123,9 +123,7 @@ export interface IUpdateCommentResponse {
   data: IUpdatedComment;
 }
 
-export interface IDeleteCommentResponse {
-  commentId: string;
-}
+export type IDeleteCommentResponse = ApiResponse<null>;
 
 export interface ICheckLikeResponse {
   message: string;
