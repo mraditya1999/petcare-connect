@@ -42,7 +42,7 @@ export const loginUser = createAsyncThunk<
 );
 
 export const registerUser = createAsyncThunk<
-  RegisterUserResponse,
+  { message: string; data: null },
   RegisterUserParams,
   { rejectValue: string }
 >(
@@ -54,7 +54,7 @@ export const registerUser = createAsyncThunk<
         parsedData,
       );
       ShowToast({ description: "Registered successfully!", type: "success" });
-      return response.data;
+      return { message: response.data.message, data: null };
     } catch (error) {
       const errMsg = handleError(error);
       ShowToast({ description: errMsg, type: "error" });
@@ -64,17 +64,19 @@ export const registerUser = createAsyncThunk<
 );
 
 export const logoutUser = createAsyncThunk<
-  LogoutUserResponse,
+  { message: string; data: null },
   void,
   { rejectValue: string }
 >("auth/logoutUser", async (_, { rejectWithValue }) => {
   try {
     ShowToast({ description: "Logging out...", type: "success" });
-    const response = await customFetch.delete("/auth/logout");
+    const response = await customFetch.delete<LogoutUserResponse>(
+      "/auth/logout",
+    );
     localStorage.removeItem("user");
     sessionStorage.removeItem("user");
     ShowToast({ description: "Logged out successfully!", type: "success" });
-    return response.data;
+    return { message: response.data.message, data: null };
   } catch (error) {
     const errMsg = handleError(error);
     ShowToast({ description: errMsg, type: "error" });
@@ -83,21 +85,27 @@ export const logoutUser = createAsyncThunk<
 });
 
 export const verifyEmail = createAsyncThunk<
-  VerifyEmailResponse,
+  { message: string; data: { success: boolean } },
   VerifyEmailParams,
   { rejectValue: string }
 >("auth/verifyEmail", async ({ token, navigate }, { rejectWithValue }) => {
   try {
     ShowToast({ description: "Verifying email...", type: "success" });
-    const response = await customFetch.post("/auth/verify-email", {
-      verificationToken: token,
-    });
+    const response = await customFetch.post<VerifyEmailResponse>(
+      "/auth/verify-email",
+      {
+        verificationToken: token,
+      },
+    );
     ShowToast({
       description: "Email verified successfully!",
       type: "success",
     });
     setTimeout(() => navigate(ROUTES.LOGIN), 3000);
-    return response.data;
+    return {
+      message: response.data.message,
+      data: { success: response.data.data.success },
+    };
   } catch (error) {
     const errMsg = handleError(error);
     ShowToast({ description: errMsg, type: "error" });
@@ -106,18 +114,18 @@ export const verifyEmail = createAsyncThunk<
 });
 
 export const forgetPassword = createAsyncThunk<
-  ForgetPasswordResponse,
+  { message: string; data: null },
   ForgetPasswordParams,
   { rejectValue: string }
 >(
   "auth/forgetPassword",
   async ({ parsedData }: ForgetPasswordParams, { rejectWithValue }) => {
     try {
-      const response = await customFetch.post(
+      const response = await customFetch.post<ForgetPasswordResponse>(
         "/auth/forget-password",
         parsedData,
       );
-      return response.data;
+      return { message: response.data.message, data: null };
     } catch (error) {
       return rejectWithValue(handleError(error));
     }
@@ -125,7 +133,7 @@ export const forgetPassword = createAsyncThunk<
 );
 
 export const resetPassword = createAsyncThunk<
-  ResetPasswordResponse,
+  { message: string; data: null },
   ResetPasswordParams,
   { rejectValue: string }
 >(
@@ -133,12 +141,15 @@ export const resetPassword = createAsyncThunk<
   async ({ parsedData, token }: ResetPasswordParams, { rejectWithValue }) => {
     try {
       // ShowToast({ description: "Resetting password...", type: "success" });
-      const response = await customFetch.post("/auth/reset-password", {
-        newPassword: parsedData.password,
-        token,
-      });
+      const response = await customFetch.post<ResetPasswordResponse>(
+        "/auth/reset-password",
+        {
+          newPassword: parsedData.password,
+          token,
+        },
+      );
       ShowToast({ description: "Password reset successful!", type: "success" });
-      return response.data;
+      return { message: response.data.message, data: null };
     } catch (error) {
       const errMsg = handleError(error);
       ShowToast({ description: errMsg, type: "error" });
@@ -203,7 +214,7 @@ export const githubLoginUser = createAsyncThunk<
 );
 
 export const sendOtp = createAsyncThunk<
-  string,
+  SendOtpResponse,
   { phone: string },
   { rejectValue: string }
 >("auth/sendOtp", async ({ phone }, { rejectWithValue }) => {
@@ -212,7 +223,7 @@ export const sendOtp = createAsyncThunk<
       phone,
     });
     ShowToast({ description: response.data.message, type: "success" });
-    return response.data.message; // "OTP sent"
+    return response.data;
   } catch (err) {
     console.error("sendOtp error:", err);
     const msg = handleError(err);
@@ -222,21 +233,24 @@ export const sendOtp = createAsyncThunk<
 });
 
 export const verifyOtp = createAsyncThunk<
-  IOtpLoginResponse,
+  { message: string; data: IOtpLoginResponse },
   { phone: string; otp: string },
   { rejectValue: string }
 >("auth/verifyOtp", async ({ phone, otp }, { rejectWithValue }) => {
   try {
-    const response = await customFetch.post("/auth/verify-otp", { phone, otp });
+    const response = await customFetch.post<{
+      message: string;
+      data: IOtpLoginResponse;
+    }>("/auth/verify-otp", { phone, otp });
 
-    const { data } = response.data;
+    const { data, message } = response.data;
 
     // Save temp token only for new users
     if (data.isNewUser && data.tempToken) {
       localStorage.setItem("tempSignupToken", data.tempToken);
     }
 
-    return data;
+    return { message, data };
   } catch (err) {
     return rejectWithValue(handleError(err));
   }

@@ -168,12 +168,12 @@ export const authSlice = createSlice({
       .addCase(verifyOtp.fulfilled, (state, action) => {
         state.loading = false;
 
-        const payload = action.payload;
+        const { data: payload, message } = action.payload;
         if (payload.isNewUser) {
           return;
         }
         state.user = {
-          message: "User logged in successfully",
+          message: message,
           data: payload,
         };
       })

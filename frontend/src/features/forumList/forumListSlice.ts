@@ -1,5 +1,6 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { IForumListState } from "@/types/forum-types";
+import { IFetchFeaturedForumsResponse } from "@/types/forum-thunk-types";
 import {
   fetchForums,
   fetchFeaturedForums,
@@ -100,10 +101,13 @@ const forumListSlice = createSlice({
         state.featuredLoading = true;
         state.featuredError = null;
       })
-      .addCase(fetchFeaturedForums.fulfilled, (state, action) => {
-        state.featuredLoading = false;
-        state.featuredForums = action.payload;
-      })
+      .addCase(
+        fetchFeaturedForums.fulfilled,
+        (state, action: PayloadAction<IFetchFeaturedForumsResponse>) => {
+          state.featuredLoading = false;
+          state.featuredForums = action.payload.data;
+        },
+      )
       .addCase(fetchFeaturedForums.rejected, (state, action) => {
         state.featuredLoading = false;
         state.featuredError =

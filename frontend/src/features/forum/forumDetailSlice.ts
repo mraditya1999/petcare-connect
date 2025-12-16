@@ -135,8 +135,15 @@ const forumDetailSlice = createSlice({
     );
     builder.addCase(
       deleteComment.fulfilled,
-      (state, action: PayloadAction<IDeleteCommentResponse>) => {
-        const deletedId = action.payload.commentId;
+      (
+        state,
+        action: PayloadAction<
+          IDeleteCommentResponse,
+          string,
+          { arg: { commentId: string } }
+        >,
+      ) => {
+        const deletedId = action.meta.arg.commentId;
         state.comments = state.comments.filter(
           (c) => c.commentId !== deletedId,
         );

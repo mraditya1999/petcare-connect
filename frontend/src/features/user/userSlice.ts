@@ -1,5 +1,6 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { IProfileState, IProfileData } from "@/types/profile-types";
+import { ApiResponse } from "@/types/api";
 import { fetchProfile, updateProfile, deleteProfile } from "./userThunk";
 import { IDeleteProfileResponse } from "@/types/profile-thunk-types";
 
@@ -22,8 +23,8 @@ export const profileSlice = createSlice({
       })
       .addCase(
         fetchProfile.fulfilled,
-        (state, action: PayloadAction<IProfileData>) => {
-          state.profile = action.payload;
+        (state, action: PayloadAction<ApiResponse<IProfileData>>) => {
+          state.profile = action.payload.data;
           state.loading = false;
         },
       )
@@ -37,10 +38,10 @@ export const profileSlice = createSlice({
       })
       .addCase(
         updateProfile.fulfilled,
-        (state, action: PayloadAction<IProfileData>) => {
-          state.profile = action.payload;
+        (state, action: PayloadAction<ApiResponse<IProfileData>>) => {
+          state.profile = action.payload.data;
           state.loading = false;
-          state.success = "Profile updated successfully";
+          state.success = action.payload.message;
         },
       )
       .addCase(updateProfile.rejected, (state, action) => {

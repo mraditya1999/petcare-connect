@@ -37,45 +37,31 @@ export interface LoginUserResponse {
 
 export interface RegisterUserResponse {
   message: string;
-  data: {
-    message: string;
-  };
+  data: null;
 }
 
 export interface LogoutUserResponse {
   message: string;
-  data: {
-    message: string;
-  };
+  data: null;
 }
 
 export interface VerifyEmailResponse {
   message: string;
   data: {
-    message: string;
     success: boolean;
   };
 }
 
 export interface ForgetPasswordResponse {
   message: string;
-  data: {
-    message: string;
-  };
+  data: null;
 }
 
 export interface ResetPasswordResponse {
   message: string;
-  data: {
-    message: string;
-  };
+  data: null;
 }
 
-// ======================================================
-// ⬇️ OTP LOGIN TYPES (🔔 FIXED & PROPERLY NAMED)
-// ======================================================
-
-// SEND OTP
 export interface SendOtpParams {
   phone: string;
 }
@@ -87,7 +73,6 @@ export interface SendOtpResponse {
   };
 }
 
-// VERIFY OTP
 export interface VerifyOtpParams {
   phone: string;
   otp: string;
