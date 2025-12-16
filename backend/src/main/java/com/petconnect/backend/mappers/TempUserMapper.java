@@ -21,7 +21,7 @@ public interface TempUserMapper {
     @Mapping(target ="avatarUrl", ignore = true)
     @Mapping(target ="avatarPublicId", ignore = true)
     @Mapping(target ="oauthAccounts", ignore = true)
-    @Mapping(target ="isVerified", ignore = true)
+    @Mapping(target ="verified", ignore = true)
     @Mapping(target ="verificationToken", ignore = true)
     User toEntity(TempUserDTO dto);
 }
