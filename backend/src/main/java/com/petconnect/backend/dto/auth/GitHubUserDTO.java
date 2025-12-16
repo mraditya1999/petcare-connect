@@ -7,7 +7,10 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class LogoutResponseDTO {
-
-    private String message;
+public class GitHubUserDTO {
+    private Long id;
+    private String login;
+    private String avatar_url;
+    private String name;
+    private String email;
 }

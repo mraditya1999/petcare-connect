@@ -16,7 +16,6 @@ public class UserDTO {
     private String avatarPublicId;
     private String mobileNumber;
 
-    // All-args constructor
     public UserDTO(Long userId, String firstName, String lastName, String email, AddressDTO address, String avatarUrl, String avatarPublicId, String mobileNumber) {
         this.userId = userId;
         this.firstName = firstName;
@@ -28,7 +27,6 @@ public class UserDTO {
         this.mobileNumber = mobileNumber;
     }
 
-    // Convenience constructor
     public UserDTO(String firstName, String lastName, String mobileNumber) {
         this.firstName = firstName;
         this.lastName = lastName;

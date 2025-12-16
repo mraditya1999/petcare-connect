@@ -1,6 +1,6 @@
 package com.petconnect.backend.services;
 
-import com.petconnect.backend.dto.TempUserDTO;
+import com.petconnect.backend.dto.auth.TempUserDTO;
 import com.petconnect.backend.dto.specialist.SpecialistResponseDTO;
 import com.petconnect.backend.dto.specialist.SpecialistUpdateRequestDTO;
 import com.petconnect.backend.dto.specialist.SpecialistCreateRequestDTO;

@@ -1,6 +1,6 @@
 package com.petconnect.backend.mappers;
 
-import com.petconnect.backend.dto.TempUserDTO;
+import com.petconnect.backend.dto.auth.TempUserDTO;
 import com.petconnect.backend.entity.Specialist;
 import com.petconnect.backend.entity.User;
 import org.mapstruct.Mapper;
