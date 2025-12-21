@@ -15,9 +15,9 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -29,6 +29,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.util.List;
 
+@RequiredArgsConstructor
 @RestController
 @RequestMapping("/profile")
 @Validated
@@ -36,15 +37,7 @@ public class UserController {
 
     private final UserService userService;
     private static final Logger logger = LoggerFactory.getLogger(UserController.class);
-    private final FileUtils fileUtils;
     private final FileValidator fileValidator;
-
-    @Autowired
-    public UserController(UserService userService, FileUtils fileUtils, FileValidator fileValidator) {
-        this.userService = userService;
-        this.fileUtils = fileUtils;
-        this.fileValidator = fileValidator;
-    }
 
     /**
      * Fetches the user profile.

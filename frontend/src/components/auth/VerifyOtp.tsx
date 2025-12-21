@@ -67,7 +67,7 @@ export default function VerifyOtp() {
   }, []);
 
   const handleVerifyOtp = async (data: { otp: string }) => {
-    const res = await dispatch(verifyOtp({ email, phone, otp: data.otp }));
+    const res = await dispatch(verifyOtp({ phone, otp: data.otp }));
     if (verifyOtp.fulfilled.match(res)) {
       const { data: payload, message } = res.payload;
       if (payload.newUser) {

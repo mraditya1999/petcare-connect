@@ -9,7 +9,6 @@ import org.springframework.mail.javamail.JavaMailSenderImpl;
 import java.util.Properties;
 
 @Configuration
-@EnableConfigurationProperties(MailProperties.class)
 public class MailConfig {
 
     @Bean
@@ -23,6 +22,9 @@ public class MailConfig {
         Properties mailProps = new Properties();
         mailProps.put("mail.smtp.auth", "true");
         mailProps.put("mail.smtp.starttls.enable", "true");
+        mailProps.put("mail.smtp.starttls.required", "true");
+        mailProps.put("mail.smtp.ssl.trust", "smtp.gmail.com");
+        mailProps.put("mail.debug", "true");
         sender.setJavaMailProperties(mailProps);
 
         return sender;

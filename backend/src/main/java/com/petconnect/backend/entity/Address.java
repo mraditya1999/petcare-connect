@@ -39,8 +39,8 @@ public class Address {
     private String locality;
 
     @OneToOne(mappedBy = "address",
-            cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE},
-            fetch = FetchType.LAZY)
+            cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE}
+    )
     @JsonBackReference
     private User user;
 

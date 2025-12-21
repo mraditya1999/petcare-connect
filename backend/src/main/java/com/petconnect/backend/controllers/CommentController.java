@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +24,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Optional;
 
+@RequiredArgsConstructor
 @RestController
 @RequestMapping("/comments")
 @Tag(
@@ -30,14 +32,10 @@ import java.util.Optional;
         description = "APIs for forum comments and replies"
 )
 public class CommentController {
-    private static final Logger logger = LoggerFactory.getLogger(CommentController.class);
 
     private final CommentService commentService;
 
-    @Autowired
-    public CommentController(CommentService commentService) {
-        this.commentService = commentService;
-    }
+    private static final Logger logger = LoggerFactory.getLogger(CommentController.class);
 
     /**
      * Get all comments by forum ID with pagination.

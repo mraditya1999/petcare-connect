@@ -16,7 +16,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -36,23 +36,15 @@ import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@RequiredArgsConstructor
 @RestController
 @RequestMapping("/specialists")
 public class SpecialistController {
 
-    private static final Logger log = LoggerFactory.getLogger(SpecialistController.class);
-
     private final SpecialistService specialistService;
-    private final SpecialistMapper specialistMapper;
-    private static final Logger logger = LoggerFactory.getLogger(SpecialistController.class);
     private final FileValidator fileValidator;
 
-    @Autowired
-    public SpecialistController(SpecialistService specialistService, SpecialistMapper specialistMapper, FileValidator fileValidator) {
-        this.specialistService = specialistService;
-        this.specialistMapper = specialistMapper;
-        this.fileValidator = fileValidator;
-    }
+    private static final Logger logger = LoggerFactory.getLogger(SpecialistController.class);
 
     /**
      * Update the current specialist's profile.

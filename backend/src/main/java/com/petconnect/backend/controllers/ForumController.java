@@ -16,9 +16,9 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -29,18 +29,15 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@RequiredArgsConstructor
 @RestController
 @RequestMapping("/forums")
 @Tag(name = "Forums", description = "APIs for forum creation, search, and management")
 public class ForumController {
-    private static final Logger logger = LoggerFactory.getLogger(ForumController.class);
 
     private final ForumService forumService;
 
-    @Autowired
-    public ForumController(ForumService forumService) {
-        this.forumService = forumService;
-    }
+    private static final Logger logger = LoggerFactory.getLogger(ForumController.class);
 
     /**
      * Get all forums with pagination and sorting.

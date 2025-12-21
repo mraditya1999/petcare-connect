@@ -17,9 +17,9 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -30,22 +30,15 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.util.List;
 
+@RequiredArgsConstructor
 @RestController
 @RequestMapping("/pets")
 public class PetController {
 
-    private static final Logger logger = LoggerFactory.getLogger(PetController.class);
-
     private final PetService petService;
-    private final FileUtils fileUtils;
     private final FileValidator fileValidator;
 
-    @Autowired
-    public PetController(PetService petService, FileUtils fileUtils, FileValidator fileValidator) {
-        this.petService = petService;
-        this.fileUtils = fileUtils;
-        this.fileValidator = fileValidator;
-    }
+    private static final Logger logger = LoggerFactory.getLogger(PetController.class);
 
     /**
      * Creates a pet for the user.

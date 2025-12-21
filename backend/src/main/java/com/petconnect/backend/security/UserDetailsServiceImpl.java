@@ -11,9 +11,16 @@ import java.util.stream.Collectors;
 public class UserDetailsServiceImpl implements UserDetails {
 
     private User user;
+    private String username;
 
     public UserDetailsServiceImpl(User user) {
         this.user = user;
+        this.username = user.getEmail() != null ? user.getEmail() : user.getMobileNumber();
+    }
+
+    public UserDetailsServiceImpl(User user, String username) {
+        this.user = user;
+        this.username = username;
     }
 
     @Override
@@ -30,7 +37,7 @@ public class UserDetailsServiceImpl implements UserDetails {
 
     @Override
     public String getUsername() {
-        return user.getEmail();
+        return username;
     }
 
     @Override
