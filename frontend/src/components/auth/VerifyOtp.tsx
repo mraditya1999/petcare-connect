@@ -39,7 +39,6 @@ export default function VerifyOtp() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const phone = params.get("phone") || "";
-  const email = params.get("email") || "";
 
   const [timer, setTimer] = useState(30);
   const [isNewUser, setIsNewUser] = useState(false);
