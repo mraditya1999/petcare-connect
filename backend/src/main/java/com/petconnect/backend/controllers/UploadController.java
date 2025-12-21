@@ -8,8 +8,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -21,17 +20,14 @@ import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
+@RequiredArgsConstructor
 @RestController
 @RequestMapping("/upload")
 public class UploadController {
 
     private final UploadService uploadService;
-    private static final Logger logger = LoggerFactory.getLogger(UploadController.class);
 
-    @Autowired
-    public UploadController(UploadService uploadService) {
-        this.uploadService = uploadService;
-    }
+    private static final Logger logger = LoggerFactory.getLogger(UploadController.class);
 
     @Operation(
             summary = "Upload an image",
@@ -45,7 +41,7 @@ public class UploadController {
     )
     @PostMapping("/{profileType}")
     public ResponseEntity<ApiResponseDTO<Map<String, Object>>> uploadImage(
-            @Parameter(description = "Profile type for the image (e.g., USER, PET, SPECIALIST)") @PathVariable("profileType") UploadService.ProfileType profileType,
+            @PathVariable @Parameter(description = "Profile type for the image (e.g., USER, PET, SPECIALIST)") UploadService.ProfileType profileType,
             @Parameter(description = "Image file to upload") @RequestParam("profile-image") MultipartFile profileImage) {
         logger.info("Uploading image for profile type: {}", profileType);
         try {

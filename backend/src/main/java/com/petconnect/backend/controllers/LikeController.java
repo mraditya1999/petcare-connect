@@ -13,9 +13,9 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -27,22 +27,17 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+@RequiredArgsConstructor
 @RestController
 @RequestMapping("/likes")
 @Tag(name = "Likes", description = "APIs for forum and comment likes")
 public class LikeController {
-    private static final Logger logger = LoggerFactory.getLogger(LikeController.class);
 
     private final LikeService likeService;
     private final LikeMapper likeMapper;
     private final UserRepository userRepository;
 
-    @Autowired
-    public LikeController(LikeService likeService, LikeMapper likeMapper, UserRepository userRepository) {
-        this.likeService = likeService;
-        this.likeMapper = likeMapper;
-        this.userRepository = userRepository;
-    }
+    private static final Logger logger = LoggerFactory.getLogger(LikeController.class);
 
     /**
      * Fetch likes for a forum by its ID.

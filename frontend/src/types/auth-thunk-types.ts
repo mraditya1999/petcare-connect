@@ -76,7 +76,6 @@ export interface SendOtpResponse {
 export interface VerifyOtpParams {
   phone: string;
   otp: string;
-  navigate: NavigateFunction;
 }
 
 export interface UserLoginResponseDTO {

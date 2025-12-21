@@ -16,9 +16,9 @@ import com.petconnect.backend.utils.PhoneUtils;
 import com.petconnect.backend.utils.RoleAssignmentUtil;
 import com.petconnect.backend.validators.PasswordValidator;
 import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -34,6 +34,7 @@ import java.util.Map;
 import java.util.Set;
 import com.petconnect.backend.exceptions.IllegalArgumentException;
 
+@RequiredArgsConstructor
 @Service
 public class UserService {
     private final UserRepository userRepository;
@@ -42,45 +43,9 @@ public class UserService {
     private final UserMapper userMapper;
     private final UploadService uploadService;
     private final SpecialistMapper specialistMapper;
-    private final SpecialistRepository specialistRepository;
-    private static final Logger logger = LoggerFactory.getLogger(UserService.class);
     private final PetRepository petRepository;
 
-    @Autowired
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, RoleAssignmentUtil roleAssignmentUtil, UserMapper userMapper, UploadService uploadService, SpecialistMapper specialistMapper, SpecialistRepository specialistRepository, PetRepository petRepository) {
-        if (userRepository == null) {
-            throw new IllegalArgumentException("UserRepository cannot be null");
-        }
-        if (passwordEncoder == null) {
-            throw new IllegalArgumentException("PasswordEncoder cannot be null");
-        }
-        if (roleAssignmentUtil == null) {
-            throw new IllegalArgumentException("RoleAssignmentUtil cannot be null");
-        }
-        if (userMapper == null) {
-            throw new IllegalArgumentException("UserMapper cannot be null");
-        }
-        if (uploadService == null) {
-            throw new IllegalArgumentException("UploadService cannot be null");
-        }
-        if (specialistMapper == null) {
-            throw new IllegalArgumentException("SpecialistMapper cannot be null");
-        }
-        if (specialistRepository == null) {
-            throw new IllegalArgumentException("SpecialistRepository cannot be null");
-        }
-        if (petRepository == null) {
-            throw new IllegalArgumentException("PetRepository cannot be null");
-        }
-        this.userRepository = userRepository;
-        this.passwordEncoder = passwordEncoder;
-        this.roleAssignmentUtil = roleAssignmentUtil;
-        this.userMapper = userMapper;
-        this.uploadService = uploadService;
-        this.specialistMapper = specialistMapper;
-        this.specialistRepository = specialistRepository;
-        this.petRepository = petRepository;
-    }
+    private static final Logger logger = LoggerFactory.getLogger(UserService.class);
 
     /**
      * Fetches the profile for a user based on their email address.
@@ -209,7 +174,6 @@ public class UserService {
      *
      * @param user the user whose pet profiles are to be deleted
      */
-    @Transactional
     private void deletePetAvatars(User user) {
         List<Pet> pets = petRepository.findAllByPetOwner(user);
         for (Pet pet : pets) {
@@ -449,7 +413,6 @@ public class UserService {
      * @param user the user whose fields are to be updated
      * @param userUpdateDTO the data transfer object containing updated user information
      */
-    @Transactional
     private void updateUserFields(User user, UserUpdateDTO userUpdateDTO) {
         if (userUpdateDTO.getFirstName() != null) user.setFirstName(userUpdateDTO.getFirstName());
         if (userUpdateDTO.getLastName() != null) user.setLastName(userUpdateDTO.getLastName());
@@ -482,7 +445,6 @@ public class UserService {
      * @param user the user to update (must not be null)
      * @param userUpdateDTO the update DTO (must not be null)
      */
-    @Transactional
     private void updateAddress(User user, UserUpdateDTO userUpdateDTO) {
         if (user == null) {
             throw new IllegalArgumentException("User cannot be null");
@@ -522,7 +484,6 @@ public class UserService {
      * @param user the user for whom the profile image is to be uploaded
      * @throws IOException if an error occurs while uploading the profile image
      */
-    @Transactional
     private void handleProfileImageUpload(MultipartFile profileImage, User user) throws IOException {
         if (profileImage != null && !profileImage.isEmpty()) {
             if (user.getAvatarPublicId() != null && !user.getAvatarPublicId().isEmpty()) {
@@ -542,7 +503,6 @@ public class UserService {
      * @return a map containing the avatar URL and public ID
      * @throws IOException if an error occurs while uploading the profile image
      */
-    @Transactional
     private Map<String, String> uploadProfileImage(MultipartFile profileImage) throws IOException {
         Map<String, Object> uploadResult = uploadService.uploadImage(profileImage, UploadService.ProfileType.USER);
         String avatarUrl = (String) uploadResult.get("secure_url");
@@ -561,7 +521,6 @@ public class UserService {
      * @param user the user whose avatar image is to be deleted
      * @throws ImageDeletionException if an error occurs while deleting the avatar image
      */
-    @Transactional
     private void deleteAvatar(User user) {
         if (user.getAvatarPublicId() != null && !user.getAvatarPublicId().isEmpty()) {
             try {

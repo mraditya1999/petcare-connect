@@ -2,8 +2,7 @@ package com.petconnect.backend.security;
 
 import com.petconnect.backend.config.SecurityProperties;
 import com.petconnect.backend.services.AuthService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -22,9 +21,9 @@ import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWrite
 import org.springframework.web.cors.CorsConfigurationSource;
 import static org.springframework.security.config.Customizer.withDefaults;
 
+@RequiredArgsConstructor
 @EnableWebSecurity
 @Configuration
-@EnableConfigurationProperties(SecurityProperties.class)
 public class SecurityConfig {
 
     private final JwtRequestFilter jwtRequestFilter;
@@ -32,20 +31,11 @@ public class SecurityConfig {
     private final SecurityProperties securityProperties;
     private final CorsConfigurationSource corsConfigurationSource;
 
-    @Autowired
-    public SecurityConfig(JwtRequestFilter jwtRequestFilter, AuthService authService, 
-                         SecurityProperties securityProperties, CorsConfigurationSource corsConfigurationSource) {
-        this.jwtRequestFilter = jwtRequestFilter;
-        this.authService = authService;
-        this.securityProperties = securityProperties;
-        this.corsConfigurationSource = corsConfigurationSource;
-    }
-
     @Bean
     SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
         http.cors(cors -> cors.configurationSource(corsConfigurationSource))
                 .authorizeHttpRequests((requests) -> requests
-                        .requestMatchers(securityProperties.authWhitelist().toArray(new String[0])).permitAll()
+                        .requestMatchers(securityProperties.getAuthWhitelist().toArray(new String[0])).permitAll()
                         .requestMatchers(HttpMethod.GET, securityProperties.getRequestWhitelist().toArray(new String[0])).permitAll()
                         .requestMatchers(HttpMethod.POST, "/specialists/**").hasRole("ADMIN")
                         .requestMatchers("/admin/**").hasRole("ADMIN")

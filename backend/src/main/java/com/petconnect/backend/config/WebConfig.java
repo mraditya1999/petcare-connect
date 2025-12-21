@@ -17,15 +17,12 @@ import static org.springframework.data.web.config.EnableSpringDataWebSupport.Pag
 
 @Configuration
 @EnableSpringDataWebSupport(pageSerializationMode = VIA_DTO)
-@EnableConfigurationProperties(FrontendProperties.class)
 public class WebConfig implements WebMvcConfigurer {
 
     private final RequestInterceptor interceptor;
-    private final FrontendProperties frontendProperties;
 
-    public WebConfig(RequestInterceptor interceptor, FrontendProperties frontendProperties) {
+    public WebConfig(RequestInterceptor interceptor) {
         this.interceptor = interceptor;
-        this.frontendProperties = frontendProperties;
     }
 
     @Override
@@ -33,21 +30,4 @@ public class WebConfig implements WebMvcConfigurer {
         registry.addInterceptor(interceptor)
                 .addPathPatterns(AppConstants.PROTECTED_PATHS);
     }
-
-    @Bean
-    @Primary
-    public CorsConfigurationSource corsConfig() {
-        CorsConfiguration config = new CorsConfiguration();
-
-        config.setAllowedOrigins(frontendProperties.urls());
-        config.setAllowCredentials(true);
-        config.addAllowedHeader(CorsConfiguration.ALL);
-        config.addAllowedMethod(CorsConfiguration.ALL);
-        config.addExposedHeader("Authorization");
-
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", config);
-        return source;
-    }
-
 }

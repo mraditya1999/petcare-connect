@@ -18,6 +18,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -26,18 +27,15 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+@RequiredArgsConstructor
 @RestController
 @RequestMapping("/appointments")
 public class AppointmentController {
 
-    private static final Logger logger = LoggerFactory.getLogger(AppointmentController.class);
     private final AppointmentService appointmentService;
     private final UserRepository userRepository;
 
-    public AppointmentController(AppointmentService appointmentService, UserRepository userRepository) {
-        this.appointmentService = appointmentService;
-        this.userRepository = userRepository;
-    }
+    private static final Logger logger = LoggerFactory.getLogger(AppointmentController.class);
 
     @Operation(
             summary = "Get appointments by pet owner",

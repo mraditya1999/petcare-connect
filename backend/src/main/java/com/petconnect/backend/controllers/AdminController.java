@@ -29,9 +29,9 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -48,10 +48,12 @@ import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
+@RequiredArgsConstructor
 @RestController
 @RequestMapping("/admin")
 @Tag(name = "Admin Controller", description = "Admin operations for Users, Pets, Specialists, Forum, Comments, and Likes")
 public class AdminController {
+
     private final UserService userService;
     private final PetService petService;
     private final SpecialistService specialistService;
@@ -60,24 +62,9 @@ public class AdminController {
     private final LikeMapper likeMapper;
     private final CommentMapper commentMapper;
     private final CommentService commentService;
-
-    private static final Logger logger = LoggerFactory.getLogger(AdminController.class);
-    private final FileUtils fileUtils;
     private final FileValidator fileValidator;
 
-    @Autowired
-    public AdminController(UserService userService, PetService petService, SpecialistService specialistService, ForumService forumService, LikeService likeService, LikeMapper likeMapper, CommentMapper commentMapper, CommentService commentService, FileUtils fileUtils, FileValidator fileValidator) {
-        this.userService = userService;
-        this.petService = petService;
-        this.specialistService = specialistService;
-        this.forumService = forumService;
-        this.likeService = likeService;
-        this.likeMapper = likeMapper;
-        this.commentMapper = commentMapper;
-        this.commentService = commentService;
-        this.fileUtils = fileUtils;
-        this.fileValidator = fileValidator;
-    }
+    private static final Logger logger = LoggerFactory.getLogger(AdminController.class);
 
 //    ############################################################# USER #########################################################
     /**

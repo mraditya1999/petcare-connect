@@ -1,5 +1,6 @@
 package com.petconnect.backend.services;
 
+import com.petconnect.backend.config.GitHubProperties;
 import com.petconnect.backend.dto.auth.CompleteProfileRequestDTO;
 import com.petconnect.backend.dto.auth.TempUserDTO;
 import com.petconnect.backend.dto.auth.VerifyOtpResponseDTO;
@@ -60,38 +61,27 @@ public class AuthService implements UserDetailsService {
 
     private static final long OAUTH_TOKEN_EXPIRY_SECONDS = 3600L;
     private static final long TEMP_TOKEN_TTL_MS = 1000L * 60 * 10;
-
-        // Password strength: at least 8 chars, 1 upper, 1 lower, 1 digit, 1 special
-        private static final Pattern PASSWORD_PATTERN = Pattern.compile(
+    private static final Pattern PASSWORD_PATTERN = Pattern.compile(
             "^(?=.{8,}$)(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[^A-Za-z0-9]).*$"
         );
 
-    @Value("${github.client.id}")
-    private String githubClientId;
+        @Value("${otp.length:6}")
+        private int otpLength;
 
-    @Value("${github.client.secret}")
-    private String githubClientSecret;
+        @Value("${otp.ttlMinutes:5}")
+        private int otpTtlMinutes;
 
-    @Value("${github.redirect.uri}")
-    private String githubRedirectUri;
+        @Value("${otp.max.verify.attempts:5}")
+        private int maxVerifyAttempts;
 
-    @Value("${otp.length:6}")
-    private int otpLength;
+        @Value("${otp.resendCooldownSeconds:30}")
+        private int resendCooldownSeconds;
 
-    @Value("${otp.ttlMinutes:5}")
-    private int otpTtlMinutes;
+        @Value("${otp.block.seconds:3600}")  // default 1 hour
+        private long blockSeconds;
 
-    @Value("${otp.max.verify.attempts:5}")
-    private int maxVerifyAttempts;
-
-    @Value("${otp.resendCooldownSeconds:30}")
-    private int resendCooldownSeconds;
-
-    @Value("${otp.block.seconds:3600}")  // default 1 hour
-    private long blockSeconds;
-
-    @Value("${verification.token.ttl.hours:24}")
-    private long verificationTtlHours;
+        @Value("${verification.token.ttl.hours:24}")
+        private long verificationTtlHours;
 
     private final WebClient webClient;
     private final UserRepository userRepository;
@@ -106,6 +96,7 @@ public class AuthService implements UserDetailsService {
     private final RedisStorageService redisStorageService;
     private final UserMapper userMapper;
     private final TempUserMapper tempUserMapper;
+    private final GitHubProperties gitHubProperties;
 
 
     @Autowired
@@ -115,7 +106,7 @@ public class AuthService implements UserDetailsService {
                        @Lazy VerificationService verificationService,
                        JwtUtil jwtUtil,
                        TempUserStore tempUserStore,
-                       OAuthAccountRepository oauthAccountRepository, OtpRedisService otpRedisService, SmsSender smsSender, RedisStorageService redisStorageService, UserMapper userMapper, TempUserMapper tempUserMapper) {
+                       OAuthAccountRepository oauthAccountRepository, OtpRedisService otpRedisService, SmsSender smsSender, RedisStorageService redisStorageService, UserMapper userMapper, TempUserMapper tempUserMapper, GitHubProperties gitHubProperties) {
         this.webClient = webClient;
         this.userRepository = userRepository;
         this.roleAssignmentUtil = roleAssignmentUtil;
@@ -129,26 +120,45 @@ public class AuthService implements UserDetailsService {
         this.redisStorageService = redisStorageService;
         this.userMapper = userMapper;
         this.tempUserMapper = tempUserMapper;
+        this.gitHubProperties = gitHubProperties;
     }
 
     /**
-     * Loads the user by username (email) for authentication.
+     * Loads the user by username (email or phone) for authentication.
      *
-     * @param email the user's email
+     * @param username the user's email or phone number
      * @return the UserDetails object
      * @throws UsernameNotFoundException if the user is not found
      */
     @Override
-    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        if (email == null || email.isBlank()) {
-            throw new UsernameNotFoundException("Email cannot be null or blank");
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        if (username == null || username.isBlank()) {
+            throw new UsernameNotFoundException("Username cannot be null or blank");
         }
-        
+
         try {
-            email = email.toLowerCase(Locale.ROOT);
-            String finalEmail = email;
-            User user = userRepository.findByEmail(email)
-                    .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + finalEmail));
+            User user;
+            if (username.startsWith("+")) {
+                // Assume it's a phone number, normalize it
+                String normalizedPhone = PhoneUtils.normalizeToE164(username);
+                if (normalizedPhone == null) {
+                    throw new UsernameNotFoundException("Invalid phone number format: " + username);
+                }
+                Optional<User> userOpt = userRepository.findByMobileNumber(normalizedPhone);
+                if (userOpt.isPresent()) {
+                    user = userOpt.get();
+                } else {
+                    // Try to find by email if not found by phone
+                    String email = username.toLowerCase(Locale.ROOT);
+                    user = userRepository.findByEmail(email)
+                            .orElseThrow(() -> new UsernameNotFoundException("User not found with phone or email: " + username));
+                }
+            } else {
+                // Assume it's an email
+                String email = username.toLowerCase(Locale.ROOT);
+                user = userRepository.findByEmail(email)
+                        .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
+            }
 
             Set<GrantedAuthority> authorities = user.getRoles() != null ? user.getRoles().stream()
                     .map(role -> new SimpleGrantedAuthority("ROLE_" + role.getRoleName().name()))
@@ -156,12 +166,13 @@ public class AuthService implements UserDetailsService {
 
             // If password is null (OAuth-only account), supply empty string to avoid NPE in Spring User constructor.
             String pwd = user.getPassword() == null ? "" : user.getPassword();
-            return new org.springframework.security.core.userdetails.User(user.getEmail(), pwd, authorities);
+            // Use the username as provided, which could be email or phone
+            return new org.springframework.security.core.userdetails.User(username, pwd, authorities);
         } catch (UsernameNotFoundException e) {
             throw e;
         } catch (Exception e) {
-            logger.error("Error loading user by username: {}", email, e);
-            throw new UsernameNotFoundException("Error loading user: " + email, e);
+            logger.error("Error loading user by username: {}", username, e);
+            throw new UsernameNotFoundException("Error loading user: " + username, e);
         }
     }
 
@@ -483,9 +494,11 @@ public class AuthService implements UserDetailsService {
 
     public String exchangeCodeForAccessToken(String code) {
         String url = "https://github.com/login/oauth/access_token";
+        String githubClientId = gitHubProperties.getClientId();
+        String githubClientSecret = gitHubProperties.getClientSecret();
+        String githubRedirectUri = gitHubProperties.getRedirectUri();
 
-        // Validate GitHub credentials are configured
-        if (githubClientId == null || githubClientId.isBlank() ||
+        if ( githubClientId == null || githubClientId.isBlank() ||
             githubClientSecret == null || githubClientSecret.isBlank() ||
             githubRedirectUri == null || githubRedirectUri.isBlank()) {
             logger.error("GitHub OAuth credentials not properly configured");
@@ -497,11 +510,11 @@ public class AuthService implements UserDetailsService {
             throw new IllegalArgumentException("GitHub authorization code is required");
         }
 
-        org.springframework.util.MultiValueMap<String, String> body = new org.springframework.util.LinkedMultiValueMap<>();
-        body.add("client_id", githubClientId);
-        body.add("client_secret", githubClientSecret);
-        body.add("code", code);
-        body.add("redirect_uri", githubRedirectUri);
+            org.springframework.util.MultiValueMap<String, String> body = new org.springframework.util.LinkedMultiValueMap<>();
+            body.add("client_id", githubClientId);
+            body.add("client_secret", githubClientSecret);
+            body.add("code", code);
+            body.add("redirect_uri", githubRedirectUri);
 
         try {
             Map<String, Object> response = webClient.post()

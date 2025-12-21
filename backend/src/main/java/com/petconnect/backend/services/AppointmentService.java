@@ -16,6 +16,7 @@ import com.petconnect.backend.repositories.AppointmentRepository;
 import com.petconnect.backend.repositories.PetRepository;
 import com.petconnect.backend.repositories.SpecialistRepository;
 import com.petconnect.backend.repositories.UserRepository;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -24,38 +25,17 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@RequiredArgsConstructor
 @Service
 public class AppointmentService {
 
-    private static final Logger logger = LoggerFactory.getLogger(AppointmentService.class);
     private final AppointmentRepository appointmentRepository;
     private final AppointmentMapper appointmentMapper;
     private final UserRepository userRepository;
     private final PetRepository petRepository;
     private final SpecialistRepository specialistRepository;
 
-    public AppointmentService(AppointmentRepository appointmentRepository, AppointmentMapper appointmentMapper, UserRepository userRepository, PetRepository petRepository, SpecialistRepository specialistRepository) {
-        if (appointmentRepository == null) {
-            throw new IllegalArgumentException("AppointmentRepository cannot be null");
-        }
-        if (appointmentMapper == null) {
-            throw new IllegalArgumentException("AppointmentMapper cannot be null");
-        }
-        if (userRepository == null) {
-            throw new IllegalArgumentException("UserRepository cannot be null");
-        }
-        if (petRepository == null) {
-            throw new IllegalArgumentException("PetRepository cannot be null");
-        }
-        if (specialistRepository == null) {
-            throw new IllegalArgumentException("SpecialistRepository cannot be null");
-        }
-        this.appointmentRepository = appointmentRepository;
-        this.appointmentMapper = appointmentMapper;
-        this.userRepository = userRepository;
-        this.petRepository = petRepository;
-        this.specialistRepository = specialistRepository;
-    }
+    private static final Logger logger = LoggerFactory.getLogger(AppointmentService.class);
 
     @Transactional(readOnly = true)
     public Page<AppointmentResponseDTO> getAppointmentsByPetOwner(Long petOwnerId, int page, int size) {

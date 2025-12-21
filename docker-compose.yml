@@ -12,6 +12,8 @@ services:
         condition: service_healthy
       mongodb:
         condition: service_started
+      redis:
+        condition: service_started
 
   frontend:
     build:
@@ -52,3 +54,8 @@ services:
       MONGO_INITDB_DATABASE: petcare-connect-db
     ports:
       - '27017:27017'
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - '6379:6379'

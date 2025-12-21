@@ -1,5 +1,6 @@
 package com.petconnect.backend.controllers;
 
+import com.petconnect.backend.config.GitHubProperties;
 import com.petconnect.backend.dto.*;
 import com.petconnect.backend.dto.auth.*;
 import com.petconnect.backend.dto.auth.CompleteProfileRequestDTO;
@@ -13,6 +14,7 @@ import com.petconnect.backend.exceptions.IllegalArgumentException;
 import com.petconnect.backend.repositories.UserRepository;
 import com.petconnect.backend.services.AuthService;
 import com.petconnect.backend.services.EmailService;
+import com.petconnect.backend.services.RedisStorageService;
 import com.petconnect.backend.services.UserService;
 import com.petconnect.backend.utils.CommonUtils;
 import com.petconnect.backend.utils.PhoneUtils;
@@ -24,11 +26,13 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -39,34 +43,24 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.util.*;
 import java.util.stream.Collectors;
 
+@RequiredArgsConstructor
 @RestController
+@EnableConfigurationProperties(GitHubProperties.class)
 @RequestMapping("/auth")
 @Tag(
         name = "Authentication",
         description = "Authentication, OAuth, OTP and profile management APIs"
 )
 public class AuthController {
-    private static final Logger logger = LoggerFactory.getLogger(AuthController.class);
 
     private final AuthService authService;
     private final UserService userService;
     private final EmailService emailService;
     private final UserRepository userRepository;
-    private final com.petconnect.backend.services.RedisStorageService redisStorageService;
-    @Value("${github.client.id}")
-    private String githubClientIdProp;
+    private final RedisStorageService redisStorageService;
+    private final GitHubProperties gitHubProperties;
 
-    @Value("${github.redirect.uri}")
-    private String githubRedirectUriProp;
-
-    @Autowired
-    public AuthController(AuthService authService, UserService userService, EmailService emailService, UserRepository userRepository, com.petconnect.backend.services.RedisStorageService redisStorageService) {
-        this.authService = authService;
-        this.userService = userService;
-        this.emailService = emailService;
-        this.userRepository = userRepository;
-        this.redisStorageService = redisStorageService;
-    }
+    private static final Logger logger = LoggerFactory.getLogger(AuthController.class);
 
     /**
      * Registers a new user.
@@ -365,8 +359,9 @@ public class AuthController {
         java.time.Duration ttl = java.time.Duration.ofMinutes(10);
         redisStorageService.saveOAuthState(state, ttl);
 
-        String clientId = githubClientIdProp != null ? githubClientIdProp : System.getenv("GITHUB_CLIENT_ID");
-        String redirectUri = githubRedirectUriProp != null ? githubRedirectUriProp : System.getenv("GITHUB_REDIRECT_URI");
+
+        String clientId = gitHubProperties.getClientId();
+        String redirectUri = gitHubProperties.getRedirectUri();
 
         String url = String.format(
                 "https://github.com/login/oauth/authorize?client_id=%s&redirect_uri=%s&scope=user:email&state=%s&allow_signup=true",
