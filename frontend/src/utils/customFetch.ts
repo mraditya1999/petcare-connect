@@ -1,8 +1,8 @@
 import axios from "axios";
 import { getUserFromStorage } from "./helpers";
 
-const baseUrl = "http://localhost:8080/api/v1";
-// const baseUrl = "https://petcare-connect-production.up.railway.app/api/v1";
+const baseUrl =
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api/v1";
 
 export const customFetch = axios.create({
   baseURL: baseUrl,
@@ -17,13 +17,13 @@ customFetch.interceptors.request.use(
 
     const url = config.url || "";
 
-    // 1️⃣ Only use temp token for complete-profile
+    // Only use temp token for complete-profile
     if (tempToken && url.includes("/auth/complete-profile")) {
       config.headers.Authorization = `Bearer ${tempToken}`;
       return config;
     }
 
-    // 2️⃣ Use main JWT for everything except auth routes
+    // Use main JWT for everything except auth routes
     if (mainToken && !url.startsWith("/auth/")) {
       config.headers.Authorization = `Bearer ${mainToken}`;
     }

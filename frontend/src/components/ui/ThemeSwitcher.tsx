@@ -1,43 +1,31 @@
 import { useAppDispatch, useAppSelector } from "@/app/hooks";
 import { setTheme } from "@/features/theme/themeSlice";
 import { FaSun, FaMoon } from "react-icons/fa";
-
-type Theme = "dark" | "light" | "system";
+import { Button } from "@/components/ui/button";
 
 const ThemeSwitcher: React.FC = () => {
   const dispatch = useAppDispatch();
   const currentTheme = useAppSelector((state) => state.theme.theme);
 
-  const handleThemeChange = (theme: Theme) => {
-    dispatch(setTheme(theme));
+  const handleToggle = () => {
+    const newTheme = currentTheme === "dark" ? "light" : "dark";
+    dispatch(setTheme(newTheme));
   };
 
   return (
-    <div className="text-xl">
-      {currentTheme === "light" ? (
-        <button
-          onClick={() => handleThemeChange("dark")}
-          style={{
-            background: "transparent",
-            border: "none",
-            cursor: "pointer",
-          }}
-        >
-          <FaMoon />
-        </button>
+    <Button
+      variant="ghost"
+      size="sm"
+      className="w-9 px-0"
+      onClick={handleToggle}
+    >
+      {currentTheme === "dark" ? (
+        <FaSun className="h-4 w-4" />
       ) : (
-        <button
-          onClick={() => handleThemeChange("light")}
-          style={{
-            background: "transparent",
-            border: "none",
-            cursor: "pointer",
-          }}
-        >
-          <FaSun />
-        </button>
+        <FaMoon className="h-4 w-4" />
       )}
-    </div>
+      <span className="sr-only">Toggle theme</span>
+    </Button>
   );
 };
 
