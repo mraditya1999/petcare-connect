@@ -1,39 +1,43 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { setTheme } from "@/features/theme/themeSlice";
 import { useAppDispatch, useAppSelector } from "@/app/hooks";
-import { Theme } from "@/utils/helpers";
+import { getSystemTheme } from "@/utils/helpers";
 
 const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const dispatch = useAppDispatch();
   const theme = useAppSelector((state) => state.theme.theme);
+  const initializedRef = useRef(false);
 
-  // Initialize theme from localStorage
+  // Initialize theme from localStorage once
   useEffect(() => {
-    const storedTheme = localStorage.getItem("theme") as Theme | null;
+    if (initializedRef.current) return;
+    initializedRef.current = true;
 
-    if (storedTheme) {
-      dispatch(setTheme(storedTheme));
+    const storedTheme = localStorage.getItem("theme");
+    let initialTheme: "light" | "dark";
+
+    if (storedTheme === "light" || storedTheme === "dark") {
+      initialTheme = storedTheme;
     } else {
-      dispatch(setTheme("system"));
+      // Default to system preference for first-time users
+      initialTheme = getSystemTheme();
     }
+
+    dispatch(setTheme(initialTheme));
   }, [dispatch]);
 
-  // Apply theme class to <html>
+  // Apply theme to document
   useEffect(() => {
     document.documentElement.className = theme;
-  }, [theme]);
 
-  // Update favicon based on theme
-  useEffect(() => {
-    const favicon = document.getElementById("favicon") as HTMLLinkElement;
-    if (!favicon) return;
-
-    if (theme === "dark") {
-      favicon.href = "/icon-dark.ico";
-    } else {
-      favicon.href = "/icon-light.ico";
+    // Update favicon
+    const favicon = document.querySelector(
+      'link[rel="icon"]',
+    ) as HTMLLinkElement;
+    if (favicon) {
+      favicon.href = theme === "dark" ? "/icon-dark.ico" : "/icon-light.ico";
     }
   }, [theme]);
 

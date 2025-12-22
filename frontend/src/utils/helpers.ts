@@ -36,6 +36,17 @@ export const getInitialTheme = (): Theme => {
   return "system";
 };
 
+export const getSystemTheme = (): "dark" | "light" => {
+  if (typeof window !== "undefined" && window.matchMedia) {
+    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  }
+  return "light"; // fallback to light theme
+};
+
+export const getAppliedTheme = (theme: Theme): "dark" | "light" => {
+  return theme === "system" ? getSystemTheme() : theme;
+};
+
 export function handleError(error: unknown): string {
   // Handle ZodError
   if (error instanceof ZodError) {

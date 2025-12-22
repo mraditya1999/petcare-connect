@@ -1,12 +1,13 @@
-import { getInitialTheme, Theme } from "@/utils/helpers";
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+
+export type Theme = "light" | "dark";
 
 export type ThemeState = {
   theme: Theme;
 };
 
 const initialState: ThemeState = {
-  theme: getInitialTheme(),
+  theme: "light",
 };
 
 export const themeSlice = createSlice({
@@ -16,7 +17,6 @@ export const themeSlice = createSlice({
     setTheme: (state, action: PayloadAction<Theme>) => {
       state.theme = action.payload;
       localStorage.setItem("theme", action.payload);
-      document.documentElement.className = action.payload;
     },
   },
 });
