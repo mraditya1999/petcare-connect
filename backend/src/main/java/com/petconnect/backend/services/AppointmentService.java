@@ -12,15 +12,15 @@ import com.petconnect.backend.entity.User;
 import com.petconnect.backend.exceptions.ResourceNotFoundException;
 import com.petconnect.backend.exceptions.UnauthorizedAccessException;
 import com.petconnect.backend.mappers.AppointmentMapper;
-import com.petconnect.backend.repositories.AppointmentRepository;
-import com.petconnect.backend.repositories.PetRepository;
-import com.petconnect.backend.repositories.SpecialistRepository;
-import com.petconnect.backend.repositories.UserRepository;
+import com.petconnect.backend.repositories.jpa.AppointmentRepository;
+import com.petconnect.backend.repositories.jpa.PetRepository;
+import com.petconnect.backend.repositories.jpa.SpecialistRepository;
+import com.petconnect.backend.repositories.jpa.UserRepository;
+import com.petconnect.backend.utils.PaginationUtils;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -39,7 +39,7 @@ public class AppointmentService {
 
     @Transactional(readOnly = true)
     public Page<AppointmentResponseDTO> getAppointmentsByPetOwner(Long petOwnerId, int page, int size) {
-        Pageable pageable = PageRequest.of(page, size);
+        Pageable pageable = PaginationUtils.createPageable(page, size);
         return appointmentRepository.findByPetOwnerUserId(petOwnerId, pageable)
                 .map(appointmentMapper::toAppointmentResponseDTO);
     }
@@ -87,7 +87,7 @@ public class AppointmentService {
                 throw new UnauthorizedAccessException("User does not have permission to access this pet's appointments");
             }
 
-            Pageable pageable = PageRequest.of(page, size);
+            Pageable pageable = PaginationUtils.createPageable(page, size);
             return appointmentRepository.findByPetPetId(petId, pageable)
                     .map(appointmentMapper::toAppointmentResponseDTO);
         } catch (ResourceNotFoundException | UnauthorizedAccessException | IllegalArgumentException e) {
@@ -107,7 +107,7 @@ public class AppointmentService {
 
     @Transactional(readOnly = true)
     public Page<AppointmentResponseDTO> getAppointmentsByStatusForUser(AppointmentStatus status, int page, int size, Long userId) {
-        Pageable pageable = PageRequest.of(page, size);
+        Pageable pageable = PaginationUtils.createPageable(page, size);
         return appointmentRepository.findByStatusAndPetOwnerUserId(status, userId, pageable)
                 .map(appointmentMapper::toAppointmentResponseDTO);
     }
@@ -326,7 +326,7 @@ public class AppointmentService {
 
     @Transactional(readOnly = true)
     public Page<AppointmentResponseDTO> getAppointmentHistory(Long userId, int page, int size) {
-        Pageable pageable = PageRequest.of(page, size);
+        Pageable pageable = PaginationUtils.createPageable(page, size);
         return appointmentRepository.findByPetOwnerUserId(userId, pageable)
                 .map(appointmentMapper::toAppointmentResponseDTO);
     }
@@ -341,7 +341,7 @@ public class AppointmentService {
     //    FOR SPECIALISTS
     @Transactional(readOnly = true)
     public Page<AppointmentResponseDTO> getAppointmentsForSpecialist(Long specialistId, int page, int size) {
-        Pageable pageable = PageRequest.of(page, size);
+        Pageable pageable = PaginationUtils.createPageable(page, size);
         return appointmentRepository.findBySpecialistUserId(specialistId, pageable)
                 .map(appointmentMapper::toAppointmentResponseDTO);
     }

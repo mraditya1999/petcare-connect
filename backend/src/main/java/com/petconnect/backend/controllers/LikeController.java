@@ -3,7 +3,7 @@ package com.petconnect.backend.controllers;
 import com.petconnect.backend.dto.ApiResponseDTO;
 import com.petconnect.backend.dto.forum.LikeDTO;
 import com.petconnect.backend.entity.User;
-import com.petconnect.backend.repositories.UserRepository;
+import com.petconnect.backend.repositories.jpa.UserRepository;
 import com.petconnect.backend.services.LikeService;
 import com.petconnect.backend.mappers.LikeMapper;
 import com.petconnect.backend.utils.ResponseEntityUtil;
@@ -13,7 +13,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -27,17 +26,23 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-@RequiredArgsConstructor
 @RestController
 @RequestMapping("/likes")
 @Tag(name = "Likes", description = "APIs for forum and comment likes")
-public class LikeController {
+public class LikeController extends BaseController {
 
     private final LikeService likeService;
     private final LikeMapper likeMapper;
     private final UserRepository userRepository;
 
     private static final Logger logger = LoggerFactory.getLogger(LikeController.class);
+
+    public LikeController(LikeService likeService, LikeMapper likeMapper, UserRepository userRepository) {
+        super(logger);
+        this.likeService = likeService;
+        this.likeMapper = likeMapper;
+        this.userRepository = userRepository;
+    }
 
     /**
      * Fetch likes for a forum by its ID.

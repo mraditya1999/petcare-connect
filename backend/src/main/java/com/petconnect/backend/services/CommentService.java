@@ -7,16 +7,16 @@ import com.petconnect.backend.entity.User;
 import com.petconnect.backend.exceptions.ResourceNotFoundException;
 import com.petconnect.backend.mappers.CommentMapper;
 import com.petconnect.backend.mappers.UserMapper;
-import com.petconnect.backend.repositories.CommentRepository;
-import com.petconnect.backend.repositories.ForumRepository;
-import com.petconnect.backend.repositories.LikeRepository;
-import com.petconnect.backend.repositories.UserRepository;
+import com.petconnect.backend.repositories.mongo.CommentRepository;
+import com.petconnect.backend.repositories.mongo.ForumRepository;
+import com.petconnect.backend.repositories.mongo.LikeRepository;
+import com.petconnect.backend.repositories.jpa.UserRepository;
+import com.petconnect.backend.utils.PaginationUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -69,7 +69,7 @@ public class CommentService {
 
     @Transactional(readOnly = true)
     public Page<CommentDTO> getAllCommentsByForumId(String forumId, int page, int size) {
-        Pageable pageable = PageRequest.of(page, size);
+        Pageable pageable = PaginationUtils.createPageable(page, size);
         Page<Comment> commentsPage = commentRepository.findByForumId(forumId, pageable);
 
         // Fetch all comments for this forum, including replies
@@ -305,8 +305,8 @@ public class CommentService {
     }
 
     // ADMIN SERVICES (These remain mostly the same, but apply the same principles)
-    public Page<Comment> getAllComments(PageRequest pageRequest) {
-        return commentRepository.findAll(pageRequest);
+    public Page<Comment> getAllComments(Pageable pageable) {
+        return commentRepository.findAll(pageable);
     }
 
     public Optional<Comment> getCommentById(String commentId) {

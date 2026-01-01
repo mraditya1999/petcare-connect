@@ -8,7 +8,7 @@ import com.petconnect.backend.dto.appointment.AppointmentResponseDTO;
 import com.petconnect.backend.entity.Appointment;
 import com.petconnect.backend.exceptions.ResourceNotFoundException;
 import com.petconnect.backend.exceptions.UnauthorizedAccessException;
-import com.petconnect.backend.repositories.UserRepository;
+import com.petconnect.backend.repositories.jpa.UserRepository;
 import com.petconnect.backend.services.AppointmentService;
 import com.petconnect.backend.utils.ResponseEntityUtil;
 import io.swagger.v3.oas.annotations.Operation;
@@ -18,7 +18,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
-import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -27,15 +26,20 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
-@RequiredArgsConstructor
 @RestController
 @RequestMapping("/appointments")
-public class AppointmentController {
+public class AppointmentController extends BaseController {
 
     private final AppointmentService appointmentService;
     private final UserRepository userRepository;
 
     private static final Logger logger = LoggerFactory.getLogger(AppointmentController.class);
+
+    public AppointmentController(AppointmentService appointmentService, UserRepository userRepository) {
+        super(logger);
+        this.appointmentService = appointmentService;
+        this.userRepository = userRepository;
+    }
 
     @Operation(
             summary = "Get appointments by pet owner",

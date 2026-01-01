@@ -1,6 +1,7 @@
 package com.petconnect.backend.services;
 
 import com.petconnect.backend.dto.auth.TempUserDTO;
+import com.petconnect.backend.utils.RedisUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,24 +26,15 @@ public class RedisStorageService {
     }
 
     private String tempUserKey(String token) { 
-        if (token == null || token.isBlank()) {
-            throw new IllegalArgumentException("Token cannot be null or blank");
-        }
-        return "user:temp:" + token; 
+        return RedisUtils.tempUserKey(token);
     }
     
     private String verifyKey(String token) { 
-        if (token == null || token.isBlank()) {
-            throw new IllegalArgumentException("Token cannot be null or blank");
-        }
-        return "token:verify:" + token; 
+        return RedisUtils.verifyTokenKey(token);
     }
     
     private String resetKey(String token) { 
-        if (token == null || token.isBlank()) {
-            throw new IllegalArgumentException("Token cannot be null or blank");
-        }
-        return "token:reset:" + token; 
+        return RedisUtils.resetTokenKey(token);
     }
 
     // TEMP USER
@@ -112,16 +104,6 @@ public class RedisStorageService {
      * @throws IllegalArgumentException if any parameter is null or token/email is blank
      */
     public void saveVerificationToken(String token, String email, Duration ttl) {
-        if (token == null || token.isBlank()) {
-            throw new IllegalArgumentException("Token cannot be null or blank");
-        }
-        if (email == null || email.isBlank()) {
-            throw new IllegalArgumentException("Email cannot be null or blank");
-        }
-        if (ttl == null || ttl.isNegative() || ttl.isZero()) {
-            throw new IllegalArgumentException("TTL must be positive");
-        }
-        
         try {
             redisTemplate.opsForValue().set(verifyKey(token), email, ttl);
             logger.debug("Saved verification token for email: {}", email);
@@ -242,10 +224,7 @@ public class RedisStorageService {
 
     // OAUTH STATE (simple mapping token -> present)
     private String oauthStateKey(String state) { 
-        if (state == null || state.isBlank()) {
-            throw new IllegalArgumentException("State cannot be null or blank");
-        }
-        return "oauth:state:" + state; 
+        return RedisUtils.oauthStateKey(state);
     }
 
     /**

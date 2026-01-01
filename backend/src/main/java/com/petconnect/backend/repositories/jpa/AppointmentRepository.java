@@ -1,4 +1,4 @@
-package com.petconnect.backend.repositories;
+package com.petconnect.backend.repositories.jpa;
 
 import com.petconnect.backend.entity.Appointment;
 import com.petconnect.backend.entity.Appointment.AppointmentStatus;

@@ -1,4 +1,4 @@
-package com.petconnect.backend.repositories;
+package com.petconnect.backend.repositories.mongo;
 
 import com.petconnect.backend.entity.Like;
 import org.springframework.data.mongodb.repository.MongoRepository;

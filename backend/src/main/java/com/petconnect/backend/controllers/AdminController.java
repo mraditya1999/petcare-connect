@@ -18,7 +18,7 @@ import com.petconnect.backend.exceptions.IllegalArgumentException;
 import com.petconnect.backend.mappers.CommentMapper;
 import com.petconnect.backend.mappers.LikeMapper;
 import com.petconnect.backend.services.*;
-import com.petconnect.backend.utils.FileUtils;
+import com.petconnect.backend.utils.PaginationUtils;
 import com.petconnect.backend.utils.ResponseEntityUtil;
 import com.petconnect.backend.validators.FileValidator;
 import io.swagger.v3.oas.annotations.Operation;
@@ -29,12 +29,10 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
-import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
@@ -48,11 +46,10 @@ import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
-@RequiredArgsConstructor
 @RestController
 @RequestMapping("/admin")
 @Tag(name = "Admin Controller", description = "Admin operations for Users, Pets, Specialists, Forum, Comments, and Likes")
-public class AdminController {
+public class AdminController extends BaseController {
 
     private final UserService userService;
     private final PetService petService;
@@ -65,6 +62,21 @@ public class AdminController {
     private final FileValidator fileValidator;
 
     private static final Logger logger = LoggerFactory.getLogger(AdminController.class);
+
+    public AdminController(UserService userService, PetService petService, SpecialistService specialistService,
+                          ForumService forumService, LikeService likeService, LikeMapper likeMapper,
+                          CommentMapper commentMapper, CommentService commentService, FileValidator fileValidator) {
+        super(logger);
+        this.userService = userService;
+        this.petService = petService;
+        this.specialistService = specialistService;
+        this.forumService = forumService;
+        this.likeService = likeService;
+        this.likeMapper = likeMapper;
+        this.commentMapper = commentMapper;
+        this.commentService = commentService;
+        this.fileValidator = fileValidator;
+    }
 
 //    ############################################################# USER #########################################################
     /**
@@ -88,7 +100,7 @@ public class AdminController {
             @Parameter(description = "Number of items per page") @RequestParam(defaultValue = "10") @Min(1) int size,
             @Parameter(description = "Field to sort by") @RequestParam(defaultValue = "userId") String sortBy,
             @Parameter(description = "Sort direction (asc/desc)") @RequestParam(defaultValue = "asc") String sortDir) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.fromString(sortDir), sortBy));
+        Pageable pageable = PaginationUtils.createPageable(page, size, sortBy, Sort.Direction.fromString(sortDir));
         Page<UserDTO> users = userService.getAllUsers(pageable);
         logger.info("Fetched all users with pagination and sorting");
         return ResponseEntityUtil.page(users, "Fetched all users");
@@ -221,7 +233,7 @@ public class AdminController {
             @Parameter(description = "Field to sort by") @RequestParam(defaultValue = "userId") String sortBy,
             @Parameter(description = "Sort direction (asc/desc)") @RequestParam(defaultValue = "asc") String sortDir) {
         try {
-            Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.fromString(sortDir), sortBy));
+            Pageable pageable = PaginationUtils.createPageable(page, size, sortBy, Sort.Direction.fromString(sortDir));
             Page<UserDTO> users = userService.searchUsers(keyword, pageable);
             logger.info("Searched users with keyword: {}", keyword);
             return ResponseEntityUtil.page(users, "Searched users");
@@ -337,7 +349,7 @@ public class AdminController {
             @Parameter(description = "Number of items per page") @RequestParam(defaultValue = "10") @Min(1) int size,
             @Parameter(description = "Field to sort by") @RequestParam(defaultValue = "petId") String sortBy,
             @Parameter(description = "Sort direction (asc/desc)") @RequestParam(defaultValue = "asc") String sortDir) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.fromString(sortDir), sortBy));
+        Pageable pageable = PaginationUtils.createPageable(page, size, sortBy, Sort.Direction.fromString(sortDir));
         Page<PetResponseDTO> pets = petService.getAllPets(pageable);
         logger.info("Fetched all pets with pagination and sorting");
         return ResponseEntity.ok(new ApiResponseDTO<>("Fetched all pets", pets));
@@ -584,7 +596,7 @@ public class AdminController {
             @Parameter(description = "Field to sort by") @RequestParam(defaultValue = "specialistId") String sortBy,
             @Parameter(description = "Sort direction (asc/desc)") @RequestParam(defaultValue = "asc") String sortDir) {
         try {
-            Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.fromString(sortDir), sortBy));
+            Pageable pageable = PaginationUtils.createPageable(page, size, sortBy, Sort.Direction.fromString(sortDir));
             Page<SpecialistResponseDTO> specialists = specialistService.searchSpecialists(keyword, pageable);
             logger.info("Searched specialists with keyword: {}", keyword);
             return ResponseEntity.ok(new ApiResponseDTO<>("Searched specialists", specialists));
@@ -702,7 +714,7 @@ public class AdminController {
             @RequestParam(defaultValue = "0") @Min(0) int page,
             @RequestParam(defaultValue = "5") @Min(1) int size) {
         logger.debug("Fetching all comments with pagination");
-        Page<CommentDTO> comments = commentService.getAllComments(PageRequest.of(page, size))
+        Page<CommentDTO> comments = commentService.getAllComments(PaginationUtils.createPageable(page, size))
                 .map(commentMapper::toDTO);
         return ResponseEntity.ok(new ApiResponseDTO<>("Comments fetched successfully", comments));
     }

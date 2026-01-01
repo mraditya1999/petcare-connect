@@ -21,10 +21,9 @@ public class TempUserStore {
     }
 
     private String key(String token) {
-        return "tempUser:" + token;
+        return RedisUtils.tempUserKey(token);
     }
 
-    // Save temporary DTO with TTL (e.g. 24h)
     public void saveTemporaryUser(String token, TempUserDTO tempUserDTO, Duration ttl) {
         redisTemplate.opsForValue().set(key(token), tempUserDTO, ttl);
         logger.info("Temporary user DTO saved in Redis with token: {}", token);

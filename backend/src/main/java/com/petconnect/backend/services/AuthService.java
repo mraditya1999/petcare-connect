@@ -1,8 +1,8 @@
 package com.petconnect.backend.services;
 
 import com.petconnect.backend.config.GitHubProperties;
+import com.petconnect.backend.config.OtpProperties;
 import com.petconnect.backend.dto.auth.CompleteProfileRequestDTO;
-import com.petconnect.backend.dto.auth.TempUserDTO;
 import com.petconnect.backend.dto.auth.VerifyOtpResponseDTO;
 import com.petconnect.backend.dto.auth.UserLoginResponseDTO;
 import com.petconnect.backend.dto.auth.UserRegistrationRequestDTO;
@@ -15,22 +15,21 @@ import com.petconnect.backend.entity.User;
 import com.petconnect.backend.exceptions.ApiException;
 import com.petconnect.backend.exceptions.AuthenticationException;
 import com.petconnect.backend.exceptions.IllegalArgumentException;
+import com.petconnect.backend.exceptions.ResourceNotFoundException;
 import com.petconnect.backend.exceptions.UserAlreadyExistsException;
-import com.petconnect.backend.mappers.TempUserMapper;
 import com.petconnect.backend.mappers.UserMapper;
-import com.petconnect.backend.repositories.OAuthAccountRepository;
+import com.petconnect.backend.repositories.jpa.OAuthAccountRepository;
 import com.petconnect.backend.utils.CommonUtils;
 import com.petconnect.backend.utils.PhoneUtils;
 import com.petconnect.backend.utils.RoleAssignmentUtil;
-import com.petconnect.backend.repositories.UserRepository;
+import com.petconnect.backend.utils.ValidationUtils;
+import com.petconnect.backend.repositories.jpa.UserRepository;
 import com.petconnect.backend.security.JwtUtil;
 import com.petconnect.backend.security.UserDetailsServiceImpl;
-import com.petconnect.backend.utils.TempUserStore;
 import io.jsonwebtoken.Claims;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.*;
 import org.springframework.security.core.GrantedAuthority;
@@ -56,6 +55,20 @@ import java.util.regex.Pattern;
 
 @Service
 public class AuthService implements UserDetailsService {
+    private final WebClient webClient;
+    private final UserRepository userRepository;
+    private final RoleAssignmentUtil roleAssignmentUtil;
+    private final PasswordEncoder passwordEncoder;
+    private final VerificationService verificationService;
+    private final JwtUtil jwtUtil;
+    private final EmailService emailService;
+    private final OAuthAccountRepository oauthAccountRepository;
+    private final OtpRedisService otpRedisService;
+    private final SmsSender smsSender;
+    private final RedisStorageService redisStorageService;
+    private final UserMapper userMapper;
+    private final GitHubProperties gitHubProperties;
+    private final OtpProperties otpProperties;
 
     private static final Logger logger = LoggerFactory.getLogger(AuthService.class);
 
@@ -63,40 +76,7 @@ public class AuthService implements UserDetailsService {
     private static final long TEMP_TOKEN_TTL_MS = 1000L * 60 * 10;
     private static final Pattern PASSWORD_PATTERN = Pattern.compile(
             "^(?=.{8,}$)(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[^A-Za-z0-9]).*$"
-        );
-
-        @Value("${otp.length:6}")
-        private int otpLength;
-
-        @Value("${otp.ttlMinutes:5}")
-        private int otpTtlMinutes;
-
-        @Value("${otp.max.verify.attempts:5}")
-        private int maxVerifyAttempts;
-
-        @Value("${otp.resendCooldownSeconds:30}")
-        private int resendCooldownSeconds;
-
-        @Value("${otp.block.seconds:3600}")  // default 1 hour
-        private long blockSeconds;
-
-        @Value("${verification.token.ttl.hours:24}")
-        private long verificationTtlHours;
-
-    private final WebClient webClient;
-    private final UserRepository userRepository;
-    private final RoleAssignmentUtil roleAssignmentUtil;
-    private final PasswordEncoder passwordEncoder;
-    private final VerificationService verificationService;
-    private final JwtUtil jwtUtil;
-    private final TempUserStore tempUserStore;
-    private final OAuthAccountRepository oauthAccountRepository;
-    private final OtpRedisService otpRedisService;
-    private final SmsSender smsSender;
-    private final RedisStorageService redisStorageService;
-    private final UserMapper userMapper;
-    private final TempUserMapper tempUserMapper;
-    private final GitHubProperties gitHubProperties;
+    );
 
 
     @Autowired
@@ -105,22 +85,22 @@ public class AuthService implements UserDetailsService {
                        @Lazy PasswordEncoder passwordEncoder,
                        @Lazy VerificationService verificationService,
                        JwtUtil jwtUtil,
-                       TempUserStore tempUserStore,
-                       OAuthAccountRepository oauthAccountRepository, OtpRedisService otpRedisService, SmsSender smsSender, RedisStorageService redisStorageService, UserMapper userMapper, TempUserMapper tempUserMapper, GitHubProperties gitHubProperties) {
+                       EmailService emailService,
+                       OAuthAccountRepository oauthAccountRepository, OtpRedisService otpRedisService, SmsSender smsSender, RedisStorageService redisStorageService, UserMapper userMapper, GitHubProperties gitHubProperties, OtpProperties otpProperties) {
         this.webClient = webClient;
         this.userRepository = userRepository;
         this.roleAssignmentUtil = roleAssignmentUtil;
         this.passwordEncoder = passwordEncoder;
         this.verificationService = verificationService;
         this.jwtUtil = jwtUtil;
-        this.tempUserStore = tempUserStore;
+        this.emailService = emailService;
         this.oauthAccountRepository = oauthAccountRepository;
         this.otpRedisService = otpRedisService;
         this.smsSender = smsSender;
         this.redisStorageService = redisStorageService;
         this.userMapper = userMapper;
-        this.tempUserMapper = tempUserMapper;
         this.gitHubProperties = gitHubProperties;
+        this.otpProperties = otpProperties;
     }
 
     /**
@@ -191,8 +171,8 @@ public class AuthService implements UserDetailsService {
         }
 
         User user = userMapper.toEntity(dto);
-
         user.setEmail(email);
+
         String rawPassword = user.getPassword();
         if (rawPassword == null || !PASSWORD_PATTERN.matcher(rawPassword).matches()) {
             throw new IllegalArgumentException("Password must be at least 8 characters long and include uppercase, lowercase, digit and special character.");
@@ -200,22 +180,15 @@ public class AuthService implements UserDetailsService {
         user.setPassword(passwordEncoder.encode(rawPassword));
         user.setVerified(false);
 
-        boolean isFirstVerifiedUser  = userRepository.countByVerified(true) == 0;
-        Set<Role.RoleName> roles = roleAssignmentUtil.determineRolesForUser(isFirstVerifiedUser );
-        roleAssignmentUtil.assignRoles(user, roles);
-
         String token = CommonUtils.generateSecureToken();
         user.setVerificationToken(token);
 
-        // Save user to database with unverified status
         userRepository.save(user);
 
-        TempUserDTO tempUserDTO = tempUserMapper.toTempUserDTO(user);
-        Duration ttl = Duration.ofHours(verificationTtlHours);
-        tempUserStore.saveTemporaryUser(token, tempUserDTO,ttl);
+        Duration ttl = Duration.ofHours(24);
         redisStorageService.saveVerificationToken(token,email, ttl);
 
-        verificationService.sendVerificationEmail(user);
+        emailService.sendVerificationEmail(user);
         logger.info("User registered with email: {}", user.getEmail());
     }
 
@@ -266,29 +239,56 @@ public class AuthService implements UserDetailsService {
     }
 
     /**
-     * Generates a JWT token for an authenticated user.
-     *
-     * @param user the authenticated user
-     * @return the generated JWT token
-     */
-    public String generateJwtToken(User user) {
-        UserDetails userDetails = new UserDetailsServiceImpl(user);
-        Map<String, Object> claims = new HashMap<>();
-        claims.put("userId", user.getUserId());
-        claims.put("email", user.getEmail());
-        claims.put("roles", user.getRoles().stream().map(Role::getAuthority).toArray());
-        String token = jwtUtil.generateToken(claims, userDetails.getUsername());
-        logger.info("JWT token generated for user with email: {}", user.getEmail());
-        return token;
-    }
-
-    /**
      * Verifies a user using a verification token.
      *
-     * @param verificationToken the verification token
+     * @param verificationToken the verification token (must not be null or blank)
+     * @throws IllegalArgumentException  if verificationToken is null or blank
+     * @throws ResourceNotFoundException if token is invalid/expired or user is not found
      */
+    @Transactional
     public void verifyUser(String verificationToken) {
-        verificationService.verifyUser(verificationToken);
+        if (verificationToken == null || verificationToken.isBlank()) {
+            throw new IllegalArgumentException("Verification token cannot be null or blank");
+        }
+        
+        try {
+            String email = redisStorageService.getVerificationEmail(verificationToken);
+            if (email == null) {
+                logger.warn("Invalid or expired verification token");
+                throw new ResourceNotFoundException("Invalid or expired verification token");
+            }
+
+            User user = userRepository.findByEmail(email)
+                    .orElseThrow(() -> {
+                        logger.error("User not found for email: {}", email);
+                        return new ResourceNotFoundException("User not found");
+                    });
+
+            if (user.isVerified()) {
+                logger.info("User already verified: {}", user.getEmail());
+                redisStorageService.deleteVerificationToken(verificationToken);
+                return;
+            }
+
+            user.setVerified(true);
+            boolean isFirstVerifiedUser = userRepository.countByVerified(true) == 0;
+            Set<Role.RoleName> roles;
+            if (user.getRoles().stream().anyMatch(role -> role.getRoleName() == Role.RoleName.SPECIALIST)) {
+                roles = Set.of(Role.RoleName.USER, Role.RoleName.SPECIALIST);
+            } else {
+                roles = roleAssignmentUtil.determineRolesForUser(isFirstVerifiedUser);
+            }
+            roleAssignmentUtil.assignRoles(user, roles);
+
+            userRepository.save(user);
+            redisStorageService.deleteVerificationToken(verificationToken);
+            logger.info("User verified successfully: {}", user.getEmail());
+        } catch (ResourceNotFoundException e) {
+            throw e;
+        } catch (Exception e) {
+            logger.error("Error verifying user with token", e);
+            throw new RuntimeException("Failed to verify user", e);
+        }
     }
 
     /**
@@ -327,14 +327,14 @@ public class AuthService implements UserDetailsService {
 
     @Transactional
     public User processGoogleLogin(GoogleUserDTO profile, String rawAccessToken) {
-        if (profile == null) throw new IllegalArgumentException("Google profile is null");
+        ValidationUtils.requireNotNull(profile, "Google profile");
         OAuthProfile p = OAuthProfile.fromGoogle(profile);
         return processOAuthLoginGeneric(OAuthAccount.AuthProvider.GOOGLE, p, rawAccessToken);
     }
 
     @Transactional
     public User processGitHubLogin(GitHubUserDTO profile, String rawAccessToken) {
-        if (profile == null) throw new IllegalArgumentException("GitHub profile is null");
+        ValidationUtils.requireNotNull(profile, "GitHub profile");
         OAuthProfile p = OAuthProfile.fromGitHub(profile);
         return processOAuthLoginGeneric(OAuthAccount.AuthProvider.GITHUB, p, rawAccessToken);
     }
@@ -427,36 +427,18 @@ public class AuthService implements UserDetailsService {
             oauthAccount.setTokenExpiry(Instant.now().plusSeconds(OAUTH_TOKEN_EXPIRY_SECONDS));
         }
 
+        // Explicitly save the OAuthAccount first
         oauthAccountRepository.save(oauthAccount);
-        user.getOauthAccounts().add(oauthAccount);
 
-        // save user if not already
+        // Add to user's collection, if not already present
+        if (!user.getOauthAccounts().contains(oauthAccount)) {
+            user.getOauthAccounts().add(oauthAccount);
+        }
+        
+        // save user if not already (this will merge the user and reflect the collection changes)
         userRepository.save(user);
 
         return user;
-    }
-
-    // ---------------------------
-    // Helper methods
-    // ---------------------------
-
-    private User createUserFromProfile(OAuthProfile profile) {
-        User user = new User();
-        user.setEmail(profile.getEmail().toLowerCase(Locale.ROOT));
-        user.setFirstName(profile.getFirstName() != null ? profile.getFirstName() : "User");
-        user.setLastName(profile.getLastName() != null ? profile.getLastName() : "User");
-        user.setAvatarUrl(profile.getAvatarUrl());
-        user.setVerified(true);
-
-        // Make sure validation won't fail (non-empty password)
-        String randomPassword = CommonUtils.generateSecureRandomPassword();
-        user.setPassword(passwordEncoder.encode(randomPassword));
-
-        boolean isFirstVerifiedUser = userRepository.countByVerified(true) == 0;
-        Set<Role.RoleName> roles = roleAssignmentUtil.determineRolesForUser(isFirstVerifiedUser);
-        roleAssignmentUtil.assignRoles(user, roles);
-
-        return userRepository.save(user);
     }
 
     /**
@@ -561,14 +543,6 @@ public class AuthService implements UserDetailsService {
                 .block(); // Blocking call since this is used in a non-reactive context
     }
 
-    private String generateNumericOtp(int len) {
-        SecureRandom r = new SecureRandom();
-        int min = (int) Math.pow(10, len - 1);
-        int max = (int) Math.pow(10, len) - 1;
-        int val = r.nextInt((max - min) + 1) + min;
-        return String.format("%0" + len + "d", val);
-    }
-
     /**
      * Sends an OTP to the specified phone number.
      *
@@ -597,13 +571,13 @@ public class AuthService implements UserDetailsService {
                 throw new IllegalStateException("Please wait before requesting another code.");
             }
 
-            String otp = generateNumericOtp(otpLength);
+            String otp = generateNumericOtp(otpProperties.getLength());
             String hashed = passwordEncoder.encode(otp);
 
             otpRedisService.saveOtp(normalizedPhone, hashed);  // stores OTP hash in Redis
             otpRedisService.setCooldown(normalizedPhone);       // sets cooldown
 
-            String message = String.format("Your verification code is %s. Expires in %d minutes.", otp, otpTtlMinutes);
+            String message = String.format("Your verification code is %s. Expires in %d minutes.", otp, otpProperties.getTtlMinutes());
             smsSender.sendSms(normalizedPhone, message);
 
             // Log OTP sent (without exposing code)
@@ -620,8 +594,6 @@ public class AuthService implements UserDetailsService {
             );
         }
     }
-
-
 
     @Transactional
     public VerifyOtpResponseDTO verifyOtpAndLogin(String phone, String otp) {
@@ -651,11 +623,11 @@ public class AuthService implements UserDetailsService {
         if (!passwordEncoder.matches(otp, storedOtpHash)) {
             int attempts = otpRedisService.increaseAttempts(normalizedPhone);
 
-            if (attempts > maxVerifyAttempts) {
+            if (attempts > otpProperties.getMaxVerifyAttempts()) {
                 otpRedisService.deleteOtp(normalizedPhone);
 
                 // 4. BLOCK PHONE IF TOO MANY FAILED ATTEMPTS
-                otpRedisService.blockPhone(normalizedPhone, blockSeconds);
+                otpRedisService.blockPhone(normalizedPhone, otpProperties.getBlockSeconds());
 
                 throw new IllegalStateException("Too many invalid OTP attempts");
             }
@@ -676,13 +648,7 @@ public class AuthService implements UserDetailsService {
         if (found.isPresent()) {
             User user = found.get();
 
-            if (!user.isProfileComplete()) {
-                // Incomplete profile → temp token
-                String tempToken = generateJwtToken(user);
-                return VerifyOtpResponseDTO.forNewUser(user.getUserId(), tempToken);
-            }
-
-            // Existing user with complete profile → login response
+            // Existing user → login response
             return VerifyOtpResponseDTO.forExistingUser(buildLoginResponse(user));
         }
 
@@ -693,32 +659,10 @@ public class AuthService implements UserDetailsService {
         return VerifyOtpResponseDTO.forNewUser(null, tempToken);
     }
 
-
-    private UserLoginResponseDTO buildLoginResponse(User user) {
-        String jwt = generateJwtToken(user);
-        List<String> roles = user.getRoles().stream()
-                .map(Role::getAuthority)
-                .collect(Collectors.toList());
-        String oauthProvider = user.getOauthAccounts().stream()
-                .findFirst()
-                .map(acc -> acc.getProvider().name())
-                .orElse(OAuthAccount.AuthProvider.MOBILE.name());
-        boolean isProfileCompleted = user.isProfileComplete();
-
-        return new UserLoginResponseDTO(
-                user.getUserId(),
-                user.getEmail(),
-                roles,
-                jwt,
-                oauthProvider,
-                isProfileCompleted
-        );
-    }
-
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public UserLoginResponseDTO completeProfile(CompleteProfileRequestDTO dto) {
         String phone = PhoneUtils.normalizeToE164(dto.getPhone());
-        if (phone == null) throw new IllegalArgumentException("Invalid phone number format");
+        ValidationUtils.requireNotNull(phone, "Phone number");
 
         String email = dto.getEmail().toLowerCase(Locale.ROOT);
 
@@ -772,6 +716,27 @@ public class AuthService implements UserDetailsService {
         return buildLoginResponse(saved);
     }
 
+
+//    ################################################# Helper Methods #################################################
+
+    private User createUserFromProfile(OAuthProfile profile) {
+        User user = new User();
+        user.setEmail(profile.getEmail().toLowerCase(Locale.ROOT));
+        user.setFirstName(profile.getFirstName() != null ? profile.getFirstName() : "User");
+        user.setLastName(profile.getLastName() != null ? profile.getLastName() : "User");
+        user.setAvatarUrl(profile.getAvatarUrl());
+        user.setVerified(true);
+
+        // Make sure validation won't fail (non-empty password)
+        String randomPassword = CommonUtils.generateSecureRandomPassword();
+        user.setPassword(passwordEncoder.encode(randomPassword));
+
+        boolean isFirstVerifiedUser = userRepository.countByVerified(true) == 0;
+        Set<Role.RoleName> roles = roleAssignmentUtil.determineRolesForUser(isFirstVerifiedUser);
+        roleAssignmentUtil.assignRoles(user, roles);
+
+        return userRepository.save(user);
+    }
     public String generateTempTokenForPhone(String phone) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("phone", phone);
@@ -790,6 +755,52 @@ public class AuthService implements UserDetailsService {
         } catch (JwtException ex) {
             return false;
         }
+    }
+
+    private UserLoginResponseDTO buildLoginResponse(User user) {
+        String jwt = generateJwtToken(user);
+        List<String> roles = user.getRoles().stream()
+                .map(Role::getAuthority)
+                .collect(Collectors.toList());
+        String oauthProvider = user.getOauthAccounts().stream()
+                .findFirst()
+                .map(acc -> acc.getProvider().name())
+                .orElse(OAuthAccount.AuthProvider.MOBILE.name());
+        boolean isProfileCompleted = user.isProfileComplete();
+
+        return new UserLoginResponseDTO(
+                user.getUserId(),
+                user.getEmail(),
+                roles,
+                jwt,
+                oauthProvider,
+                isProfileCompleted
+        );
+    }
+
+    private String generateNumericOtp(int len) {
+        SecureRandom r = new SecureRandom();
+        int min = (int) Math.pow(10, len - 1);
+        int max = (int) Math.pow(10, len) - 1;
+        int val = r.nextInt((max - min) + 1) + min;
+        return String.format("%0" + len + "d", val);
+    }
+
+    /**
+     * Generates a JWT token for an authenticated user.
+     *
+     * @param user the authenticated user
+     * @return the generated JWT token
+     */
+    public String generateJwtToken(User user) {
+        UserDetails userDetails = new UserDetailsServiceImpl(user);
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("userId", user.getUserId());
+        claims.put("email", user.getEmail());
+        claims.put("roles", user.getRoles().stream().map(Role::getAuthority).toArray());
+        String token = jwtUtil.generateToken(claims, userDetails.getUsername());
+        logger.info("JWT token generated for user with email: {}", user.getEmail());
+        return token;
     }
 
 }
