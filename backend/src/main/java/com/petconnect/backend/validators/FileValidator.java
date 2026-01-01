@@ -9,15 +9,15 @@ import java.io.InputStream;
 import java.util.List;
 
 @Component
-public class FileValidator {
+public class FileValidator extends BaseValidator {
 
     private static final long MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
-        private static final List<String> ALLOWED_FORMATS = List.of(
-            "image/jpeg",
-            "image/png",
-            "image/webp",
-            "application/pdf"
-        );
+    private static final List<String> ALLOWED_FORMATS = List.of(
+        "image/jpeg",
+        "image/png",
+        "image/webp",
+        "application/pdf"
+    );
 
     /**
      * Validates the provided multipart file (size, content type and magic number).
@@ -26,7 +26,8 @@ public class FileValidator {
      * @throws FileValidationException if the file is invalid
      */
     public void validateFile(MultipartFile file) {
-        if (file == null || file.isEmpty()) {
+        requireNotNull(file, "File");
+        if (file.isEmpty()) {
             throw new FileValidationException("No file provided");
         }
 

@@ -7,7 +7,6 @@ import org.springframework.context.annotation.Configuration;
 @EnableConfigurationProperties({
         CloudinaryProperties.class,
         CorsProperties.class,
-        FrontendProperties.class,
         GitHubProperties.class,
         JwtProperties.class,
         MailProperties.class,

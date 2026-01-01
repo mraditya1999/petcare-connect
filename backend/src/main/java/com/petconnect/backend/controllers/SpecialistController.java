@@ -5,8 +5,8 @@ import com.petconnect.backend.dto.specialist.SpecialistResponseDTO;
 import com.petconnect.backend.dto.specialist.SpecialistUpdateRequestDTO;
 import com.petconnect.backend.exceptions.FileValidationException;
 import com.petconnect.backend.exceptions.ResourceNotFoundException;
-import com.petconnect.backend.mappers.SpecialistMapper;
 import com.petconnect.backend.services.SpecialistService;
+import com.petconnect.backend.utils.PaginationUtils;
 import com.petconnect.backend.utils.ResponseEntityUtil;
 import com.petconnect.backend.validators.FileValidator;
 import io.swagger.v3.oas.annotations.Operation;
@@ -16,10 +16,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
-import lombok.RequiredArgsConstructor;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.MediaType;
@@ -36,15 +34,20 @@ import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@RequiredArgsConstructor
 @RestController
 @RequestMapping("/specialists")
-public class SpecialistController {
+public class SpecialistController extends BaseController {
 
     private final SpecialistService specialistService;
     private final FileValidator fileValidator;
 
     private static final Logger logger = LoggerFactory.getLogger(SpecialistController.class);
+
+    public SpecialistController(SpecialistService specialistService, FileValidator fileValidator) {
+        super(logger);
+        this.specialistService = specialistService;
+        this.fileValidator = fileValidator;
+    }
 
     /**
      * Update the current specialist's profile.
@@ -129,7 +132,7 @@ public class SpecialistController {
             @Parameter(description = "Sort direction: asc or desc") @RequestParam(defaultValue = "asc") String sortDir) {
         try {
             // Create pageable object with given page, size, sortBy, and sortDir
-            Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.fromString(sortDir), sortBy));
+            Pageable pageable = PaginationUtils.createPageable(page, size, sortBy, Sort.Direction.fromString(sortDir));
             // Fetch the specialists with pagination and sorting
             Page<SpecialistResponseDTO> specialists = specialistService.getAllSpecialists(pageable);
 

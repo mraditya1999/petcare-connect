@@ -20,14 +20,18 @@ import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
-@RequiredArgsConstructor
 @RestController
 @RequestMapping("/upload")
-public class UploadController {
+public class UploadController extends BaseController {
 
     private final UploadService uploadService;
 
     private static final Logger logger = LoggerFactory.getLogger(UploadController.class);
+
+    public UploadController(UploadService uploadService) {
+        super(logger);
+        this.uploadService = uploadService;
+    }
 
     @Operation(
             summary = "Upload an image",
@@ -37,8 +41,7 @@ public class UploadController {
                             content = @Content(schema = @Schema(implementation = ApiResponseDTO.class))),
                     @ApiResponse(responseCode = "400", description = "Invalid input or file"),
                     @ApiResponse(responseCode = "500", description = "Internal server error")
-            }
-    )
+            })
     @PostMapping("/{profileType}")
     public ResponseEntity<ApiResponseDTO<Map<String, Object>>> uploadImage(
             @PathVariable @Parameter(description = "Profile type for the image (e.g., USER, PET, SPECIALIST)") UploadService.ProfileType profileType,

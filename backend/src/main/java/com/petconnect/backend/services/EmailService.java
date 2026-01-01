@@ -1,6 +1,7 @@
 package com.petconnect.backend.services;
 
 import com.petconnect.backend.entity.User;
+import com.petconnect.backend.utils.CommonUtils;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import org.slf4j.Logger;
@@ -50,16 +51,6 @@ public class EmailService {
      * @throws EmailSendException if email sending fails
      */
     public void sendVerificationEmail(User user) {
-        if (user == null) {
-            throw new IllegalArgumentException("User cannot be null");
-        }
-        if (user.getEmail() == null || user.getEmail().isBlank()) {
-            throw new IllegalArgumentException("User email cannot be null or blank");
-        }
-        if (user.getVerificationToken() == null || user.getVerificationToken().isBlank()) {
-            throw new IllegalArgumentException("Verification token cannot be null or blank");
-        }
-        
         try {
             String[] urls = frontendUrls.split(",");
             String token = user.getVerificationToken();
@@ -93,14 +84,8 @@ public class EmailService {
         
         try {
             String[] urls = frontendUrls.split(",");
-
-            // Generate a cryptographically strong token
-            String token = generateSecureToken();
-
-            // Save token in Redis with TTL (15 minutes)
+            String token = CommonUtils.generateSecureToken();
             redisStorageService.saveResetToken(token, user.getEmail(), Duration.ofMinutes(15));
-
-            // Secure link: only token, no email
             String resetLink = chooseURL(urls) + "/user/reset-password?token=" + token;
 
             sendEmail(user,

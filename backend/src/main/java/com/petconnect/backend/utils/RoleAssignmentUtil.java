@@ -3,8 +3,8 @@ package com.petconnect.backend.utils;
 import com.petconnect.backend.entity.Role;
 import com.petconnect.backend.entity.User;
 import com.petconnect.backend.exceptions.RoleNotFoundException;
-import com.petconnect.backend.repositories.RoleRepository;
-import com.petconnect.backend.repositories.UserRepository;
+import com.petconnect.backend.repositories.jpa.RoleRepository;
+import com.petconnect.backend.repositories.jpa.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 

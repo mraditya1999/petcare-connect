@@ -1,7 +1,13 @@
 package com.petconnect.backend.exceptions;
 
+import com.petconnect.backend.utils.DateTimeUtils;
+import lombok.Getter;
+import lombok.Setter;
+
 import java.time.LocalDateTime;
 
+@Setter
+@Getter
 public class ErrorResponse {
 
     private String message;
@@ -10,49 +16,16 @@ public class ErrorResponse {
     private int statusCode;
 
     public ErrorResponse() {
-        this.timestamp = LocalDateTime.now();
+        this.timestamp = DateTimeUtils.nowUtc();
     }
 
     public ErrorResponse(String message, String details, int statusCode) {
         this.message = message;
-        this.timestamp = LocalDateTime.now();
+        this.timestamp = DateTimeUtils.nowUtc();
         this.details = details;
         this.statusCode = statusCode;
     }
 
-    public String getMessage() {
-        return message;
-    }
-
-    public void setMessage(String message) {
-        this.message = message;
-    }
-
-    public LocalDateTime getTimestamp() {
-        return timestamp;
-    }
-
-    public void setTimestamp(LocalDateTime timestamp) {
-        this.timestamp = timestamp;
-    }
-
-    public String getDetails() {
-        return details;
-    }
-
-    public void setDetails(String details) {
-        this.details = details;
-    }
-
-    public int getStatusCode() {
-        return statusCode;
-    }
-
-    public void setStatusCode(int statusCode) {
-        this.statusCode = statusCode;
-    }
-
-    // Builder pattern
     public static Builder builder() {
         return new Builder();
     }

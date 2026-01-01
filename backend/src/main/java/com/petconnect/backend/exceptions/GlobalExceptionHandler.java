@@ -2,6 +2,8 @@ package com.petconnect.backend.exceptions;
 
 import com.petconnect.backend.dto.ApiResponseDTO;
 import com.petconnect.backend.dto.ErrorResponseDTO;
+import com.petconnect.backend.services.EmailService.EmailSendException;
+import com.petconnect.backend.utils.ErrorResponseUtils;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import org.slf4j.Logger;
@@ -67,7 +69,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(UserAlreadyExistsException.class)
     public ResponseEntity<ApiResponseDTO<String>> handleUserAlreadyExistsException(UserAlreadyExistsException e) {
         logger.error("User already exists: ", e);
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(new ApiResponseDTO<>(e.getMessage()));
+        return ErrorResponseUtils.conflict(e.getMessage());
     }
 
     /**
@@ -219,6 +221,15 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * Handles EmailSendException.
+     */
+    @ExceptionHandler(EmailSendException.class)
+    public ResponseEntity<ApiResponseDTO<Object>> handleEmailSendException(EmailSendException ex, WebRequest request) {
+        logger.error("EmailSendException: {}", ex.getMessage(), ex);
+        return createErrorResponse("Failed to send email. Please try again later.", null, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    /**
      * Handles global Exception.
      *
      * @param ex the exception
@@ -242,7 +253,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(DuplicateResourceException.class)
     public ResponseEntity<ApiResponseDTO<String>> handleDuplicateResourceException(DuplicateResourceException ex, WebRequest request) {
         logger.error("DuplicatePetNameException: {}", ex.getMessage(), ex);
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponseDTO<>(ex.getMessage(), null));
+        return ErrorResponseUtils.badRequest(ex.getMessage());
     }
 
      /**
@@ -253,7 +264,7 @@ public class GlobalExceptionHandler {
       */
      @ExceptionHandler(FileValidationException.class)
      public ResponseEntity<ApiResponseDTO<String>> handleFileValidationException(FileValidationException ex) {
-         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponseDTO<>(ex.getMessage(), null));
+         return ErrorResponseUtils.badRequest(ex.getMessage());
      }
 
     /**
@@ -262,7 +273,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ValidationException.class)
     public ResponseEntity<ApiResponseDTO<String>> handleValidationException(ValidationException ex) {
         logger.error("ValidationException: {}", ex.getMessage(), ex);
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponseDTO<>(ex.getMessage(), null));
+        return ErrorResponseUtils.badRequest(ex.getMessage());
     }
 
      /**
@@ -273,7 +284,7 @@ public class GlobalExceptionHandler {
       */
      @ExceptionHandler(UnauthorizedAccessException.class)
      public ResponseEntity<ApiResponseDTO<String>> handleUnauthorizedAccessException(UnauthorizedAccessException ex) {
-         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new ApiResponseDTO<>(ex.getMessage(), null));
+         return ErrorResponseUtils.forbidden(ex.getMessage());
      }
 
     /**

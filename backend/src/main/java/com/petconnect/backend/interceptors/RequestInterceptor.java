@@ -1,5 +1,6 @@
 package com.petconnect.backend.interceptors;
 
+import io.github.resilience4j.core.lang.NonNull;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
@@ -16,18 +17,18 @@ public class RequestInterceptor implements HandlerInterceptor {
     private static final Logger logger = LoggerFactory.getLogger(RequestInterceptor.class);
 
     @Override
-    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws IOException {
+    public boolean preHandle(HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull Object handler) throws IOException {
         logger.info("Incoming request: {} {}", request.getMethod(), request.getRequestURI());
         return true;
     }
 
     @Override
-    public void postHandle(HttpServletRequest request, HttpServletResponse response, Object handler, ModelAndView modelAndView) {
+    public void postHandle(@NonNull HttpServletRequest request, HttpServletResponse response, @NonNull Object handler, ModelAndView modelAndView) {
         logger.info("Outgoing response: {}", response.getStatus());
     }
 
     @Override
-    public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) {
+    public void afterCompletion(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull Object handler, Exception ex) {
         if (ex != null) {
             logger.error("Request completed with exception: ", ex);
         } else {

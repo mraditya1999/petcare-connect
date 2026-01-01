@@ -1,4 +1,4 @@
-package com.petconnect.backend.repositories;
+package com.petconnect.backend.repositories.mongo;
 
 import com.petconnect.backend.entity.Forum;
 import org.jetbrains.annotations.NotNull;
@@ -11,6 +11,7 @@ import org.springframework.data.mongodb.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+
 
 @Repository
 public interface ForumRepository extends MongoRepository<Forum, String> {

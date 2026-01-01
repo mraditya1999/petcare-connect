@@ -11,7 +11,7 @@ import com.petconnect.backend.entity.User;
 import com.petconnect.backend.exceptions.*;
 import com.petconnect.backend.entity.OAuthAccount;
 import com.petconnect.backend.exceptions.IllegalArgumentException;
-import com.petconnect.backend.repositories.UserRepository;
+import com.petconnect.backend.repositories.jpa.UserRepository;
 import com.petconnect.backend.services.AuthService;
 import com.petconnect.backend.services.EmailService;
 import com.petconnect.backend.services.RedisStorageService;
@@ -26,12 +26,9 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
-import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.ResponseEntity;
@@ -43,7 +40,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.util.*;
 import java.util.stream.Collectors;
 
-@RequiredArgsConstructor
 @RestController
 @EnableConfigurationProperties(GitHubProperties.class)
 @RequestMapping("/auth")
@@ -51,7 +47,7 @@ import java.util.stream.Collectors;
         name = "Authentication",
         description = "Authentication, OAuth, OTP and profile management APIs"
 )
-public class AuthController {
+public class AuthController extends BaseController {
 
     private final AuthService authService;
     private final UserService userService;
@@ -61,6 +57,18 @@ public class AuthController {
     private final GitHubProperties gitHubProperties;
 
     private static final Logger logger = LoggerFactory.getLogger(AuthController.class);
+
+    public AuthController(AuthService authService, UserService userService, EmailService emailService,
+                         UserRepository userRepository, RedisStorageService redisStorageService,
+                         GitHubProperties gitHubProperties) {
+        super(logger);
+        this.authService = authService;
+        this.userService = userService;
+        this.emailService = emailService;
+        this.userRepository = userRepository;
+        this.redisStorageService = redisStorageService;
+        this.gitHubProperties = gitHubProperties;
+    }
 
     /**
      * Registers a new user.
@@ -73,6 +81,7 @@ public class AuthController {
             @ApiResponse(responseCode = "201", description = "User registered"),
             @ApiResponse(responseCode = "409", description = "User already exists")
     })
+
     @PostMapping("/register")
     public ResponseEntity<ApiResponseDTO<UserRegistrationResponseDTO>> registerUser(
             @Valid @RequestBody UserRegistrationRequestDTO request
@@ -110,10 +119,7 @@ public class AuthController {
                 String token = authService.generateJwtToken(user);
                 List<String> roles = user.getRoles().stream().map(Role::getAuthority).collect(Collectors.toList());
                 boolean isProfileCompleted = user.isProfileComplete();
-                String oauthProvider = user.getOauthAccounts().stream()
-                        .findFirst()
-                        .map(acc -> acc.getProvider().name())
-                        .orElse(OAuthAccount.AuthProvider.LOCAL.name());
+                    String oauthProvider = OAuthAccount.AuthProvider.LOCAL.name();
 
                 UserLoginResponseDTO userLoginResponseDTO = new UserLoginResponseDTO(
                         user.getUserId(),
@@ -173,19 +179,12 @@ public class AuthController {
     ) {
         try {
             String token = request.getVerificationToken();
-            authService.verifyUser(token); // service handles Redis lookup + deletion
-
-            VerifyEmailResponseDTO body =
-                    new VerifyEmailResponseDTO("User verified and registered successfully.", true);
-
+            authService.verifyUser(token);
+            VerifyEmailResponseDTO body = new VerifyEmailResponseDTO("User verified and registered successfully.", true);
             return ResponseEntityUtil.ok("User verified successfully.", body);
         }  catch (ResourceNotFoundException ex) {
-
-            VerifyEmailResponseDTO body =
-                new VerifyEmailResponseDTO(ex.getMessage(), false);
-
+            VerifyEmailResponseDTO body = new VerifyEmailResponseDTO(ex.getMessage(), false);
             return ResponseEntityUtil.notFound(ex.getMessage(), body);
-
         }
     }
 
@@ -263,7 +262,6 @@ public class AuthController {
     ) {
 
             String accessToken = body.get("token");
-
             try {
                 GoogleUserDTO googleUser = authService.fetchGoogleProfile(accessToken);
 
@@ -282,10 +280,7 @@ public class AuthController {
                         .map(Role::getAuthority)
                         .collect(Collectors.toList());
 
-                String oauthProvider = user.getOauthAccounts().stream()
-                        .findFirst()
-                        .map(acc -> acc.getProvider().name())
-                        .orElse(OAuthAccount.AuthProvider.LOCAL.name());
+                String oauthProvider = OAuthAccount.AuthProvider.GOOGLE.name();
 
                 boolean isProfileCompleted = user.isProfileComplete();
                 UserLoginResponseDTO response = new UserLoginResponseDTO(user.getUserId(),user.getEmail(),roles,jwtToken,oauthProvider,isProfileCompleted);
@@ -297,6 +292,7 @@ public class AuthController {
                 return ResponseEntityUtil.unauthorized("Invalid Google token");
             }
         }
+
     /**
      * Authenticates user via GitHub OAuth.
      *
@@ -332,11 +328,7 @@ public class AuthController {
                     .map(Role::getAuthority)
                     .collect(Collectors.toList());
 
-            String oauthProvider =
-                    user.getOauthAccounts().stream()
-                            .anyMatch(acc -> acc.getProvider() == OAuthAccount.AuthProvider.GITHUB)
-                            ? OAuthAccount.AuthProvider.GITHUB.name()
-                            : OAuthAccount.AuthProvider.LOCAL.name();
+            String oauthProvider = OAuthAccount.AuthProvider.GITHUB.name();
 
             boolean isProfileCompleted = user.isProfileComplete();
             UserLoginResponseDTO response = new UserLoginResponseDTO(user.getUserId(),user.getEmail(),roles,jwtToken,oauthProvider,isProfileCompleted);
@@ -486,7 +478,7 @@ public class AuthController {
         } catch (DataIntegrityViolationException ex) {
             return ResponseEntityUtil.conflict("Data integrity error (possible duplicate email)");
         } catch (Exception ex) {
-            logger.error("complete-profile error", ex);
+                logger.error("complete-profile error", ex);
             return ResponseEntityUtil.internalServerError("Server error");
         }
     }

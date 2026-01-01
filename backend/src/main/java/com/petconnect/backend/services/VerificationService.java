@@ -3,7 +3,7 @@ package com.petconnect.backend.services;
 import com.petconnect.backend.entity.Role;
 import com.petconnect.backend.entity.User;
 import com.petconnect.backend.exceptions.ResourceNotFoundException;
-import com.petconnect.backend.repositories.UserRepository;
+import com.petconnect.backend.repositories.jpa.UserRepository;
 import com.petconnect.backend.utils.RoleAssignmentUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,6 +12,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import java.util.Set;
 import com.petconnect.backend.exceptions.IllegalArgumentException;
 
@@ -43,12 +44,11 @@ public class VerificationService {
      * Verifies a user using the provided verification token.
      *
      * @param verificationToken the verification token (must not be null or blank)
-     * @return true if verification is successful
-     * @throws IllegalArgumentException if verificationToken is null or blank
+     * @throws IllegalArgumentException  if verificationToken is null or blank
      * @throws ResourceNotFoundException if token is invalid/expired or user is not found
      */
     @Transactional
-    public boolean verifyUser(String verificationToken) {
+    public void verifyUser(String verificationToken) {
         if (verificationToken == null || verificationToken.isBlank()) {
             throw new IllegalArgumentException("Verification token cannot be null or blank");
         }
@@ -68,13 +68,11 @@ public class VerificationService {
 
             if (user.isVerified()) {
                 logger.info("User already verified: {}", user.getEmail());
-                // Still delete the token to prevent reuse
                 redisStorageService.deleteVerificationToken(verificationToken);
-                return true;
+                return;
             }
 
             user.setVerified(true);
-
             boolean isFirstVerifiedUser = userRepository.countByVerified(true) == 0;
             Set<Role.RoleName> roles;
             if (user.getRoles().stream().anyMatch(role -> role.getRoleName() == Role.RoleName.SPECIALIST)) {
@@ -87,7 +85,6 @@ public class VerificationService {
             userRepository.save(user);
             redisStorageService.deleteVerificationToken(verificationToken);
             logger.info("User verified successfully: {}", user.getEmail());
-            return true;
         } catch (ResourceNotFoundException e) {
             throw e;
         } catch (Exception e) {
@@ -153,19 +150,7 @@ public class VerificationService {
      * @throws IllegalArgumentException if user is null or user email/token is invalid
      */
     public void sendVerificationEmail(User user) {
-        if (user == null) {
-            throw new IllegalArgumentException("User cannot be null");
-        }
-        if (user.getEmail() == null || user.getEmail().isBlank()) {
-            throw new IllegalArgumentException("User email cannot be null or blank");
-        }
-        if (user.getVerificationToken() == null || user.getVerificationToken().isBlank()) {
-            throw new IllegalArgumentException("Verification token cannot be null or blank");
-        }
-        
         try {
-            String token = user.getVerificationToken();
-            redisStorageService.saveVerificationToken(token, user.getEmail(), java.time.Duration.ofHours(24));
             emailService.sendVerificationEmail(user);
             logger.info("Verification email sent to: {}", user.getEmail());
         } catch (Exception e) {

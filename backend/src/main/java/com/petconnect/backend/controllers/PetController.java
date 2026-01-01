@@ -30,15 +30,20 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.util.List;
 
-@RequiredArgsConstructor
 @RestController
 @RequestMapping("/pets")
-public class PetController {
+public class PetController extends BaseController {
 
     private final PetService petService;
     private final FileValidator fileValidator;
 
     private static final Logger logger = LoggerFactory.getLogger(PetController.class);
+
+    public PetController(PetService petService, FileValidator fileValidator) {
+        super(logger);
+        this.petService = petService;
+        this.fileValidator = fileValidator;
+    }
 
     /**
      * Creates a pet for the user.

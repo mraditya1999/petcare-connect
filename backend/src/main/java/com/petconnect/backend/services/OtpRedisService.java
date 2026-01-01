@@ -1,5 +1,7 @@
 package com.petconnect.backend.services;
 
+import com.petconnect.backend.utils.RedisUtils;
+import com.petconnect.backend.utils.ValidationUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,18 +27,10 @@ public class OtpRedisService {
             @Value("${otp.resend.cooldown.seconds:60}") long resendCooldownSeconds,
             @Value("${otp.max.send.per.hour:5}") int maxSendsPerHour
     ) {
-        if (redisTemplate == null) {
-            throw new IllegalArgumentException("RedisTemplate cannot be null");
-        }
-        if (otpTtlMinutes <= 0) {
-            throw new IllegalArgumentException("OTP TTL must be positive");
-        }
-        if (resendCooldownSeconds <= 0) {
-            throw new IllegalArgumentException("Resend cooldown must be positive");
-        }
-        if (maxSendsPerHour <= 0) {
-            throw new IllegalArgumentException("Max sends per hour must be positive");
-        }
+        ValidationUtils.requireNotNull(redisTemplate, "RedisTemplate");
+        ValidationUtils.requirePositive(otpTtlMinutes, "OTP TTL minutes");
+        ValidationUtils.requirePositive(resendCooldownSeconds, "Resend cooldown seconds");
+        ValidationUtils.requirePositive(maxSendsPerHour, "Max sends per hour");
         
         this.redisTemplate = redisTemplate;
         this.otpTtlMinutes = otpTtlMinutes;
@@ -46,38 +40,23 @@ public class OtpRedisService {
 
     // ---------- Redis Keys ----------
     private String otpKey(String phone) {
-        if (phone == null || phone.isBlank()) {
-            throw new IllegalArgumentException("Phone cannot be null or blank");
-        }
-        return "otp:code:" + phone;
+        return RedisUtils.otpKey(phone);
     }
-    
+
     private String cooldownKey(String phone) {
-        if (phone == null || phone.isBlank()) {
-            throw new IllegalArgumentException("Phone cannot be null or blank");
-        }
-        return "otp:cooldown:" + phone;
+        return RedisUtils.rateLimitKey(phone, "cooldown");
     }
-    
+
     private String hourlyCountKey(String phone) {
-        if (phone == null || phone.isBlank()) {
-            throw new IllegalArgumentException("Phone cannot be null or blank");
-        }
-        return "otp:rate-limit:hour:" + phone;
+        return RedisUtils.rateLimitKey(phone, "hourly");
     }
-    
+
     private String attemptsKey(String phone) {
-        if (phone == null || phone.isBlank()) {
-            throw new IllegalArgumentException("Phone cannot be null or blank");
-        }
-        return "otp:attempts:" + phone;
+        return RedisUtils.rateLimitKey(phone, "attempts");
     }
-    
+
     private String blockKey(String phone) {
-        if (phone == null || phone.isBlank()) {
-            throw new IllegalArgumentException("Phone cannot be null or blank");
-        }
-        return "otp:block:" + phone;
+        return RedisUtils.rateLimitKey(phone, "block");
     }
 
     // ---------- Phone Blocking ----------

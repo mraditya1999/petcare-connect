@@ -5,6 +5,7 @@ import com.petconnect.backend.dto.forum.ForumCreateDTO;
 import com.petconnect.backend.dto.forum.ForumDTO;
 import com.petconnect.backend.dto.forum.UpdateForumDTO;
 import com.petconnect.backend.services.ForumService;
+import com.petconnect.backend.utils.PaginationUtils;
 import com.petconnect.backend.utils.ResponseEntityUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -16,11 +17,10 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
-import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -29,15 +29,19 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@RequiredArgsConstructor
 @RestController
 @RequestMapping("/forums")
 @Tag(name = "Forums", description = "APIs for forum creation, search, and management")
-public class ForumController {
+public class ForumController extends BaseController {
 
     private final ForumService forumService;
 
     private static final Logger logger = LoggerFactory.getLogger(ForumController.class);
+
+    public ForumController(ForumService forumService) {
+        super(logger);
+        this.forumService = forumService;
+    }
 
     /**
      * Get all forums with pagination and sorting.
@@ -75,9 +79,8 @@ public class ForumController {
             String sortDir
     ) {
 
-        Sort sort = Sort.by(sortDir.equalsIgnoreCase("asc") ? Sort.Direction.ASC : Sort.Direction.DESC, sortBy);
-        PageRequest pageRequest = PageRequest.of(page, size, sort);
-        Page<ForumDTO> forums = forumService.getAllForums(pageRequest);
+        Pageable pageable = PaginationUtils.createPageable(page, size, sortBy, Sort.Direction.fromString(sortDir));
+        Page<ForumDTO> forums = forumService.getAllForums(pageable);
         return ResponseEntityUtil.page(forums);
     }
 
@@ -153,10 +156,9 @@ public class ForumController {
             String sortDir
     ) {
 
-        Sort sort = Sort.by(sortDir.equalsIgnoreCase("asc") ? Sort.Direction.ASC : Sort.Direction.DESC, sortBy);
-        PageRequest pageRequest = PageRequest.of(page, size, sort);
+        Pageable pageable = PaginationUtils.createPageable(page, size, sortBy, Sort.Direction.fromString(sortDir));
 
-        Page<ForumDTO> forums = forumService.searchForums(keyword, pageRequest);
+        Page<ForumDTO> forums = forumService.searchForums(keyword, pageable);
         return ResponseEntityUtil.page(forums);
     }
 
@@ -191,10 +193,9 @@ public class ForumController {
             String sortDir
     ) {
 
-        Sort sort = Sort.by(sortDir.equalsIgnoreCase("asc") ? Sort.Direction.ASC : Sort.Direction.DESC, sortBy);
-        PageRequest pageRequest = PageRequest.of(page, size, sort);
+        Pageable pageable = PaginationUtils.createPageable(page, size, sortBy, Sort.Direction.fromString(sortDir));
 
-        Page<ForumDTO> forums = forumService.searchForumsByTags(tags, pageRequest);
+        Page<ForumDTO> forums = forumService.searchForumsByTags(tags, pageable);
         return ResponseEntityUtil.page(forums);
     }
 

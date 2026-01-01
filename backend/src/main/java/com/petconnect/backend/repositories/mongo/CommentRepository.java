@@ -1,4 +1,4 @@
-package com.petconnect.backend.repositories;
+package com.petconnect.backend.repositories.mongo;
 
 import com.petconnect.backend.entity.Comment;
 import org.springframework.data.domain.Page;
@@ -17,5 +17,3 @@ public interface CommentRepository extends MongoRepository<Comment, String> {
     long countByForumId(String forumId);
     List<Comment> findByParentCommentIn(List<Comment> parentComments);
 }
-
-

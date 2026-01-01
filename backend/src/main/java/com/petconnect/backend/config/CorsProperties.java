@@ -21,23 +21,11 @@ public class CorsProperties {
     @NotEmpty
     private List<String> allowedOrigins;
 
-    private boolean allowCredentials;
+    private boolean allowCredentials = true;
 
-    private List<String> allowedMethods;
+    private List<String> allowedMethods = List.of("GET", "POST", "PUT", "DELETE", "OPTIONS");
 
-    private List<String> allowedHeaders;
+    private List<String> allowedHeaders = List.of("*");
 
-    private List<String> exposedHeaders;
-
-    public CorsProperties() {
-        if (allowedMethods == null) {
-            allowedMethods = List.of("*");
-        }
-        if (allowedHeaders == null) {
-            allowedHeaders = List.of("*");
-        }
-        if (exposedHeaders == null) {
-            exposedHeaders = List.of("Authorization");
-        }
-    }
+    private List<String> exposedHeaders = List.of("Authorization");
 }

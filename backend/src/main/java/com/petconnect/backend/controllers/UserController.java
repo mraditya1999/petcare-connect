@@ -29,15 +29,20 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.util.List;
 
-@RequiredArgsConstructor
 @RestController
 @RequestMapping("/profile")
 @Validated
-public class UserController {
+public class UserController extends BaseController {
 
     private final UserService userService;
     private static final Logger logger = LoggerFactory.getLogger(UserController.class);
     private final FileValidator fileValidator;
+
+    public UserController(UserService userService, FileValidator fileValidator) {
+        super(logger);
+        this.userService = userService;
+        this.fileValidator = fileValidator;
+    }
 
     /**
      * Fetches the user profile.

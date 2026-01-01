@@ -8,10 +8,10 @@ import com.petconnect.backend.exceptions.DuplicateResourceException;
 import com.petconnect.backend.exceptions.ImageDeletionException;
 import com.petconnect.backend.exceptions.ResourceNotFoundException;
 import com.petconnect.backend.mappers.SpecialistMapper;
-import com.petconnect.backend.repositories.PetRepository;
-import com.petconnect.backend.repositories.SpecialistRepository;
-import com.petconnect.backend.repositories.UserRepository;
+import com.petconnect.backend.repositories.jpa.PetRepository;
+import com.petconnect.backend.repositories.jpa.UserRepository;
 import com.petconnect.backend.mappers.UserMapper;
+import com.petconnect.backend.utils.PaginationUtils;
 import com.petconnect.backend.utils.PhoneUtils;
 import com.petconnect.backend.utils.RoleAssignmentUtil;
 import com.petconnect.backend.validators.PasswordValidator;
@@ -20,7 +20,6 @@ import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -206,16 +205,14 @@ public class UserService {
             User user = userRepository.findByEmail(email)
                     .orElseThrow(() -> new ResourceNotFoundException("User not found with email " + email));
 
-            boolean isLocalUser = user.getOauthAccounts()
-                    .stream()
-                    .anyMatch(acc -> acc.getProvider() == OAuthAccount.AuthProvider.LOCAL);
+            boolean hasPassword = user.getPassword() != null && !user.getPassword().isBlank();
 
             if (!PasswordValidator.isValid(updatePasswordRequestDTO.getNewPassword())) {
                 throw new IllegalArgumentException("Password must be at least 8 characters long and include uppercase, lowercase, number, and special character.");
             }
 
 
-            if (isLocalUser) {
+            if (hasPassword) {
                 if (!passwordEncoder.matches(updatePasswordRequestDTO.getCurrentPassword(), user.getPassword())) {
                     throw new IllegalArgumentException("Current password is incorrect.");
                 }
@@ -399,7 +396,7 @@ public class UserService {
      * @return a page of UserDTOs containing the filtered users
      */
     public Page<UserDTO> getAllUsersByRole(String roleName, int page, int size, String sortBy, String sortDir) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.fromString(sortDir), sortBy));
+        Pageable pageable = PaginationUtils.createPageable(page, size, sortBy, Sort.Direction.fromString(sortDir));
         Page<User> usersPage = userRepository.findAllByRole(roleName, pageable);
         return usersPage.map(userMapper::toDTO);
     }
