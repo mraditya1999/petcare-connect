@@ -1,5 +1,6 @@
 package com.petconnect.backend.dto.user;
 
+import jakarta.persistence.Column;
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -21,8 +22,8 @@ public class UserUpdateDTO {
     @Pattern(regexp = "^\\d{10}$", message = "Mobile number must be 10 digits")
     private String mobileNumber;
 
-    @Min(value = 100000, message = "Pincode must be at least 6 digits")
-    private Long pincode;
+    @Pattern(regexp = "\\d{6}", message = "Pincode must be exactly 6 digits")
+    private String pincode;
 
     @Size(max = 100, message = "City cannot exceed 100 characters")
     private String city;

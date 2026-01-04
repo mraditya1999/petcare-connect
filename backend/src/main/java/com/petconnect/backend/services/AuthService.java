@@ -353,12 +353,12 @@ public class AuthService implements UserDetailsService {
      */
     @Transactional
     public User processOAuthLoginGeneric(OAuthAccount.AuthProvider provider, OAuthProfile profile, String rawAccessToken) {
-        if (profile.getProviderUserId() == null || profile.getEmail() == null) {
+        if (profile.getProviderUserId() == null && profile.getEmail() == null) {
             throw new IllegalArgumentException("Invalid profile: missing providerUserId or email");
         }
 
         final String providerUserId = profile.getProviderUserId();
-        final String email = profile.getEmail().toLowerCase(Locale.ROOT);
+        final String email = (profile.getEmail() != null) ? profile.getEmail().toLowerCase(Locale.ROOT) : null;
 
         logger.debug("Processing OAuth login: provider={}, providerUserId={}, email={}", provider, providerUserId, email);
 
@@ -649,14 +649,20 @@ public class AuthService implements UserDetailsService {
             User user = found.get();
 
             // Existing user → login response
-            return VerifyOtpResponseDTO.forExistingUser(buildLoginResponse(user));
+            // Ensure the MOBILE OAuth account is created/updated
+            User authenticatedUser = processOAuthLoginGeneric(
+                    OAuthAccount.AuthProvider.MOBILE,
+                    OAuthProfile.fromMobile(user.getMobileNumber()),
+                    generateJwtToken(user)
+            );
+            return VerifyOtpResponseDTO.forExistingUser(buildLoginResponse(authenticatedUser));
         }
 
         // -----------------------------------------------------
         // 7. No user → new-user flow
         // -----------------------------------------------------
         String tempToken = generateTempTokenForPhone(normalizedPhone);
-        return VerifyOtpResponseDTO.forNewUser(null, tempToken);
+        return VerifyOtpResponseDTO.forNewUser(normalizedPhone, tempToken);
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
@@ -710,10 +716,25 @@ public class AuthService implements UserDetailsService {
             logger.info("Creating new user for phone: {}", phone);
         }
 
-        User saved = userRepository.save(user);
+        User savedUser = userRepository.save(user);
+
+        // Ensure the MOBILE OAuth account is created/updated for newly completed profiles
+        OAuthProfile mobileOAuthProfile = new OAuthProfile(
+                savedUser.getMobileNumber(),
+                savedUser.getEmail(), // Use the email that was just saved
+                savedUser.getFirstName(),
+                savedUser.getLastName(),
+                null // avatarUrl is not applicable for mobile login
+        );
+        User finalUser = processOAuthLoginGeneric(
+                OAuthAccount.AuthProvider.MOBILE,
+                mobileOAuthProfile,
+                generateJwtToken(savedUser) // Use the generated JWT as rawAccessToken
+        );
+
         logger.info("Profile completed successfully for phone: {}, email: {}", phone, email);
 
-        return buildLoginResponse(saved);
+        return buildLoginResponse(finalUser);
     }
 
 

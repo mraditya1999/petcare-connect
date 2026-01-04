@@ -61,15 +61,15 @@ public class OAuthAccount {
     // TOKENS
     // ----------------------------
     @Lob
-    @Column(name = "access_token", columnDefinition = "LONGTEXT")
-    private String accessToken; // token may be long → LOB/Text
+    @Column(name = "access_token")
+    private String accessToken;
 
     @Lob
-    @Column(name = "refresh_token", columnDefinition = "LONGTEXT")
+    @Column(name = "refresh_token")
     private String refreshToken;
 
     @Column(name = "token_expiry")
-    private Instant tokenExpiry; // Instant = better for timezone handling
+    private Instant tokenExpiry;
 
     @Column(name = "refresh_token_expiry")
     private Instant refreshTokenExpiry;

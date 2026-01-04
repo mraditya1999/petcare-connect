@@ -116,7 +116,6 @@ const ResetPassword = () => {
               <PasswordInput
                 id="password"
                 placeholder="Enter your password"
-                type="password"
                 required
                 name="password"
                 value={resetPasswordCredentials.password}
@@ -130,7 +129,6 @@ const ResetPassword = () => {
               <PasswordInput
                 id="confirmPassword"
                 placeholder="Confirm your password"
-                type="password"
                 required
                 name="confirmPassword"
                 value={resetPasswordCredentials.confirmPassword}

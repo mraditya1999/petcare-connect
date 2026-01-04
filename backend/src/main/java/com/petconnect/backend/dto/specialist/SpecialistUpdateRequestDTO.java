@@ -1,6 +1,8 @@
 package com.petconnect.backend.dto.specialist;
 
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -31,8 +33,9 @@ public class SpecialistUpdateRequestDTO {
     private String avatarUrl;
     private String avatarPublicId;
 
-    @Min(value = 100000, message = "Pincode must be at least 6 digits")
-    private Long pincode;
+    @NotBlank(message = "Pincode is required")
+    @Pattern(regexp = "\\d{6}", message = "Pincode must be exactly 6 digits")
+    private String pincode;
 
     @Size(max = 100, message = "City cannot exceed 100 characters")
     private String city;

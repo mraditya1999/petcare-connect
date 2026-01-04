@@ -53,6 +53,19 @@ public class OAuthProfile {
         );
     }
 
+    public static OAuthProfile fromMobile(String mobileNumber) {
+        if (!StringUtils.hasText(mobileNumber)) {
+            throw new IllegalStateException("Mobile number is missing for OAuthProfile");
+        }
+        return new OAuthProfile(
+                mobileNumber, // providerUserId
+                null,         // email
+                null,         // firstName
+                null,         // lastName
+                null          // avatarUrl
+        );
+    }
+
     private static String normalize(String value) {
         return StringUtils.hasText(value) ? value.trim() : null;
     }

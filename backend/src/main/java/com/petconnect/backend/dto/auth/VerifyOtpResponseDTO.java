@@ -1,5 +1,6 @@
 package com.petconnect.backend.dto.auth;
 
+import com.petconnect.backend.entity.OAuthAccount;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -18,13 +19,13 @@ public class VerifyOtpResponseDTO {
     private boolean isNewUser;
     private String tempToken;
 
-    public static VerifyOtpResponseDTO forNewUser(Long userId, String tempToken) {
+    public static VerifyOtpResponseDTO forNewUser(String mobileNumber, String tempToken) {
         return new VerifyOtpResponseDTO(
-                userId,
+                null, // userId is null for new users at this stage
                 null,
                 List.of(),
                 null,
-                null,
+                OAuthAccount.AuthProvider.MOBILE.name(),
                 false,
                 true,
                 tempToken

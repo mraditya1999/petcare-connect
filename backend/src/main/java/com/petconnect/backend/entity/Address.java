@@ -23,8 +23,10 @@ public class Address {
     private Long addressId;
 
     @NotNull(message = "Pincode is required")
-    @Column(nullable = false)
-    private Long pincode;
+    @Pattern(regexp = "\\d{6}", message = "Pincode must be exactly 6 digits")
+    @Column(nullable = false, length = 10)
+    private String pincode;
+
 
     @Size(max = 100, message = "City cannot exceed 100 characters")
     private String city;

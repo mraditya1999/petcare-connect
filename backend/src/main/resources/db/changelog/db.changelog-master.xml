@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <databaseChangeLog
-    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
     https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
 
+    <!-- ROLES -->
     <changeSet id="1" author="aditya">
         <createTable tableName="roles">
             <column name="role_id" type="INTEGER" autoIncrement="true">
@@ -17,23 +18,18 @@
     </changeSet>
 
     <changeSet id="2" author="aditya">
-        <insert tableName="roles">
-            <column name="role_name" value="ADMIN"/>
-        </insert>
-        <insert tableName="roles">
-            <column name="role_name" value="USER"/>
-        </insert>
-        <insert tableName="roles">
-            <column name="role_name" value="SPECIALIST"/>
-        </insert>
+        <insert tableName="roles"><column name="role_name" value="ADMIN"/></insert>
+        <insert tableName="roles"><column name="role_name" value="USER"/></insert>
+        <insert tableName="roles"><column name="role_name" value="SPECIALIST"/></insert>
     </changeSet>
 
+    <!-- ADDRESS -->
     <changeSet id="3" author="aditya">
         <createTable tableName="address">
             <column name="address_id" type="BIGINT" autoIncrement="true">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
-            <column name="pincode" type="BIGINT">
+            <column name="pincode" type="VARCHAR(10)">
                 <constraints nullable="false"/>
             </column>
             <column name="city" type="VARCHAR(100)"/>
@@ -49,34 +45,32 @@
         </createTable>
     </changeSet>
 
+    <!-- USERS -->
     <changeSet id="4" author="aditya">
         <createTable tableName="users">
             <column name="user_id" type="BIGINT" autoIncrement="true">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
-            <column name="dtype" type="VARCHAR(31)">
-                <constraints nullable="true"/>
-            </column>
             <column name="first_name" type="VARCHAR(50)"/>
             <column name="last_name" type="VARCHAR(50)"/>
             <column name="email" type="VARCHAR(100)">
-                <constraints nullable="true" unique="true"/>
+                <constraints unique="true"/>
             </column>
             <column name="address_id" type="BIGINT"/>
             <column name="avatar_url" type="VARCHAR(255)"/>
             <column name="avatar_public_id" type="VARCHAR(255)"/>
             <column name="mobile_number" type="VARCHAR(20)">
-                <constraints nullable="true" unique="true"/>
+                <constraints unique="true"/>
             </column>
             <column name="password" type="VARCHAR(255)">
-                <constraints nullable="false"/>
+                <constraints nullable="true"/>
             </column>
             <column name="verification_token" type="VARCHAR(255)"/>
             <column name="reset_token" type="VARCHAR(255)"/>
-            <column name="is_verified" type="TINYINT(1)" defaultValue="0">
+            <column name="verified" type="BOOLEAN" defaultValueBoolean="false">
                 <constraints nullable="false"/>
             </column>
-            <column name="is_profile_complete" type="TINYINT(1)" defaultValue="0">
+            <column name="profile_complete" type="BOOLEAN" defaultValueBoolean="false">
                 <constraints nullable="false"/>
             </column>
             <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
@@ -86,15 +80,17 @@
                 <constraints nullable="false"/>
             </column>
         </createTable>
-        <addForeignKeyConstraint 
-            baseTableName="users" 
-            baseColumnNames="address_id"
-            constraintName="fk_users_address_id"
-            referencedTableName="address"
-            referencedColumnNames="address_id"
-            onDelete="SET NULL"/>
+
+        <addForeignKeyConstraint
+                baseTableName="users"
+                baseColumnNames="address_id"
+                constraintName="fk_users_address_id"
+                referencedTableName="address"
+                referencedColumnNames="address_id"
+                onDelete="SET NULL"/>
     </changeSet>
 
+    <!-- SPECIALISTS -->
     <changeSet id="5" author="aditya">
         <createTable tableName="specialists">
             <column name="specialist_id" type="BIGINT">
@@ -107,15 +103,17 @@
                 <constraints nullable="false"/>
             </column>
         </createTable>
+
         <addForeignKeyConstraint
-            baseTableName="specialists"
-            baseColumnNames="specialist_id"
-            constraintName="fk_specialists_users"
-            referencedTableName="users"
-            referencedColumnNames="user_id"
-            onDelete="CASCADE"/>
+                baseTableName="specialists"
+                baseColumnNames="specialist_id"
+                constraintName="fk_specialists_users"
+                referencedTableName="users"
+                referencedColumnNames="user_id"
+                onDelete="CASCADE"/>
     </changeSet>
 
+    <!-- PET -->
     <changeSet id="6" author="aditya">
         <createTable tableName="pet">
             <column name="pet_id" type="BIGINT" autoIncrement="true">
@@ -125,7 +123,7 @@
                 <constraints nullable="false"/>
             </column>
             <column name="age" type="INT"/>
-            <column name="weight" type="FLOAT"/>
+            <column name="weight" type="REAL"/>
             <column name="gender" type="VARCHAR(20)">
                 <constraints nullable="false"/>
             </column>
@@ -147,15 +145,17 @@
                 <constraints nullable="false"/>
             </column>
         </createTable>
+
         <addForeignKeyConstraint
-            baseTableName="pet"
-            baseColumnNames="user_id"
-            constraintName="fk_pet_user_id"
-            referencedTableName="users"
-            referencedColumnNames="user_id"
-            onDelete="CASCADE"/>
+                baseTableName="pet"
+                baseColumnNames="user_id"
+                constraintName="fk_pet_user_id"
+                referencedTableName="users"
+                referencedColumnNames="user_id"
+                onDelete="CASCADE"/>
     </changeSet>
 
+    <!-- APPOINTMENTS -->
     <changeSet id="7" author="aditya">
         <createTable tableName="appointments">
             <column name="appointment_id" type="BIGINT" autoIncrement="true">
@@ -170,7 +170,7 @@
             <column name="specialist_id" type="BIGINT">
                 <constraints nullable="false"/>
             </column>
-            <column name="date" type="TIMESTAMP">
+            <column name="appointment_date" type="TIMESTAMP">
                 <constraints nullable="false"/>
             </column>
             <column name="status" type="VARCHAR(50)">
@@ -185,30 +185,35 @@
             <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
                 <constraints nullable="false"/>
             </column>
-            <column name="updated_at" type="TIMESTAMP"/> </createTable>
+            <column name="updated_at" type="TIMESTAMP"/>
+        </createTable>
+
         <addForeignKeyConstraint
-            baseTableName="appointments"
-            baseColumnNames="user_id"
-            constraintName="fk_appointments_user_id"
-            referencedTableName="users"
-            referencedColumnNames="user_id"
-            onDelete="CASCADE"/>
+                baseTableName="appointments"
+                baseColumnNames="user_id"
+                constraintName="fk_appointments_user_id"
+                referencedTableName="users"
+                referencedColumnNames="user_id"
+                onDelete="CASCADE"/>
+
         <addForeignKeyConstraint
-            baseTableName="appointments"
-            baseColumnNames="pet_id"
-            constraintName="fk_appointments_pet_id"
-            referencedTableName="pet"
-            referencedColumnNames="pet_id"
-            onDelete="CASCADE"/>
+                baseTableName="appointments"
+                baseColumnNames="pet_id"
+                constraintName="fk_appointments_pet_id"
+                referencedTableName="pet"
+                referencedColumnNames="pet_id"
+                onDelete="CASCADE"/>
+
         <addForeignKeyConstraint
-            baseTableName="appointments"
-            baseColumnNames="specialist_id"
-            constraintName="fk_appointments_specialist_id"
-            referencedTableName="specialists"
-            referencedColumnNames="specialist_id"
-            onDelete="CASCADE"/>
+                baseTableName="appointments"
+                baseColumnNames="specialist_id"
+                constraintName="fk_appointments_specialist_id"
+                referencedTableName="specialists"
+                referencedColumnNames="specialist_id"
+                onDelete="CASCADE"/>
     </changeSet>
 
+    <!-- OAUTH -->
     <changeSet id="8" author="aditya">
         <createTable tableName="oauth_accounts">
             <column name="id" type="BIGINT" autoIncrement="true">
@@ -223,8 +228,8 @@
             <column name="provider_user_id" type="VARCHAR(100)">
                 <constraints nullable="false"/>
             </column>
-            <column name="access_token" type="LONGTEXT"/>
-            <column name="refresh_token" type="LONGTEXT"/>
+            <column name="access_token" type="TEXT"/>
+            <column name="refresh_token" type="TEXT"/>
             <column name="token_expiry" type="TIMESTAMP"/>
             <column name="refresh_token_expiry" type="TIMESTAMP"/>
             <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
@@ -234,22 +239,26 @@
                 <constraints nullable="false"/>
             </column>
         </createTable>
+
         <addUniqueConstraint
-            tableName="oauth_accounts"
-            columnNames="provider,provider_user_id"
-            constraintName="uk_oauth_provider_id"/>
+                tableName="oauth_accounts"
+                columnNames="provider,provider_user_id"
+                constraintName="uk_oauth_provider_id"/>
+
         <addForeignKeyConstraint
-            baseTableName="oauth_accounts"
-            baseColumnNames="user_id"
-            constraintName="fk_oauth_accounts_user_id"
-            referencedTableName="users"
-            referencedColumnNames="user_id"
-            onDelete="CASCADE"/>
+                baseTableName="oauth_accounts"
+                baseColumnNames="user_id"
+                constraintName="fk_oauth_accounts_user_id"
+                referencedTableName="users"
+                referencedColumnNames="user_id"
+                onDelete="CASCADE"/>
+
         <createIndex tableName="oauth_accounts" indexName="idx_oauth_user_id">
             <column name="user_id"/>
         </createIndex>
     </changeSet>
 
+    <!-- USER ROLES -->
     <changeSet id="9" author="aditya">
         <createTable tableName="user_roles">
             <column name="user_id" type="BIGINT">
@@ -259,22 +268,25 @@
                 <constraints primaryKey="true" nullable="false"/>
             </column>
         </createTable>
+
         <addForeignKeyConstraint
-            baseTableName="user_roles"
-            baseColumnNames="user_id"
-            constraintName="fk_user_roles_user_id"
-            referencedTableName="users"
-            referencedColumnNames="user_id"
-            onDelete="CASCADE"/>
+                baseTableName="user_roles"
+                baseColumnNames="user_id"
+                constraintName="fk_user_roles_user_id"
+                referencedTableName="users"
+                referencedColumnNames="user_id"
+                onDelete="CASCADE"/>
+
         <addForeignKeyConstraint
-            baseTableName="user_roles"
-            baseColumnNames="role_id"
-            constraintName="fk_user_roles_role_id"
-            referencedTableName="roles"
-            referencedColumnNames="role_id"
-            onDelete="CASCADE"/>
+                baseTableName="user_roles"
+                baseColumnNames="role_id"
+                constraintName="fk_user_roles_role_id"
+                referencedTableName="roles"
+                referencedColumnNames="role_id"
+                onDelete="CASCADE"/>
     </changeSet>
 
+    <!-- INDEXES -->
     <changeSet id="10" author="aditya">
         <createIndex tableName="users" indexName="idx_users_email">
             <column name="email"/>
