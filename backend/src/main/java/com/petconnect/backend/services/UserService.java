@@ -205,26 +205,51 @@ public class UserService {
             User user = userRepository.findByEmail(email)
                     .orElseThrow(() -> new ResourceNotFoundException("User not found with email " + email));
 
-            boolean hasPassword = user.getPassword() != null && !user.getPassword().isBlank();
-
+            // 1. Validate new password strength
             if (!PasswordValidator.isValid(updatePasswordRequestDTO.getNewPassword())) {
                 throw new IllegalArgumentException("Password must be at least 8 characters long and include uppercase, lowercase, number, and special character.");
             }
 
+            boolean isOAuthUser = !user.getOauthAccounts().isEmpty();
+            boolean hasStoredPassword = user.getPassword() != null && !user.getPassword().isBlank();
+            boolean currentPasswordProvided = updatePasswordRequestDTO.getCurrentPassword() != null && !updatePasswordRequestDTO.getCurrentPassword().isBlank();
 
-            if (hasPassword) {
-                if (!passwordEncoder.matches(updatePasswordRequestDTO.getCurrentPassword(), user.getPassword())) {
-                    throw new IllegalArgumentException("Current password is incorrect.");
+
+            if (isOAuthUser) {
+                // For OAuth users: Always allow setting a new password without requiring the current one.
+                // The stored password (even if system-generated) will be overwritten.
+                // If a current password was provided, it is ignored, as OAuth users don't know the system-generated one.
+                logger.info("OAuth user setting a new password (current password ignored if provided): {}", email);
+            } else {
+                // For non-OAuth users:
+                if (hasStoredPassword) {
+                    // Non-OAuth user with an existing password, current password is required.
+                    if (!currentPasswordProvided) {
+                        throw new IllegalArgumentException("Current password is required to update your password.");
+                    }
+                    if (!passwordEncoder.matches(updatePasswordRequestDTO.getCurrentPassword(), user.getPassword())) {
+                        throw new IllegalArgumentException("Current password is incorrect.");
+                    }
+                    // If current password matches, then new password cannot be the same as old.
+                    if (passwordEncoder.matches(updatePasswordRequestDTO.getNewPassword(), user.getPassword())) {
+                        throw new IllegalArgumentException("New password cannot be the same as the old password.");
+                    }
+                    logger.info("Non-OAuth user updating existing password: {}", email);
+                } else {
+                    // Non-OAuth user setting password for the first time.
+                    // Should not provide a current password.
+                    if (currentPasswordProvided) {
+                        throw new IllegalArgumentException("You do not have a current password to verify. Please leave 'currentPassword' field blank.");
+                    }
+                    logger.info("Non-OAuth user setting password for the first time: {}", email);
                 }
             }
 
-            if (passwordEncoder.matches(updatePasswordRequestDTO.getNewPassword(), user.getPassword())) {
-                throw new IllegalArgumentException("New password cannot be the same as the old password.");
-            }
-
+            // 4. Encode and save the new password
             user.setPassword(passwordEncoder.encode(updatePasswordRequestDTO.getNewPassword()));
             userRepository.save(user);
             logger.info("Password updated successfully for user with email: {}", email);
+
         } catch (ResourceNotFoundException e) {
             logger.error("User not found with email: {}", email, e);
             throw e;

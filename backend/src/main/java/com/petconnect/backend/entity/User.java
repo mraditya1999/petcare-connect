@@ -50,18 +50,18 @@
 
         @NotEmpty(message = "First name is required")
         @Size(max = 50, message = "First name cannot exceed 50 characters")
-        @Column(nullable = true, length = 50)
+        @Column(nullable = false, length = 50)
         private String firstName;
 
         @NotEmpty(message = "Last name is required")
         @Size(max = 50, message = "Last name cannot exceed 50 characters")
-        @Column(nullable = true, length = 50)
+        @Column(nullable = false, length = 50)
         private String lastName;
 
         @NotEmpty(message = "Email is required")
         @Email(message = "Email must be valid")
         @Size(max = 100, message = "Email cannot exceed 100 characters")
-        @Column(nullable = true, unique = true, length = 100)
+        @Column(nullable = false, unique = true, length = 100)
         private String email;
 
         @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
@@ -79,11 +79,7 @@
         @Column(length = 20, unique = true, nullable = true)
         private String mobileNumber;
 
-//        @NotBlank(message = "Password is required")
         @Size(min = 8, message = "Password must be at least 8 characters")
-//        @Pattern(regexp = "^(?=.*[A-Z])(?=.*[a-z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]+$",
-//                message = "Password must contain at least one uppercase letter, one lowercase letter, one digit, and one special character")
-        @Column(nullable = true)
         private String password;
 
         @Column

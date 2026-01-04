@@ -14,7 +14,7 @@ public class AddressDTO {
     private Long addressId;
 
     @NotBlank(message = "Pincode is required")
-    @Pattern(regexp = "\\d{6}", message = "Pincode must be 6 digits")
+    @Pattern(regexp = "\\d{6}", message = "Pincode must be exactly 6 digits")
     private String pincode;
 
     @NotBlank(message = "City is required")
