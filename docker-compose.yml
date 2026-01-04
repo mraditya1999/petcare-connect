@@ -8,7 +8,7 @@ services:
     env_file:
       - .env
     depends_on:
-      mysql:
+      postgres:
         condition: service_healthy
       mongodb:
         condition: service_started
@@ -22,26 +22,18 @@ services:
     ports:
       - '5173:5173'
 
-  mysql:
-    image: mysql:5.7
+  postgres:
+    image: postgres:15-alpine
     environment:
-      MYSQL_DATABASE: ${DB_NAME}
-      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
     ports:
-      - '3306:3306'
+      - '5432:5432'
     healthcheck:
-      test:
-        [
-          'CMD',
-          'mysqladmin',
-          'ping',
-          '-h',
-          'localhost',
-          '-uroot',
-          '-p${DB_PASSWORD}',
-        ]
-      interval: 30s
-      timeout: 10s
+      test: [ "CMD-SHELL", "pg_isready -U ${DB_USERNAME} -d ${DB_NAME}" ]
+      interval: 10s
+      timeout: 5s
       retries: 5
 
   mongodb:

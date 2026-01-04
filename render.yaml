@@ -1,0 +1,134 @@
+# render.yaml
+# This file defines the services for your application on Render.
+# You can deploy this by creating a new "Blueprint" service in the Render dashboard
+# and connecting it to your GitHub repository.
+
+# -----------------
+# Service Definitions
+# -----------------
+services:
+  # 1. Spring Boot Backend Service
+  - type: web
+    name: petcare-backend
+    env: docker
+    repo: https://github.com/mraditya1999/petcare-connect # Important: Replace with your repository URL
+    dockerfilePath: ./backend/Dockerfile
+    healthCheckPath: /api/v1/actuator/health # Assumes actuator is enabled
+    envVars:
+      - key: SERVER_PORT
+        value: 8080
+      - key: SPRING_PROFILE
+        value: prod
+      # --- Database Connection (from Render's managed PostgreSQL) ---
+      - key: DB_HOST
+        fromService:
+          type: pserv
+          name: petcare-db
+          property: host
+      - key: DB_PORT
+        fromService:
+          type: pserv
+          name: petcare-db
+          property: port
+      - key: DB_NAME
+        fromService:
+          type: pserv
+          name: petcare-db
+          property: database
+      - key: DB_USERNAME
+        fromService:
+          type: pserv
+          name: petcare-db
+          property: user
+      - key: DB_PASSWORD
+        fromService:
+          type: pserv
+          name: petcare-db
+          property: password
+      # --- Redis Connection (from Render's managed Redis) ---
+      - key: SPRING_REDIS_HOST
+        fromService:
+          type: redis
+          name: petcare-redis
+          property: host
+      - key: SPRING_REDIS_PORT
+        fromService:
+          type: redis
+          name: petcare-redis
+          property: port
+      - key: SPRING_REDIS_PASSWORD
+        fromService:
+          type: redis
+          name: petcare-redis
+          property: password
+      - key: SPRING_REDIS_SSL
+        value: true
+      # --- Frontend URL for CORS ---
+      - key: FRONTEND_URLS
+        fromService:
+          type: web
+          name: petcare-frontend
+          property: url
+      # --- Secrets ---
+      # These must be set in the Render dashboard under Environment > Secret Files
+      - key: MONGO_URI
+        sync: false
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+      - key: GMAIL_USERNAME
+        sync: false
+      - key: GMAIL_PASSWORD
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GITHUB_CLIENT_ID
+        sync: false
+      - key: GITHUB_CLIENT_SECRET
+        sync: false
+      - key: GITHUB_REDIRECT_URI
+        sync: false
+      - key: TWILIO_ACCOUNT_SID
+        sync: false
+      - key: TWILIO_AUTH_TOKEN
+        sync: false
+      - key: TWILIO_FROM_PHONE
+        sync: false
+
+
+  # 2. React Frontend Service
+  - type: web
+    name: petcare-frontend
+    env: docker
+    repo: https://github.com/mraditya1999/petcare-connect # Important: Replace with your repository URL
+    dockerfilePath: ./frontend/Dockerfile
+    # Rewrites to proxy API requests to the backend
+    rewrites:
+      - source: /api/:path*
+        destination: http://petcare-backend:8080/api/:path*
+    envVars:
+      # This tells the frontend where to send API requests in development.
+      # In production, the rewrite rule handles this.
+      - key: VITE_API_BASE_URL
+        value: /api/v1 # The path will be handled by the rewrite rule
+
+# -----------------
+# Database and Cache Definitions
+# -----------------
+databases:
+  # 1. PostgreSQL Database
+  - name: petcare-db
+    databaseName: petcare
+    user: petcare_user
+    plan: free # Or choose a paid plan for production
+    ipAllowList: [] # Allow all, or restrict to your services
+
+  # 2. Redis Cache
+  - name: petcare-redis
+    plan: free # Or choose a paid plan for production
+    ipAllowList: [] # Allow all, or restrict to your services
