@@ -22,12 +22,8 @@ public class PetRequestDto {
     @DecimalMax(value = "300", message = "Pet weight cannot exceed 300 kg")
     private Double weight;
 
-    @NotBlank(message = "Gender is required")
-    @Pattern(
-            regexp = "^(?i)(MALE|FEMALE)$",
-            message = "Invalid gender value. Allowed values are: MALE | FEMALE"
-    )
-    private String gender;
+    @NotNull(message = "Gender is required")
+    private Gender gender;
 
     @NotNull(message = "Breed ID is required")
     @Positive
@@ -35,12 +31,4 @@ public class PetRequestDto {
 
     private String avatarUrl;
     private String avatarPublicId;
-
-    public void setGender(String gender) {
-        if (gender != null) {
-            this.gender = gender.trim().toUpperCase();
-        } else {
-            this.gender = null;
-        }
-    }
 }

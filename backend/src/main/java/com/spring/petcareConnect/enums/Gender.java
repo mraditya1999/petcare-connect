@@ -1,5 +1,6 @@
 package com.spring.petcareConnect.enums;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import lombok.Getter;
 
 @Getter
@@ -13,6 +14,7 @@ public enum Gender {
         this.displayName = displayName;
     }
 
+    @JsonCreator
     public static Gender fromString(String value) {
         for (Gender gender : Gender.values()) {
             if (gender.name().equalsIgnoreCase(value) || gender.displayName.equalsIgnoreCase(value)) {

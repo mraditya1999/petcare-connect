@@ -4,15 +4,12 @@ import com.spring.petcareConnect.dtos.CustomApiResponse;
 import com.spring.petcareConnect.dtos.profile.request.UpdatePasswordRequestDto;
 import com.spring.petcareConnect.dtos.profile.request.UserProfileRequestDto;
 import com.spring.petcareConnect.dtos.profile.response.UserProfileResponseDto;
-import com.spring.petcareConnect.security.service.UserDetailsImpl;
 import com.spring.petcareConnect.services.UserProfileService;
 import com.spring.petcareConnect.config.ResponseMessages;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -35,13 +32,15 @@ public class UserProfileController {
 
     @PutMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<CustomApiResponse<UserProfileResponseDto>> updateUserProfile(
-            @Valid @ModelAttribute UserProfileRequestDto userProfileRequestDto,
-            @RequestParam(value = "profileImage", required = false) MultipartFile profileImage) {
-        UserProfileResponseDto responseDto = userProfileService.updateUserProfile(userProfileRequestDto, profileImage);
-        CustomApiResponse<UserProfileResponseDto> response = new CustomApiResponse<>(true, ResponseMessages.PROFILE_UPDATED, responseDto);
-        return new ResponseEntity<>(response, HttpStatus.OK);
-    }
+            @Valid @RequestPart("userProfile") UserProfileRequestDto userProfileRequestDto,
+            @RequestPart(value = "profileImage", required = false) MultipartFile profileImage) {
 
+        UserProfileResponseDto responseDto = userProfileService.updateUserProfile(userProfileRequestDto, profileImage);
+        CustomApiResponse<UserProfileResponseDto> response =
+                new CustomApiResponse<>(true, ResponseMessages.PROFILE_UPDATED, responseDto);
+
+        return ResponseEntity.ok(response);
+    }
 
     @DeleteMapping
     public ResponseEntity<CustomApiResponse<Void>> deleteUserProfile() {

@@ -22,6 +22,13 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body(new CustomApiResponse<>(false, errorMessage, null));
     }
 
+    @ExceptionHandler(org.springframework.http.converter.HttpMessageNotReadableException.class)
+    public ResponseEntity<CustomApiResponse<String>> handleJsonParseError(org.springframework.http.converter.HttpMessageNotReadableException ex) {
+        String message = "Invalid request payload: " + ex.getMostSpecificCause().getMessage();
+        return ResponseEntity.badRequest()
+                .body(new CustomApiResponse<>(false, message, null));
+    }
+
     @ExceptionHandler(AuthenticationException.class)
     public ResponseEntity<CustomApiResponse<String>> handleAuthenticationException(AuthenticationException ex) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)

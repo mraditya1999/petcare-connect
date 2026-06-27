@@ -9,6 +9,7 @@ import com.spring.petcareConnect.dtos.pet.response.PetResponseDto;
 import com.spring.petcareConnect.services.PetService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -23,18 +24,28 @@ public class PetController {
         this.petService = petService;
     }
 
-    @PostMapping
-    public ResponseEntity<CustomApiResponse<PetResponseDto>> createPetForUser(@Valid @ModelAttribute PetRequestDto petRequestDTO, @RequestParam(value = "profileImage", required = false) MultipartFile profileImage) {
+    @PostMapping(consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
+    public ResponseEntity<CustomApiResponse<PetResponseDto>> createPetForUser(
+            @RequestPart("petRequest") @Valid PetRequestDto petRequestDTO,
+            @RequestPart(value = "profileImage", required = false) MultipartFile profileImage) {
+
         PetResponseDto petResponseDTO = petService.createPetForUser(petRequestDTO, profileImage);
-        CustomApiResponse<PetResponseDto> response = new CustomApiResponse<>(true, ResponseMessages.PET_CREATED, petResponseDTO);
+        CustomApiResponse<PetResponseDto> response =
+                new CustomApiResponse<>(true, ResponseMessages.PET_CREATED, petResponseDTO);
+
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
-    @PutMapping("/{petId}")
-    public ResponseEntity<CustomApiResponse<PetResponseDto>> updatePetForUser(@PathVariable Long petId, @Valid @ModelAttribute PetRequestDto petRequestDTO,
-             @RequestParam(value = "profileImage", required = false) MultipartFile profileImage){
+    @PutMapping(value = "/{petId}", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
+    public ResponseEntity<CustomApiResponse<PetResponseDto>> updatePetForUser(
+            @PathVariable Long petId,
+            @RequestPart("petRequest") @Valid PetRequestDto petRequestDTO,
+            @RequestPart(value = "profileImage", required = false) MultipartFile profileImage) {
+
         PetResponseDto petResponseDTO = petService.updatePetForUser(petId, petRequestDTO, profileImage);
-        CustomApiResponse<PetResponseDto> response = new CustomApiResponse<>(true, ResponseMessages.PET_UPDATED, petResponseDTO);
+        CustomApiResponse<PetResponseDto> response =
+                new CustomApiResponse<>(true, ResponseMessages.PET_UPDATED, petResponseDTO);
+
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 

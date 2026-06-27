@@ -113,7 +113,7 @@ public class PetServiceImpl implements PetService {
 
         existingPet.setAge(petRequestDTO.getAge());
         existingPet.setWeight(petRequestDTO.getWeight());
-        existingPet.setGender(Gender.valueOf(petRequestDTO.getGender()));
+        existingPet.setGender(petRequestDTO.getGender());
 
         Breed breed = breedRepository.findById(petRequestDTO.getBreed())
                 .orElseThrow(() -> {
