@@ -309,8 +309,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public SpecialistResponseDto createSpecialist(Long adminUserId, SpecialistCreationDto specialistCreationDto) {
-        // Alternative: use AuthUtils.loggedInUserId() instead of passing adminUserId
+    public SpecialistResponseDto createSpecialist(Long adminUserId, SpecialistCreationDto dto) {
         User admin = userRepository.findById(adminUserId)
                 .orElseThrow(() -> ResourceNotFoundException.byId("User", adminUserId));
 
@@ -320,16 +319,16 @@ public class AuthServiceImpl implements AuthService {
             throw new APIException("Only ADMIN users can create specialists");
         }
 
-        String email = EmailUtils.normalize(specialistCreationDto.getEmail());
+        String email = EmailUtils.normalize(dto.getEmail());
         if (userRepository.findByEmail(email).isPresent()) {
             throw new DuplicateResourceException("User", "email", email);
         }
 
         User specialistUser = new User();
-        specialistUser.setFirstName(specialistCreationDto.getFirstName());
-        specialistUser.setLastName(specialistCreationDto.getLastName());
+        specialistUser.setFirstName(dto.getFirstName());
+        specialistUser.setLastName(dto.getLastName());
         specialistUser.setEmail(email);
-        specialistUser.setPassword(passwordEncoder.encode(specialistCreationDto.getPassword()));
+        specialistUser.setPassword(passwordEncoder.encode(dto.getPassword()));
         specialistUser.setVerified(true);
         specialistUser.setProfileComplete(false);
 
@@ -341,9 +340,17 @@ public class AuthServiceImpl implements AuthService {
 
         Specialist specialist = new Specialist();
         specialist.setUser(specialistUser);
-        specialist.setAbout(specialistCreationDto.getAbout());
+        specialist.setAbout(dto.getAbout());
         specialist.setAvailable(true);
-        specialist.setVerified(false);
+        specialist.setSlotDuration(dto.getSlotDuration());
+        specialist.setSpecialization(dto.getSpecialization());
+        specialist.setExperienceYears(dto.getExperienceYears());
+        specialist.setConsultationFee(dto.getConsultationFee());
+        specialist.setWorkingHoursStart(dto.getWorkingHoursStart());
+        specialist.setWorkingHoursEnd(dto.getWorkingHoursEnd());
+        specialist.setDaysAvailable(dto.getDaysAvailable());
+        specialist.setLocation(dto.getLocation());
+
         specialist = specialistRepository.save(specialist);
 
         SpecialistResponseDto resp = new SpecialistResponseDto();
@@ -355,6 +362,13 @@ public class AuthServiceImpl implements AuthService {
         resp.setAbout(specialist.getAbout());
         resp.setVerified(specialist.getUser().isVerified());
         resp.setAvailable(specialist.isAvailable());
+        resp.setSpecialization(specialist.getSpecialization());
+        resp.setExperienceYears(specialist.getExperienceYears());
+        resp.setConsultationFee(specialist.getConsultationFee());
+        resp.setWorkingHoursStart(specialist.getWorkingHoursStart());
+        resp.setWorkingHoursEnd(specialist.getWorkingHoursEnd());
+        resp.setDaysAvailable(specialist.getDaysAvailable());
+        resp.setLocation(specialist.getLocation());
 
         return resp;
     }

@@ -19,8 +19,6 @@ import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
 
-import java.util.Map;
-
 @RestController
 @RequestMapping("/oauth")
 public class OAuthController {
@@ -63,7 +61,7 @@ public class OAuthController {
     @GetMapping("/google/url")
     public ResponseEntity<CustomApiResponse<OAuthAuthUrlResponseDto>> googleUrl() {
         OAuthAuthUrlResponseDto oAuthAuthUrlResponseDto = oauthService.generateGoogleAuthUrl();
-        CustomApiResponse<OAuthAuthUrlResponseDto> response = new CustomApiResponse<>(true, "Google OAuth URL generated.", oAuthAuthUrlResponseDto);
+        CustomApiResponse<OAuthAuthUrlResponseDto> response = new CustomApiResponse<>(true, ResponseMessages.GOOGLE_OAUTH_URL, oAuthAuthUrlResponseDto);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
@@ -77,7 +75,7 @@ public class OAuthController {
     @GetMapping("/github/url")
     public ResponseEntity<CustomApiResponse<OAuthAuthUrlResponseDto>> githubUrl() {
         OAuthAuthUrlResponseDto oAuthAuthUrlResponseDto = oauthService.generateGithubAuthUrl();
-        CustomApiResponse<OAuthAuthUrlResponseDto> response = new CustomApiResponse<>(true, "GitHub OAuth URL generated.", oAuthAuthUrlResponseDto);
+        CustomApiResponse<OAuthAuthUrlResponseDto> response = new CustomApiResponse<>(true, ResponseMessages.GITHUB_OAUTH_URL, oAuthAuthUrlResponseDto);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 

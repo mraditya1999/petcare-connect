@@ -5,7 +5,6 @@ package com.spring.petcareConnect.config;
  */
 public final class ResponseMessages {
 
-
     private ResponseMessages() { }
 
     // Auth-related
@@ -28,6 +27,8 @@ public final class ResponseMessages {
     public static final String OTP_SENT_SUCCESS = "OTP sent successfully";
     public static final String OTP_NEW_USER = "New user. Complete profile.";
     public static final String PROFILE_COMPLETED = "Profile completed successfully.";
+    public static final String GOOGLE_OAUTH_URL = "Google OAuth URL generated.";
+    public static final String GITHUB_OAUTH_URL = "Google OAuth URL generated.";
 
     // Pet
     public static final String PET_CREATED = "Pet created successfully";
@@ -36,6 +37,10 @@ public final class ResponseMessages {
     public static final String PET_FETCHED = "Pet fetched successfully";
     public static final String PET_DELETED = "Pet deleted successfully";
 
+    // Appointment
+    public static final String APPOINTMENT_CREATED = "Appointment created successfully";
+    public static final String APPOINTMENT_UPDATED = "Appointment updated successfully";
+    public static final String APPOINTMENT_CANCELLED = "Appointment cancelled";
 
 }
 

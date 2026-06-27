@@ -89,4 +89,11 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(new CustomApiResponse<>(false, "An unexpected error occurred", null));
     }
+
+    @ExceptionHandler(ConflictException.class)
+    public ResponseEntity<CustomApiResponse<String>> handleConflictException(ConflictException ex) {
+        return ResponseEntity.status(ex.getStatus())
+                .body(new CustomApiResponse<>(false, ex.getMessage(), null));
+    }
+
 }

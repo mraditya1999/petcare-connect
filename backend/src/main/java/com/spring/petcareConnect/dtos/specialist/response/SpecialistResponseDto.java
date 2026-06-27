@@ -1,11 +1,15 @@
 package com.spring.petcareConnect.dtos.specialist.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.spring.petcareConnect.enums.AvailableDay;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.util.Set;
 
 @Data
 @NoArgsConstructor
@@ -22,6 +26,15 @@ public class SpecialistResponseDto {
     private boolean verified;
     private boolean available;
     private LocalDateTime createdAt;
+    private Integer slotDuration;
+    private String specialization;
+    private Integer experienceYears;
+    private Double rating;
+    private BigDecimal consultationFee;
+    private LocalTime workingHoursStart;
+    private LocalTime workingHoursEnd;
+    private Set<AvailableDay> daysAvailable;
+    private String location;
 
     public SpecialistResponseDto(Long specialistId, String firstName, String lastName, String about, boolean verified) {
         this.specialistId = specialistId;

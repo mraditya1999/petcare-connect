@@ -37,20 +37,20 @@ public class EmailServiceImpl implements EmailService {
     public void sendEmail(User user, EmailType type) {
         logger.info("Preparing to send {} email to {}", type, user.getEmail());
 
-        try {
-            String subject;
-            String message;
-            String actionLink;
-            String buttonText;
-            String template = "email-template";
+        String subject;
+        String message;
+        String actionLink;
+        String buttonText;
+        String template = "email-template";
 
+        try {
             switch (type) {
                 case VERIFICATION:
                     subject = "Email Verification";
                     message = "Thank you for registering. Please verify your email address by clicking below:";
                     actionLink = frontendUrl + "/user/verify-email?token=" + user.getVerificationToken();
                     buttonText = "Verify Email";
-                    logger.debug("Verification email prepared for user {}", user.getUserId());
+//                    template = "verification-email";
                     break;
 
                 case RESET:
@@ -58,7 +58,39 @@ public class EmailServiceImpl implements EmailService {
                     message = "You requested a password reset. Click below to set a new password:";
                     actionLink = frontendUrl + "/user/reset-password?token=" + user.getResetToken();
                     buttonText = "Reset Password";
-                    logger.debug("Reset email prepared for user {}", user.getUserId());
+//                    template = "reset-email";
+                    break;
+
+                case APPOINTMENT_CREATED:
+                    subject = "Appointment Confirmation";
+                    message = "Your appointment has been successfully scheduled.";
+                    actionLink = frontendUrl + "/appointments/" + user.getUserId();
+                    buttonText = "View Appointment";
+//                    template = "appointment-created-email";
+                    break;
+
+                case APPOINTMENT_UPDATED:
+                    subject = "Appointment Rescheduled";
+                    message = "Your appointment has been rescheduled. Please check the new details below.";
+                    actionLink = frontendUrl + "/appointments/" + user.getUserId();
+                    buttonText = "View Updated Appointment";
+//                    template = "appointment-updated-email";
+                    break;
+
+                case APPOINTMENT_CANCELLED:
+                    subject = "Appointment Cancelled";
+                    message = "Your appointment has been cancelled.";
+                    actionLink = frontendUrl + "/appointments/" + user.getUserId();
+                    buttonText = "View Appointments";
+//                    template = "appointment-cancelled-email";
+                    break;
+
+                case APPOINTMENT_REMINDER:
+                    subject = "Appointment Reminder";
+                    message = "This is a reminder for your upcoming appointment.";
+                    actionLink = frontendUrl + "/appointments/" + user.getUserId();
+                    buttonText = "View Appointment";
+//                    template = "appointment-reminder-email";
                     break;
 
                 default:
@@ -67,7 +99,6 @@ public class EmailServiceImpl implements EmailService {
             }
 
             sendEmailInternal(user, subject, message, actionLink, buttonText, template);
-
             logger.info("{} email successfully sent to {}", type, user.getEmail());
 
         } catch (Exception e) {
@@ -79,19 +110,19 @@ public class EmailServiceImpl implements EmailService {
     private void sendEmailInternal(User user, String subject, String message, String actionLink, String buttonText, String template) {
         logger.debug("Building email content for subject={} user={}", subject, user.getUserId());
 
+        Context context = new Context();
+        context.setVariable("user", user);
+        context.setVariable("title", subject);
+        context.setVariable("message", message);
+        context.setVariable("actionLink", actionLink);
+        context.setVariable("buttonText", buttonText);
+
+        if ("reset-email".equals(template) && user.getResetTokenExpiry() != null) {
+            context.setVariable("expiry", user.getResetTokenExpiry());
+            logger.debug("Added reset token expiry for user {}", user.getUserId());
+        }
+
         try {
-            Context context = new Context();
-            context.setVariable("user", user);
-            context.setVariable("title", subject);
-            context.setVariable("message", message);
-            context.setVariable("actionLink", actionLink);
-            context.setVariable("buttonText", buttonText);
-
-            if (template.equals("reset-email") && user.getResetTokenExpiry() != null) {
-                context.setVariable("expiry", user.getResetTokenExpiry());
-                logger.debug("Added reset token expiry for user {}", user.getUserId());
-            }
-
             String htmlContent = templateEngine.process(template, context);
             logger.trace("Generated HTML content for email: {}", htmlContent);
 

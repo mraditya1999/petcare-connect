@@ -1,6 +1,7 @@
 package com.spring.petcareConnect.config;
 
 import com.spring.petcareConnect.entities.*;
+import com.spring.petcareConnect.enums.AvailableDay;
 import com.spring.petcareConnect.enums.RoleName;
 import com.spring.petcareConnect.repositories.jpa.BreedRepository;
 import com.spring.petcareConnect.repositories.jpa.RoleRepository;
@@ -11,6 +12,8 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
+import java.math.BigDecimal;
+import java.time.LocalTime;
 import java.util.*;
 
 /**
@@ -89,22 +92,33 @@ public class DataInitializer implements CommandLineRunner {
 
         // Specialist user
         if (userRepository.findByEmail("specialist@example.com").isEmpty()) {
+            // Create User first
             User specialistUser = new User();
-            specialistUser.setFirstName("Dr. Alice");
+            specialistUser.setFirstName("Alice");
             specialistUser.setLastName("Vet");
             specialistUser.setEmail("specialist@example.com");
             specialistUser.setPassword(passwordEncoder.encode("Specialist@123"));
             specialistUser.getRoles().add(specialistRole);
             specialistUser.setVerified(true);
             specialistUser.setProfileComplete(true);
-            // Save user first to satisfy FK on Specialist
+
             userRepository.save(specialistUser);
 
             // Create Specialist record and link to user
             Specialist specialist = new Specialist();
             specialist.setUser(specialistUser);
             specialist.setAbout("Experienced veterinary specialist available for appointments.");
-            // appointments list will be empty by default
+            specialist.setAvailable(true); // accepting appointments
+            specialist.setSlotDuration(30); // 30-minute slots
+            specialist.setSpecialization("Veterinary Medicine");
+            specialist.setExperienceYears(10);
+            specialist.setRating(4.8);
+            specialist.setConsultationFee(new BigDecimal("500.00")); // INR 500
+            specialist.setWorkingHoursStart(LocalTime.of(9, 0)); // 9:00 AM
+            specialist.setWorkingHoursEnd(LocalTime.of(17, 0)); // 5:00 PM
+            specialist.setDaysAvailable(Set.of(AvailableDay.MONDAY, AvailableDay.WEDNESDAY, AvailableDay.FRIDAY));
+            specialist.setLocation("Bengaluru North Clinic");
+
             specialistRepository.save(specialist);
         }
     }

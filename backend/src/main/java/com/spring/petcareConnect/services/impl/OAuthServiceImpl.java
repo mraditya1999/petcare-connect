@@ -21,11 +21,10 @@ import com.spring.petcareConnect.services.OAuthService;
 import com.spring.petcareConnect.security.jwt.JwtUtils;
 import com.spring.petcareConnect.services.OAuthStateService;
 import com.spring.petcareConnect.services.OtpRedisService;
-import com.spring.petcareConnect.services.SmsSender;
+import com.spring.petcareConnect.services.SmsService;
 import com.spring.petcareConnect.utils.EmailUtils;
 import com.spring.petcareConnect.utils.PhoneUtils;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.validation.constraints.NotBlank;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -49,33 +48,31 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
 public class OAuthServiceImpl implements OAuthService {
 
-    @Value("${app.otp.ttlMinutes:5}")
+    @Value("${otp.ttl.minutes}")
     private int ttlMinutes;
 
-    @Value("${app.otp.maxVerifyAttempts:3}")
+    @Value("${otp.max.verify.attempts}")
     private int maxVerifyAttempts;
 
-    @Value("${app.otp.blockSeconds:300}")
+    @Value("${otp.block.seconds}")
     private int blockSeconds;
 
-    @Value("${app.otp.tempTokenExpirySeconds:600}")
+    @Value("${otp.temp.token.expiry}")
     private int tempTokenExpirySeconds;
 
-    @Value("${app.otp.length:6}")
+    @Value("${otp.length}")
     private int otpLength;
 
-    @Value("${app.otp.resendCooldownSeconds:60}")
+    @Value("${otp.resend.cooldown}")
     private int resendCooldownSeconds;
 
-    @Value("${app.otp.maxSendPerHour:5}")
+    @Value("${otp.max.send.per.hour}")
     private int maxSendPerHour;
-
 
     @Value("${github.client.id}")
     private String githubClientId;
@@ -104,7 +101,7 @@ public class OAuthServiceImpl implements OAuthService {
     private final JwtUtils jwtUtils;
     private final OtpRedisService otpRedisService;
     private final OAuthStateService oAuthStateService;
-    private final SmsSender smsSender;
+    private final SmsService smsService;
     private final WebClient webClient;
 
 
@@ -112,7 +109,7 @@ public class OAuthServiceImpl implements OAuthService {
                             UserRepository userRepository,
                             RoleRepository roleRepository,
                             PasswordEncoder passwordEncoder,
-                            JwtUtils jwtUtils, OtpRedisService otpRedisService, OAuthStateService oAuthStateService, SmsSender smsSender, WebClient webClient) {
+                            JwtUtils jwtUtils, OtpRedisService otpRedisService, OAuthStateService oAuthStateService, SmsService smsService, WebClient webClient) {
         this.oauthAccountRepository = oauthAccountRepository;
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
@@ -120,7 +117,7 @@ public class OAuthServiceImpl implements OAuthService {
         this.jwtUtils = jwtUtils;
         this.otpRedisService = otpRedisService;
         this.oAuthStateService = oAuthStateService;
-        this.smsSender = smsSender;
+        this.smsService = smsService;
         this.webClient = webClient;
     }
 
@@ -250,7 +247,7 @@ public class OAuthServiceImpl implements OAuthService {
         }
 
         try {
-            smsSender.sendSms(smsRecipient, message);
+            smsService.sendSms(smsRecipient, message);
         } catch (RuntimeException ex) {
             otpRedisService.deleteOtp(normalizedPhone);
             logger.error("OTP delivery failed for phone={}", normalizedPhone, ex);

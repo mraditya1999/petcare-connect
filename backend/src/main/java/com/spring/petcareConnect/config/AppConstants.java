@@ -45,29 +45,29 @@ public class AppConstants {
             "Password must contain at least one uppercase letter, one lowercase letter, one digit, and one special character";
 
 
-        // Providers
-        public static final String GOOGLE = "Google";
-        public static final String GITHUB = "GitHub";
+    // Providers
+    public static final String GOOGLE = "Google";
+    public static final String GITHUB = "GitHub";
 
-        // Token URLs
-        public static final String GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token";
-        public static final String GITHUB_TOKEN_URL = "https://github.com/login/oauth/access_token";
+    // Token URLs
+    public static final String GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token";
+    public static final String GITHUB_TOKEN_URL = "https://github.com/login/oauth/access_token";
 
-        // Auth URLs
-        public static final String GOOGLE_AUTH_URL_TEMPLATE =
-                "https://accounts.google.com/o/oauth2/v2/auth?client_id=%s&redirect_uri=%s&response_type=code&scope=%s&state=%s&access_type=offline&prompt=select_account";
-        public static final String GITHUB_AUTH_URL_TEMPLATE =
-                "https://github.com/login/oauth/authorize?client_id=%s&redirect_uri=%s&scope=%s&state=%s&allow_signup=true";
+    // Auth URLs
+    public static final String GOOGLE_AUTH_URL_TEMPLATE =
+            "https://accounts.google.com/o/oauth2/v2/auth?client_id=%s&redirect_uri=%s&response_type=code&scope=%s&state=%s&access_type=offline&prompt=select_account";
+    public static final String GITHUB_AUTH_URL_TEMPLATE =
+            "https://github.com/login/oauth/authorize?client_id=%s&redirect_uri=%s&scope=%s&state=%s&allow_signup=true";
 
-        // Scopes
-        public static final String GOOGLE_SCOPE = "openid email profile";
-        public static final String GITHUB_SCOPE = "user:email";
+    // Scopes
+    public static final String GOOGLE_SCOPE = "openid email profile";
+    public static final String GITHUB_SCOPE = "user:email";
 
-        // Expiry
-        public static final long OAUTH_TOKEN_EXPIRY_SECONDS = 3600L;
+    // Expiry
+    public static final long OAUTH_TOKEN_EXPIRY_SECONDS = 3600L;
 
-        // Profile endpoints
-        public static final String GOOGLE_PROFILE_URL = "https://www.googleapis.com/oauth2/v3/userinfo";
-        public static final String GITHUB_PROFILE_URL = "https://api.github.com/user";
+    // Profile endpoints
+    public static final String GOOGLE_PROFILE_URL = "https://www.googleapis.com/oauth2/v3/userinfo";
+    public static final String GITHUB_PROFILE_URL = "https://api.github.com/user";
 
 }
