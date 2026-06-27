@@ -5,6 +5,7 @@ package com.spring.petcareConnect.config;
  */
 public final class ResponseMessages {
 
+
     private ResponseMessages() { }
 
     // Auth-related
@@ -24,12 +25,16 @@ public final class ResponseMessages {
     public static final String PASSWORD_UPDATED_PREFIX = "Password has been updated successfully for user";
 
     // OAuth / OTP
-    public static final String OAUTH_LOGIN_PROCESSED = "OAuth login processed";
     public static final String OTP_SENT_SUCCESS = "OTP sent successfully";
     public static final String OTP_NEW_USER = "New user. Complete profile.";
     public static final String PROFILE_COMPLETED = "Profile completed successfully.";
 
-    // Specialist
+    // Pet
+    public static final String PET_CREATED = "Pet created successfully";
+    public static final String PET_UPDATED = "Pet updated successfully";
+    public static final String ALL_PETS_FETCHED = "All Pets fetched successfully";
+    public static final String PET_FETCHED = "Pet fetched successfully";
+    public static final String PET_DELETED = "Pet deleted successfully";
 
 
 }

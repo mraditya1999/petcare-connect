@@ -8,10 +8,11 @@ public class APIException extends RuntimeException {
     }
 
     public APIException(String message) {
-        super(message);
+        super("API error: " + message);
     }
 
     public APIException(String message, Throwable cause) {
-        super(message, cause);
+        super("API error: " + message, cause);
     }
+
 }

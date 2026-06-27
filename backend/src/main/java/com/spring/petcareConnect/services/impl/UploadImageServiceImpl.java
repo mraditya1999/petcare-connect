@@ -5,6 +5,7 @@ import com.cloudinary.utils.ObjectUtils;
 import com.spring.petcareConnect.dtos.upload.response.ImageDataResponseDto;
 import com.spring.petcareConnect.dtos.upload.response.ImageDeleteResponseDto;
 import com.spring.petcareConnect.dtos.upload.response.ImageUploadResponseDto;
+import com.spring.petcareConnect.enums.ProfileType;
 import com.spring.petcareConnect.exceptions.APIException;
 import com.spring.petcareConnect.services.UploadImageService;
 import com.spring.petcareConnect.utils.FileUtils;

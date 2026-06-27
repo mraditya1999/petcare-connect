@@ -17,10 +17,12 @@ public class FileValidator {
             logger.error("File validation failed: file is null");
             throw new ValidationException("File cannot be null");
         }
+
         if (file.isEmpty()) {
             logger.error("File validation failed: no file provided");
             throw new ValidationException("No file provided");
         }
+
         if (file.getSize() > AppConstants.MAX_FILE_SIZE) {
             logger.error("File validation failed: size={} exceeds max limit of {} bytes", file.getSize(), AppConstants.MAX_FILE_SIZE);
             throw new ValidationException("File size exceeds the maximum limit of 5MB");

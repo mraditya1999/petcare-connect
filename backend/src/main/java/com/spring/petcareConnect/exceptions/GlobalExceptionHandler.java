@@ -42,7 +42,6 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(APIException.class)
     public ResponseEntity<CustomApiResponse<String>> handleAPIException(APIException ex) {
-        // Changed from NOT_FOUND to BAD_REQUEST for consistency
         return ResponseEntity.badRequest()
                 .body(new CustomApiResponse<>(false, ex.getMessage(), null));
     }
@@ -55,12 +54,6 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(ValidationException.class)
     public ResponseEntity<CustomApiResponse<String>> handleValidationException(ValidationException ex) {
-        return ResponseEntity.badRequest()
-                .body(new CustomApiResponse<>(false, ex.getMessage(), null));
-    }
-
-    @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<CustomApiResponse<String>> handleIllegalArgumentException(IllegalArgumentException ex) {
         return ResponseEntity.badRequest()
                 .body(new CustomApiResponse<>(false, ex.getMessage(), null));
     }
@@ -85,8 +78,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<CustomApiResponse<String>> handleAllExceptions(Exception ex) {
-        // Log the exception for debugging
-        ex.printStackTrace();
+        ex.printStackTrace(); // log for debugging
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(new CustomApiResponse<>(false, "An unexpected error occurred", null));
     }

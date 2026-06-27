@@ -9,7 +9,7 @@ import com.spring.petcareConnect.entities.User;
 import com.spring.petcareConnect.exceptions.DuplicateResourceException;
 import com.spring.petcareConnect.exceptions.ResourceNotFoundException;
 import com.spring.petcareConnect.exceptions.ValidationException;
-import com.spring.petcareConnect.helpers.ProfileImageHandler;
+import com.spring.petcareConnect.helpers.UserProfileImageHandler;
 import com.spring.petcareConnect.repositories.jpa.UserRepository;
 import com.spring.petcareConnect.services.UploadImageService;
 import com.spring.petcareConnect.services.UserProfileService;
@@ -36,19 +36,19 @@ public class UserProfileServiceImpl implements UserProfileService {
     private final FileValidator fileValidator;
     private final UploadImageService uploadImageService;
     private final PasswordEncoder passwordEncoder;
-    private final ProfileImageHandler profileImageHandler;
+    private final UserProfileImageHandler userProfileImageHandler;
 
     public UserProfileServiceImpl(UserRepository userRepository,
                                   ModelMapper modelMapper,
                                   FileValidator fileValidator,
                                   UploadImageService uploadImageService,
-                                  PasswordEncoder passwordEncoder, ProfileImageHandler profileImageHandler) {
+                                  PasswordEncoder passwordEncoder, UserProfileImageHandler userProfileImageHandler) {
         this.userRepository = userRepository;
         this.modelMapper = modelMapper;
         this.fileValidator = fileValidator;
         this.uploadImageService = uploadImageService;
         this.passwordEncoder = passwordEncoder;
-        this.profileImageHandler = profileImageHandler;
+        this.userProfileImageHandler = userProfileImageHandler;
     }
 
     @Override
@@ -72,9 +72,9 @@ public class UserProfileServiceImpl implements UserProfileService {
 
         applyProfileUpdates(user, dto);
         if (profileImage == null || profileImage.isEmpty()) {
-            profileImageHandler.delete(user);
+            userProfileImageHandler.delete(user);
         } else {
-            profileImageHandler.replace(user, profileImage);
+            userProfileImageHandler.replace(user, profileImage);
         }
 
         userRepository.save(user);

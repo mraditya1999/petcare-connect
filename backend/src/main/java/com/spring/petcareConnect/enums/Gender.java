@@ -13,4 +13,12 @@ public enum Gender {
         this.displayName = displayName;
     }
 
+    public static Gender fromString(String value) {
+        for (Gender gender : Gender.values()) {
+            if (gender.name().equalsIgnoreCase(value) || gender.displayName.equalsIgnoreCase(value)) {
+                return gender;
+            }
+        }
+        throw new IllegalArgumentException("Invalid gender value: '" + value + "'. Allowed values are: MALE, FEMALE");
+    }
 }
