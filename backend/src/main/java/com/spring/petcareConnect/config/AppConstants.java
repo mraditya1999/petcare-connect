@@ -6,7 +6,8 @@ public class AppConstants {
     public static final String PAGE_NUMBER = "0";
     public static final String PAGE_SIZE = "50";
     public static final String SORT_PETS_BY = "petId";
-    public static final String SORT_DIR = "asc";
+    public static final String SORT_APPOINTMENTS_BY = "appointmentId";
+    public static final String SORT_ORDER = "asc";
 
     // File validation constants
     public static final long MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB

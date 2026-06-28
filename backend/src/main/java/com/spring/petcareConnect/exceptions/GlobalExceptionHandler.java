@@ -96,4 +96,28 @@ public class GlobalExceptionHandler {
                 .body(new CustomApiResponse<>(false, ex.getMessage(), null));
     }
 
+    @ExceptionHandler(BadRequestException.class)
+    public ResponseEntity<CustomApiResponse<String>> handleBadRequestException(BadRequestException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new CustomApiResponse<>(false, ex.getMessage(), null));
+    }
+
+    @ExceptionHandler(org.springframework.security.access.AccessDeniedException.class)
+    public ResponseEntity<CustomApiResponse<String>> handleAccessDeniedException(org.springframework.security.access.AccessDeniedException ex) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(new CustomApiResponse<>(false, "Access denied: " + ex.getMessage(), null));
+    }
+
+    @ExceptionHandler(org.springframework.dao.DataIntegrityViolationException.class)
+    public ResponseEntity<CustomApiResponse<String>> handleDataIntegrityViolationException(org.springframework.dao.DataIntegrityViolationException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(new CustomApiResponse<>(false, "Database integrity violation: " + ex.getMostSpecificCause().getMessage(), null));
+    }
+
+    @ExceptionHandler({IllegalArgumentException.class, IllegalStateException.class})
+    public ResponseEntity<CustomApiResponse<String>> handleIllegalArgumentOrState(Exception ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new CustomApiResponse<>(false, ex.getMessage(), null));
+    }
+
 }

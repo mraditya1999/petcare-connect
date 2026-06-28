@@ -53,7 +53,7 @@ public class PetController {
     public ResponseEntity<CustomApiResponse<PetListResponseDto>> getAllPetsForUser(@RequestParam(name = "pageNumber", defaultValue = AppConstants.PAGE_NUMBER, required = false) Integer pageNumber,
                                                                                    @RequestParam(name = "pageSize", defaultValue = AppConstants.PAGE_SIZE, required = false) Integer pageSize,
                                                                                    @RequestParam(name = "sortBy", defaultValue = AppConstants.SORT_PETS_BY, required = false) String sortBy,
-                                                                                   @RequestParam(name = "sortOrder", defaultValue = AppConstants.SORT_DIR, required = false) String sortOrder) {
+                                                                                   @RequestParam(name = "sortOrder", defaultValue = AppConstants.SORT_ORDER, required = false) String sortOrder) {
         PetListResponseDto petListResponseDto = petService.getAllPetsForUser(pageNumber, pageSize, sortBy, sortOrder);
         CustomApiResponse<PetListResponseDto> response = new CustomApiResponse<>(true, ResponseMessages.ALL_PETS_FETCHED, petListResponseDto);
         return new ResponseEntity<>(response, HttpStatus.OK);

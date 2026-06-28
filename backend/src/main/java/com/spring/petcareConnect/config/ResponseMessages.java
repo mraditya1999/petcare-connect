@@ -40,7 +40,10 @@ public final class ResponseMessages {
     // Appointment
     public static final String APPOINTMENT_CREATED = "Appointment created successfully";
     public static final String APPOINTMENT_UPDATED = "Appointment updated successfully";
-    public static final String APPOINTMENT_CANCELLED = "Appointment cancelled";
+    public static final String APPOINTMENT_CANCELLED = "Appointment cancelled successfully";
+    public static final String APPOINTMENTS_FETCHED = "All Appointments retrieved successfully";
+    public static final String APPOINTMENT_FETCHED = "Appointment retrieved successfully";
+    public static final String APPOINTMENT_RESCHEDULED = "Appointment rescheduled!!";
 
 }
 
