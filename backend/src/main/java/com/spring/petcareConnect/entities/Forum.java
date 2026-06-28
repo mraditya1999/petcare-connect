@@ -1,6 +1,7 @@
 package com.spring.petcareConnect.entities;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.spring.petcareConnect.enums.ForumTag;
 import jakarta.validation.constraints.*;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
@@ -29,10 +30,8 @@ import java.util.stream.Collectors;
         @CompoundIndex(name = "idx_tags", def = "{'tags': 1}")
 })
 public class Forum {
-
-    @Id
     @EqualsAndHashCode.Include
-    @Field("forum_id")
+    @Id
     private String forumId;
 
     @NotNull(message = "Creator user ID is required")
@@ -93,6 +92,12 @@ public class Forum {
 
     @Field("is_locked")
     private Boolean isLocked = false;
+
+    @Field("is_featured")
+    private Boolean isFeatured = false;
+
+    @Field("category")
+    private ForumTag category;
 
     /**
      * Custom setter for tags - enforces lowercase

@@ -254,10 +254,6 @@ public class AppointmentServiceImpl implements AppointmentService {
     }
 
     private AppointmentListResponseDto buildResponse(Page<Appointment> appointmentPage) {
-        if (appointmentPage.isEmpty()) {
-            throw new APIException("No appointment exists for this user");
-        }
-
         List<AppointmentResponseDto> appointments = appointmentPage.getContent().stream().map(this::convertToDto).toList();
         return new AppointmentListResponseDto(appointments, appointmentPage.getNumber(), appointmentPage.getSize(), appointmentPage.getTotalElements(), appointmentPage.getTotalPages(), appointmentPage.isLast());
     }

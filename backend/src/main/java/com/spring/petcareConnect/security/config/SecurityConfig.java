@@ -5,6 +5,7 @@ import com.spring.petcareConnect.security.jwt.AuthTokenFilter;
 import com.spring.petcareConnect.security.service.UserDetailsServiceImpl;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -55,6 +56,10 @@ public class SecurityConfig {
         http.exceptionHandling(exception -> exception.authenticationEntryPoint(authEntryPointJwt));
         http.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
         http.authorizeHttpRequests((authorizeRequest) -> authorizeRequest
+                .requestMatchers(HttpMethod.GET, "/forums/**").permitAll()
+                .requestMatchers(HttpMethod.POST, "/forums/**").authenticated()
+                .requestMatchers(HttpMethod.PUT, "/forums/**").authenticated()
+                .requestMatchers(HttpMethod.DELETE, "/forums/**").authenticated()
                 .requestMatchers("/auth/**").permitAll()
                 .requestMatchers("/oauth/**").permitAll()
                 .requestMatchers("/v3/api-docs/**").permitAll()

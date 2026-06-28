@@ -7,6 +7,7 @@ public class AppConstants {
     public static final String PAGE_SIZE = "50";
     public static final String SORT_PETS_BY = "petId";
     public static final String SORT_APPOINTMENTS_BY = "appointmentId";
+    public static final String SORT_FORUM_BY = "forumId";
     public static final String SORT_ORDER = "asc";
 
     // File validation constants
