@@ -33,8 +33,8 @@ public final class ResponseMessages {
     // Pet
     public static final String PET_CREATED = "Pet created successfully";
     public static final String PET_UPDATED = "Pet updated successfully";
-    public static final String ALL_PETS_FETCHED = "All Pets fetched successfully";
-    public static final String PET_FETCHED = "Pet fetched successfully";
+    public static final String ALL_PETS_FETCHED = "All Pets retrieved successfully";
+    public static final String PET_FETCHED = "Pet retrieved successfully";
     public static final String PET_DELETED = "Pet deleted successfully";
 
     // Appointment
@@ -43,7 +43,14 @@ public final class ResponseMessages {
     public static final String APPOINTMENT_CANCELLED = "Appointment cancelled successfully";
     public static final String APPOINTMENTS_FETCHED = "All Appointments retrieved successfully";
     public static final String APPOINTMENT_FETCHED = "Appointment retrieved successfully";
-    public static final String APPOINTMENT_RESCHEDULED = "Appointment rescheduled!!";
+    public static final String APPOINTMENT_RESCHEDULED = "Appointment rescheduled";
+
+    // Forum
+    public static final String FORUMS_FETCHED = "All Forum retrieved successfully";
+    public static final String FORUM_FETCHED = "Forum retrieved successfully";
+    public static final String FORUM_CREATED = "Forum created successfully";
+    public static final String FORUM_UPDATED = "Forum updated successfully";
+
 
 }
 

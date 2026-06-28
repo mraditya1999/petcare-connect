@@ -189,10 +189,6 @@ public class PetServiceImpl implements PetService {
     }
 
     private PetListResponseDto buildResponse(Page<Pet> petPage) {
-        if (petPage.isEmpty()) {
-            throw new APIException("No pet exists for this user");
-        }
-
         List<PetResponseDto> pets = petPage.getContent().stream().map(this::convertToDto).toList();
         return new PetListResponseDto(pets, petPage.getNumber(), petPage.getSize(), petPage.getTotalElements(), petPage.getTotalPages(), petPage.isLast());
     }
