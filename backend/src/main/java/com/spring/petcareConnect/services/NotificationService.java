@@ -7,4 +7,5 @@ public interface NotificationService {
     void sendAppointmentUpdated(Appointment appointment);
     void sendAppointmentCancelled(Appointment appointment);
     void sendReminder(Appointment appointment);
+    void sendAppointmentRescheduled(Appointment appointment);
 }

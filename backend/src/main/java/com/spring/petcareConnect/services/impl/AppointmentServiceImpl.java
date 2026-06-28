@@ -184,7 +184,7 @@ public class AppointmentServiceImpl implements AppointmentService {
         appointment.setAppointmentStatus(AppointmentStatus.RESCHEDULED);
 
         Appointment saved = appointmentRepository.save(appointment);
-        notificationService.sendAppointmentUpdated(saved);
+        notificationService.sendAppointmentRescheduled(saved);
 
         AppointmentResponseDto responseDto = modelMapper.map(saved, AppointmentResponseDto.class);
         responseDto.setPetName(appointment.getPet().getPetName());

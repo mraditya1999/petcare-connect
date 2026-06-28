@@ -25,8 +25,8 @@ public class NotificationServiceImpl implements NotificationService {
     private String defaultNumber;
 
     private static final Logger logger = LoggerFactory.getLogger(NotificationServiceImpl.class);
-    private static final DateTimeFormatter USER_FRIENDLY_FORMAT = DateTimeFormatter.ofPattern("EEEE, MMMM d, yyyy 'at' h:mm a");
-
+    private static final DateTimeFormatter USER_FRIENDLY_FORMAT =
+            DateTimeFormatter.ofPattern("EEEE, MMMM d, yyyy 'at' h:mm a");
 
     private final SmsService smsService;
     private final EmailService emailService;
@@ -46,17 +46,30 @@ public class NotificationServiceImpl implements NotificationService {
         User owner = appointment.getPetOwner();
 
         emailService.sendEmail(owner, EmailType.APPOINTMENT_CREATED);
-        String message = "Your appointment with " + appointment.getSpecialist().getUser().getFirstName() + " is scheduled for";
+        String message = "Your appointment with " + appointment.getSpecialist().getUser().getFirstName()
+                + " has been scheduled for";
         safeSendSms(owner.getMobileNumber(), message, appointment.getAppointmentDate());
     }
 
     @Override
     public void sendAppointmentUpdated(Appointment appointment) {
-        logger.info("Sending appointment updated notification for appointmentId={}", appointment.getAppointmentId());
+        logger.debug("Sending appointment updated notification for appointmentId={}", appointment.getAppointmentId());
         User owner = appointment.getPetOwner();
 
         emailService.sendEmail(owner, EmailType.APPOINTMENT_UPDATED);
-        String message = "Your appointment with " + appointment.getSpecialist().getUser().getFirstName() + " has been rescheduled to";
+        String message = "Your appointment with " + appointment.getSpecialist().getUser().getFirstName()
+                + " has been updated. Current scheduled time:";
+        safeSendSms(owner.getMobileNumber(), message, appointment.getAppointmentDate());
+    }
+
+    @Override
+    public void sendAppointmentRescheduled(Appointment appointment) {
+        logger.info("Sending appointment rescheduled notification for appointmentId={}", appointment.getAppointmentId());
+        User owner = appointment.getPetOwner();
+
+        emailService.sendEmail(owner, EmailType.APPOINTMENT_RESCHEDULED);
+        String message = "Your appointment with " + appointment.getSpecialist().getUser().getFirstName()
+                + " has been rescheduled to";
         safeSendSms(owner.getMobileNumber(), message, appointment.getAppointmentDate());
     }
 
@@ -66,20 +79,23 @@ public class NotificationServiceImpl implements NotificationService {
         User owner = appointment.getPetOwner();
 
         emailService.sendEmail(owner, EmailType.APPOINTMENT_CANCELLED);
-        String message = "Your appointment with " + appointment.getSpecialist().getUser().getFirstName() + " scheduled for";
-        safeSendSms(owner.getMobileNumber(), message + " (cancelled)", appointment.getAppointmentDate());
+        String message = "Your appointment with " + appointment.getSpecialist().getUser().getFirstName()
+                + " on " + appointment.getAppointmentDate().format(USER_FRIENDLY_FORMAT)
+                + " has been cancelled.";
+        safeSendSms(owner.getMobileNumber(), message, null);
     }
 
     @Override
     public void sendReminder(Appointment appointment) {
-        logger.info("Sending appointment reminder for appointmentId={}", appointment.getAppointmentId());
+        logger.debug("Sending appointment reminder for appointmentId={}", appointment.getAppointmentId());
         User owner = appointment.getPetOwner();
 
         emailService.sendEmail(owner, EmailType.APPOINTMENT_REMINDER);
-        String message = "Reminder: Appointment for " + appointment.getPet().getPetName() + " at";
+        String message = "Reminder: Appointment for " + appointment.getPet().getPetName() + " is scheduled at";
         safeSendSms(owner.getMobileNumber(), message, appointment.getAppointmentDate());
     }
 
+    // Scheduled job: send reminders once per hour for appointments within 24h
     @Scheduled(fixedRate = 3600000) // every hour
     public void sendUpcomingReminders() {
         LocalDateTime now = LocalDateTime.now();
@@ -87,14 +103,19 @@ public class NotificationServiceImpl implements NotificationService {
 
         logger.debug("Checking for upcoming appointments between {} and {}", now, reminderWindow);
         List<Appointment> upcoming = appointmentRepository.findAppointmentsBetween(now, reminderWindow);
-        upcoming.forEach(this::sendReminder);
+
+        upcoming.forEach(appointment -> {
+            // Optional: add a "reminderSent" flag in Appointment to avoid duplicates
+            sendReminder(appointment);
+        });
     }
 
     private void safeSendSms(String to, String message, LocalDateTime appointmentDate) {
         String recipient = (to == null || to.isBlank()) ? defaultNumber : to;
         try {
-            String formattedDate = appointmentDate.format(USER_FRIENDLY_FORMAT);
-            String finalMessage = message + " (" + formattedDate + ")";
+            String finalMessage = (appointmentDate != null)
+                    ? message + " (" + appointmentDate.format(USER_FRIENDLY_FORMAT) + ")"
+                    : message;
 
             smsService.sendSms(recipient, finalMessage);
             logger.info("SMS sent to {} with message '{}'", recipient, finalMessage);
