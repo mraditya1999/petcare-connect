@@ -66,9 +66,6 @@ public class Comment {
     @Field("updated_at")
     private Instant updatedAt;
 
-    @Field("is_deleted")
-    private Boolean isDeleted = false;
-
     @Field("liked_by_users")
     @JsonIgnore
     private Set<Long> likedByUsers = new HashSet<>();
@@ -78,10 +75,6 @@ public class Comment {
 
     @Field("is_edited")
     private Boolean isEdited = false;
-
-    @Size(max = 500, message = "Deletion reason cannot exceed 500 characters")
-    @Field("deletion_reason")
-    private String deletionReason;
 
     /**
      * Method to add a like from a user

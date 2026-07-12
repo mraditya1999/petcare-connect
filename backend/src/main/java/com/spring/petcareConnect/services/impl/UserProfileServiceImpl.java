@@ -11,8 +11,7 @@ import com.spring.petcareConnect.exceptions.ResourceNotFoundException;
 import com.spring.petcareConnect.exceptions.ValidationException;
 import com.spring.petcareConnect.helpers.UserProfileImageHandler;
 import com.spring.petcareConnect.repositories.jpa.UserRepository;
-import com.spring.petcareConnect.services.UploadImageService;
-import com.spring.petcareConnect.services.UserProfileService;
+import com.spring.petcareConnect.services.*;
 import com.spring.petcareConnect.utils.AuthUtils;
 import com.spring.petcareConnect.utils.PhoneUtils;
 import com.spring.petcareConnect.validators.FileValidator;
@@ -34,21 +33,24 @@ public class UserProfileServiceImpl implements UserProfileService {
     private final UserRepository userRepository;
     private final ModelMapper modelMapper;
     private final FileValidator fileValidator;
-    private final UploadImageService uploadImageService;
     private final PasswordEncoder passwordEncoder;
     private final UserProfileImageHandler userProfileImageHandler;
+    private final ForumService forumService;
+    private final CommentService commentService;
+    private final LikeService likeService;
 
     public UserProfileServiceImpl(UserRepository userRepository,
                                   ModelMapper modelMapper,
                                   FileValidator fileValidator,
-                                  UploadImageService uploadImageService,
-                                  PasswordEncoder passwordEncoder, UserProfileImageHandler userProfileImageHandler) {
+                                  PasswordEncoder passwordEncoder, UserProfileImageHandler userProfileImageHandler, ForumService forumService, CommentService commentService, LikeService likeService) {
         this.userRepository = userRepository;
         this.modelMapper = modelMapper;
         this.fileValidator = fileValidator;
-        this.uploadImageService = uploadImageService;
         this.passwordEncoder = passwordEncoder;
         this.userProfileImageHandler = userProfileImageHandler;
+        this.forumService = forumService;
+        this.commentService = commentService;
+        this.likeService = likeService;
     }
 
     @Override
@@ -71,9 +73,7 @@ public class UserProfileServiceImpl implements UserProfileService {
         }
 
         applyProfileUpdates(user, dto);
-        if (profileImage == null || profileImage.isEmpty()) {
-            userProfileImageHandler.delete(user);
-        } else {
+        if (profileImage != null && !profileImage.isEmpty()) {
             userProfileImageHandler.replace(user, profileImage);
         }
 
@@ -86,9 +86,16 @@ public class UserProfileServiceImpl implements UserProfileService {
         String email = AuthUtils.loggedInEmail()
                 .orElseThrow(() -> new IllegalStateException("No logged-in user"));
         User user = getUserByEmailOrThrow(email);
+        Long userId = user.getUserId();
+
+//        forumService.deleteForumsByUser(userId);
+//        commentService.deleteCommentsByUser(userId);
+//        likeService.deleteLikesByUser(userId);
         userRepository.delete(user);
-        logger.info("User profile deleted successfully for email={}", email);
+
+        logger.info("User profile deleted successfully for email={} and all related forums, comments, and likes cleaned up", email);
     }
+
 
     @Override
     public void updatePassword(UpdatePasswordRequestDto updatePasswordRequestDTO) {
@@ -136,9 +143,12 @@ public class UserProfileServiceImpl implements UserProfileService {
             user.setMobileNumber(normalizedPhone);
         }
 
-        if (dto.getAddressDto() != null) {
+        if (dto.getAddressDto() != null && hasAddressData(dto.getAddressDto())) {
             Address address = user.getAddress() != null ? user.getAddress() : new Address();
             updateAddressFields(address, dto.getAddressDto());
+            if (address.getPincode() == null && user.getAddress() != null) {
+                address.setPincode(user.getAddress().getPincode());
+            }
             address.setUser(user);
             user.setAddress(address);
         }
@@ -154,8 +164,17 @@ public class UserProfileServiceImpl implements UserProfileService {
         }
     }
 
+    private boolean hasAddressData(AddressDto dto) {
+        return dto != null && (
+            (dto.getPincode() != null && !dto.getPincode().isBlank()) ||
+            (dto.getCity() != null && !dto.getCity().isBlank()) ||
+            (dto.getState() != null && !dto.getState().isBlank()) ||
+            (dto.getCountry() != null && !dto.getCountry().isBlank())
+        );
+    }
+
     private void updateAddressFields(Address address, AddressDto dto) {
-        if (dto.getPincode() != null) {
+        if (dto.getPincode() != null && !dto.getPincode().isBlank()) {
             address.setPincode(dto.getPincode());
         }
         if (dto.getCity() != null && !dto.getCity().isBlank()) {

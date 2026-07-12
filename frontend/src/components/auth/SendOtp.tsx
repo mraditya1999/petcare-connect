@@ -35,14 +35,15 @@ export default function SendOtp() {
   });
 
   const onSubmit = async (data: { phone: string }) => {
-    const res = await dispatch(sendOtp({ phone: data.phone }));
+    const normalizedPhone = data.phone.replace(/\D/g, "");
+    const res = await dispatch(sendOtp({ phone: normalizedPhone }));
 
     if (sendOtp.fulfilled.match(res)) {
       ShowToast({
         description: "OTP sent successfully!",
         type: "success",
       });
-      navigate(`/verify-otp?phone=${data.phone}`);
+      navigate(`/verify-otp?phone=${normalizedPhone}`);
     } else {
       ShowToast({
         description: res.payload || "Failed to send OTP",

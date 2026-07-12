@@ -20,8 +20,9 @@ import { useAppDispatch } from "@/app/hooks";
 import { verifyOtp, sendOtp, completeProfile } from "@/features/auth/authThunk";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import ShowToast from "../shared/ShowToast";
-import { saveUserToStorage } from "@/utils/helpers";
+import { normalizeAuthUser, saveUserToStorage } from "@/utils/helpers";
 import { setUser } from "@/features/auth/authSlice";
+import { ROUTES } from "@/utils/constants";
 import {
   InputOTP,
   InputOTPGroup,
@@ -66,26 +67,21 @@ export default function VerifyOtp() {
   }, []);
 
   const handleVerifyOtp = async (data: { otp: string }) => {
-    const res = await dispatch(verifyOtp({ phone, otp: data.otp }));
+    const normalizedPhone = phone.replace(/\D/g, "");
+    const res = await dispatch(verifyOtp({ phone: normalizedPhone, otp: data.otp }));
     if (verifyOtp.fulfilled.match(res)) {
       const { data: payload, message } = res.payload;
       if (payload.newUser) {
-        if (payload.tempToken) {
-          localStorage.setItem("tempSignupToken", payload.tempToken);
-        }
         setIsNewUser(true);
         ShowToast({
           description: "OTP verified. Please complete your profile.",
           type: "success",
         });
       } else {
-        const userData = {
-          message: message,
-          data: payload,
-        };
+        const userData = normalizeAuthUser(payload, message);
         saveUserToStorage(userData, false);
         dispatch(setUser(userData));
-        navigate("/");
+        navigate(ROUTES.HOME);
       }
     } else {
       ShowToast({
@@ -96,9 +92,10 @@ export default function VerifyOtp() {
   };
 
   const handleCompleteProfile = async (data: NewUserInfo) => {
+    const normalizedPhone = phone.replace(/\D/g, "");
     const res = await dispatch(
       completeProfile({
-        phone,
+        phone: normalizedPhone,
         firstName: data.firstName,
         lastName: data.lastName,
         email: data.email,
@@ -106,9 +103,8 @@ export default function VerifyOtp() {
     );
 
     if (completeProfile.fulfilled.match(res)) {
-      localStorage.removeItem("tempSignupToken");
       dispatch(setUser(res.payload));
-      navigate("/");
+      navigate(ROUTES.HOME);
     } else {
       ShowToast({
         description: res.payload || "Failed to complete profile",
@@ -119,7 +115,8 @@ export default function VerifyOtp() {
 
   const handleResend = async () => {
     if (timer === 0) {
-      const res = await dispatch(sendOtp({ phone }));
+      const normalizedPhone = phone.replace(/\D/g, "");
+      const res = await dispatch(sendOtp({ phone: normalizedPhone }));
       if (sendOtp.fulfilled.match(res)) {
         setTimer(30);
       }

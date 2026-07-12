@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "@/app/hooks";
-import { googleLoginUser, loginUser } from "@/features/auth/authThunk";
+import { loginUser } from "@/features/auth/authThunk";
 import { ILoginCredentials } from "@/types/auth-types";
 import { ROUTES } from "@/utils/constants";
 import { Label } from "@/components/ui/label";
@@ -13,16 +13,50 @@ import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { loginFormSchema } from "@/utils/validations";
 import { handleError } from "@/utils/helpers";
 import ShowToast from "../shared/ShowToast";
-import { useGoogleLogin } from "@react-oauth/google";
 import GoogleSvg from "@/assets/images/GoogleSvg";
 import GitHubSvg from "@/assets/images/GitHubSvg";
 import { FaMobileScreenButton } from "react-icons/fa6";
 import { customFetch } from "@/utils/customFetch";
 
+const GoogleLoginButton = () => {
+  const handleGoogleLogin = async () => {
+    try {
+      const resp = await customFetch.get("/oauth/google/url");
+      const data = resp.data?.data;
+      if (!data || !data.url || !data.state)
+        throw new Error("Invalid auth url response");
+
+      sessionStorage.setItem("google_oauth_state", data.state);
+      window.location.href = data.url;
+    } catch (err) {
+      ShowToast({
+        description: "Failed to start Google login",
+        type: "error",
+      });
+      console.error("googleLogin error:", err);
+    }
+  };
+
+  return (
+    <Button
+      variant="secondary"
+      type="button"
+      className="w-full px-4 py-2"
+      onClick={handleGoogleLogin}
+    >
+      <span className="flex items-center justify-center gap-2">
+        <GoogleSvg />
+        <span>Login with Google</span>
+      </span>
+    </Button>
+  );
+};
+
 const Login = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const { loading } = useAppSelector((state) => state.auth);
+  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || "";
   const [rememberMe, setRememberMe] = useState(false);
   const [loginFormCredentials, setLoginFormCredentials] =
     useState<ILoginCredentials>({
@@ -59,20 +93,6 @@ const Login = () => {
       });
     }
   };
-
-  const googleLogin = useGoogleLogin({
-    onSuccess: async (tokenResponse) => {
-      dispatch(
-        googleLoginUser({ token: tokenResponse.access_token, navigate }),
-      );
-    },
-    onError: () => {
-      ShowToast({
-        description: "Google login failed. Try again! ",
-        type: "error",
-      });
-    },
-  });
 
   const githubLogin = () => {
     (async () => {
@@ -154,17 +174,13 @@ const Login = () => {
             {loading ? <LoadingSpinner /> : "Login now"}
           </Button>
 
-          <Button
-            variant="secondary"
-            type="button"
-            className="w-full px-4 py-2"
-            onClick={() => googleLogin()}
-          >
-            <span className="flex items-center justify-center gap-2">
-              <GoogleSvg />
-              <span>Login with Google</span>
-            </span>
-          </Button>
+          {googleClientId ? (
+            <GoogleLoginButton />
+          ) : (
+            <div className="rounded-md border border-dashed px-4 py-2 text-center text-sm text-muted-foreground">
+              Google login is currently unavailable.
+            </div>
+          )}
 
           <Button
             variant="secondary"

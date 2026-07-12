@@ -1,5 +1,6 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import {
+  completeProfile,
   loginUser,
   registerUser,
   logoutUser,
@@ -12,7 +13,7 @@ import {
   verifyOtp,
 } from "./authThunk";
 import { IUser, IUserState } from "@/types/auth-types";
-import { getUserFromStorage, saveUserToStorage } from "@/utils/helpers";
+import { getUserFromStorage, normalizeAuthUser, saveUserToStorage } from "@/utils/helpers";
 
 const initialState: IUserState = {
   user: getUserFromStorage(),
@@ -32,6 +33,7 @@ export const authSlice = createSlice({
     clearUser: (state) => {
       state.user = null;
       localStorage.removeItem("user");
+      sessionStorage.removeItem("user");
     },
     clearSuccess: (state) => {
       state.success = null;
@@ -106,6 +108,7 @@ export const authSlice = createSlice({
         state.user = null;
         state.loading = false;
         localStorage.removeItem("user");
+        sessionStorage.removeItem("user");
       })
       .addCase(logoutUser.rejected, (state, action) => {
         state.loading = false;
@@ -169,12 +172,28 @@ export const authSlice = createSlice({
         state.loading = false;
         const { data: payload, message } = action.payload;
         if (payload.newUser) {
+          state.success = message;
           return;
         }
+        const normalizedUser = normalizeAuthUser(payload, message);
         state.success = message;
-        state.user = { data: payload, message };
+        state.user = normalizedUser;
+        saveUserToStorage(normalizedUser, false);
       })
       .addCase(verifyOtp.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+      .addCase(completeProfile.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(completeProfile.fulfilled, (state, action: PayloadAction<IUser>) => {
+        state.loading = false;
+        state.user = action.payload;
+        state.success = action.payload.message;
+      })
+      .addCase(completeProfile.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       });

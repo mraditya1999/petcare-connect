@@ -10,13 +10,8 @@ export type StateEntry = {
   name: string;
 };
 
-export type IsoEntry = {
-  name: string;
-  iso2: string;
-  iso3?: string;
-};
-
 const COUNTRIESNOW_BASE = "https://countriesnow.space/api/v0.1";
+const NOMINATIM_BASE = "https://nominatim.openstreetmap.org/search";
 
 const externalFetch = axios.create({
   baseURL: COUNTRIESNOW_BASE,
@@ -58,14 +53,12 @@ export async function fetchExternalStates(country: string): Promise<string[]> {
 
   if (payload?.error) return [];
 
-  // Some responses return { data: { name, states: [ {name} ] } }
   if (payload.data?.states) {
     return (payload.data.states || [])
       .map((x: StateEntry) => x.name)
       .filter(Boolean);
   }
 
-  // fallback if direct list
   if (Array.isArray(payload.data)) {
     return payload.data.map((x: any) => x.name || x).filter(Boolean);
   }
@@ -91,39 +84,64 @@ export async function fetchExternalCities(
   return [];
 }
 
-async function fetchIsoList(): Promise<IsoEntry[]> {
-  const payload = await fetchJson(`${COUNTRIESNOW_BASE}/countries/iso`);
-  if (payload?.error) return [];
-  return payload.data || [];
-}
-
 export async function fetchExternalPincodes(
   country: string,
   state: string,
   city: string,
 ): Promise<string[]> {
-  if (!country || !city) return [];
-
-  const isoList = await fetchIsoList();
-  const matched = isoList.find(
-    (item) => item.name?.toLowerCase() === country.toLowerCase(),
-  );
-  if (!matched?.iso2) return [];
-
-  const iso2 = matched.iso2.toLowerCase();
-  const url = `https://api.zippopotam.us/${iso2}/${encodeURIComponent(city)}`;
+  if (!country || !state || !city) return [];
 
   try {
-    const payload = await fetchJson(url);
-    if (!payload?.places || !Array.isArray(payload.places)) return [];
+    const normalizedCountry = country.trim().toLowerCase();
+    if (normalizedCountry === "india") {
+      const response = await axios.get(
+        `https://api.postalpincode.in/postoffice/${encodeURIComponent(city)}`,
+      );
+      const results = Array.isArray(response.data) ? response.data : [];
+      const pincodes = results.flatMap((item: any) => {
+        const offices = Array.isArray(item?.PostOffice) ? item.PostOffice : [];
+        return offices
+          .map((office: any) => office?.Pincode)
+          .filter(
+            (value: string | undefined) =>
+              Boolean(value) && /^\d{4,6}$/.test(String(value)),
+          );
+      });
 
-    return Array.from(
-      new Set(
-        payload.places.map((place: any) => place["post code"]).filter(Boolean),
-      ),
-    );
+      return Array.from(new Set(pincodes.map((value: string) => String(value))));
+    }
   } catch (error) {
-    // not all countries are supported by zippopotam.us, so retry with pincode input option
+    console.error("Failed to fetch pincode data from postal service", error);
+  }
+
+  try {
+    const response = await axios.get(NOMINATIM_BASE, {
+      params: {
+        city,
+        state,
+        country,
+        format: "jsonv2",
+        addressdetails: 1,
+        limit: 10,
+      },
+      headers: {
+        "Accept-Language": "en",
+        "User-Agent": "PetcareConnect/1.0",
+      },
+    });
+
+    const results = Array.isArray(response.data) ? response.data : [];
+    const pincodes = results
+      .map((item: any) => item.address?.postcode)
+      .filter(
+        (value: string | undefined) =>
+          Boolean(value) && /^\d{4,6}$/.test(String(value)),
+      )
+      .map((value: string) => String(value));
+
+    return Array.from(new Set(pincodes));
+  } catch (error) {
+    console.error("Failed to fetch pincode data from live geocoding service", error);
     return [];
   }
 }

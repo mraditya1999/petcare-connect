@@ -8,16 +8,13 @@ import com.spring.petcareConnect.dtos.forum.request.ForumCreateRequestDto;
 import com.spring.petcareConnect.dtos.forum.request.ForumUpdateRequestDto;
 import com.spring.petcareConnect.dtos.forum.response.ForumListResponseDto;
 import com.spring.petcareConnect.dtos.forum.response.ForumResponseDto;
-import com.spring.petcareConnect.dtos.pet.response.PetListResponseDto;
 import com.spring.petcareConnect.services.ForumService;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Min;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/forums")
@@ -51,7 +48,14 @@ public class ForumController {
     ) {
 
         ForumListResponseDto forumListResponseDto = forumService.getAllForums(pageNumber, pageSize, sortBy, sortOrder);
-        CustomApiResponse<ForumListResponseDto> response = new CustomApiResponse<>(true, ResponseMessages.FORUM_FETCHED, forumListResponseDto);
+        CustomApiResponse<ForumListResponseDto> response = new CustomApiResponse<>(true, ResponseMessages.FORUMS_FETCHED, forumListResponseDto);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @GetMapping("/{forumId}")
+    public ResponseEntity<CustomApiResponse<ForumResponseDto>> getForumById(@PathVariable String forumId) {
+        ForumResponseDto forumResponseDto = forumService.getForumById(forumId);
+        CustomApiResponse<ForumResponseDto> response = new CustomApiResponse<>(true, ResponseMessages.FORUM_FETCHED, forumResponseDto);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
@@ -68,5 +72,40 @@ public class ForumController {
         CustomApiResponse<ForumResponseDto> response = new CustomApiResponse<>(true, ResponseMessages.FORUM_UPDATED, updatedForum);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
+
+    @DeleteMapping("/{forumId}")
+    public ResponseEntity<CustomApiResponse<String>> deleteForum(@PathVariable String forumId) {
+        forumService.deleteForumForUser(forumId);
+        CustomApiResponse<String> response = new CustomApiResponse<>(true, ResponseMessages.FORUM_DELETED, null);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<CustomApiResponse<ForumListResponseDto>> searchForums(
+            @RequestParam(name = "keyword", required = false) String keyword,
+            @RequestParam(name = "tags", required = false) List<String> tags,
+            @RequestParam(name = "pageNumber", defaultValue = AppConstants.PAGE_NUMBER) Integer pageNumber,
+            @RequestParam(name = "pageSize", defaultValue = AppConstants.PAGE_SIZE) Integer pageSize,
+            @RequestParam(name = "sortBy", defaultValue = AppConstants.SORT_FORUM_BY) String sortBy,
+            @RequestParam(name = "sortOrder", defaultValue = AppConstants.SORT_ORDER) String sortOrder
+    ) {
+        ForumListResponseDto forums = forumService.searchForums(keyword, tags, pageNumber, pageSize, sortBy, sortOrder);
+        CustomApiResponse<ForumListResponseDto> response =
+                new CustomApiResponse<>(true, ResponseMessages.FORUMS_FETCHED, forums);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @GetMapping("/top-featured")
+    public ResponseEntity<CustomApiResponse<ForumListResponseDto>> getTopFeaturedForums(
+            @RequestParam(name = "pageNumber", defaultValue = AppConstants.PAGE_NUMBER) Integer pageNumber,
+            @RequestParam(name = "pageSize", defaultValue = AppConstants.PAGE_SIZE) Integer pageSize
+    ) {
+        ForumListResponseDto forums = forumService.getTopFeaturedForums(pageNumber, pageSize);
+        CustomApiResponse<ForumListResponseDto> response =
+                new CustomApiResponse<>(true, ResponseMessages.FEATURED_FORUMS_FETCHED, forums);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+
 
 }

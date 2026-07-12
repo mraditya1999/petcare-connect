@@ -6,12 +6,16 @@ import { GoogleOAuthProvider } from "@react-oauth/google";
 const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || "";
 
 const App = () => {
-  return (
-    <GoogleOAuthProvider clientId={clientId}>
-      <ThemeProvider>
-        <RouterProvider router={router} />
-      </ThemeProvider>
-    </GoogleOAuthProvider>
+  const appContent = (
+    <ThemeProvider>
+      <RouterProvider router={router} />
+    </ThemeProvider>
+  );
+
+  return clientId ? (
+    <GoogleOAuthProvider clientId={clientId}>{appContent}</GoogleOAuthProvider>
+  ) : (
+    appContent
   );
 };
 

@@ -11,7 +11,7 @@ export type IUpdateProfileResponse = ApiResponse<IProfileData>;
 export type IDeleteProfileResponse = ApiResponse<string>;
 
 export interface IUpdatePasswordRequest {
-  currentPassword: string;
+  currentPassword?: string;
   newPassword: string;
   confirmPassword: string;
 }
