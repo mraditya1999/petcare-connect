@@ -2,24 +2,12 @@ import { ReactNode, useEffect } from "react";
 import { useAppSelector } from "@/app/hooks";
 import { useNavigate } from "react-router-dom";
 import { ROUTES } from "@/utils/constants";
-import RoleBasedUI from "@/components/shared/RoleBasedUI";
-import NotificationListener from "@/components/shared/NotificationListener";
 
 interface ProtectedRouteProps {
   children: ReactNode;
-  adminComponent: ReactNode;
-  specialistComponent: ReactNode;
-  userComponent: ReactNode;
-  showDashboard?: boolean;
 }
 
-const ProtectedRoute = ({
-  children,
-  adminComponent,
-  specialistComponent,
-  userComponent,
-  showDashboard = true,
-}: ProtectedRouteProps) => {
+const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const navigate = useNavigate();
   const user = useAppSelector((state) => state.auth.user);
 
@@ -29,19 +17,7 @@ const ProtectedRoute = ({
     }
   }, [user, navigate]);
 
-  return user ? (
-    <>
-      <NotificationListener />
-      {showDashboard && (
-        <RoleBasedUI
-          adminComponent={adminComponent}
-          specialistComponent={specialistComponent}
-          userComponent={userComponent}
-        />
-      )}
-      {children}
-    </>
-  ) : null;
+  return user ? <>{children}</> : null;
 };
 
 export default ProtectedRoute;
