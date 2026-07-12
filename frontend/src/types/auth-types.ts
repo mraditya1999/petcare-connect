@@ -1,15 +1,25 @@
+export type UserRole = "USER" | "ADMIN" | "SPECIALIST";
+export type OAuthProvider = "GOOGLE" | "LOCAL" | "GITHUB" | "MOBILE" | null;
+
+export interface IUserData {
+  userId: string | number | null;
+  email: string | null;
+  roles: UserRole[];
+  token: string | null;
+  refreshToken?: string | null;
+  oauthProvider: OAuthProvider;
+  newUser: boolean;
+  isProfileComplete: boolean;
+  tempToken?: string | null;
+  firstName?: string | null;
+  lastName?: string | null;
+  profileComplete?: boolean;
+  verified?: boolean;
+}
+
 export interface IUser {
   message: string;
-  data: {
-    userId: string | number | null;
-    email: string | null;
-    roles: ("USER" | "ADMIN" | "SPECIALIST")[];
-    token: string | null;
-    oauthProvider: "GOOGLE" | "LOCAL" | "GITHUB" | "MOBILE" | null;
-    newUser: boolean;
-    isProfileComplete: boolean;
-    tempToken?: string | null;
-  };
+  data: IUserData;
 }
 
 export interface IUserState {

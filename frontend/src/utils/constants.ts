@@ -13,6 +13,7 @@ export enum ROUTES {
   DASHBOARD = "/dashboard",
   NOTIFICATIONS = "/notifications",
   GITHUB_CALLBACK = "/oauth/github/callback",
+  GOOGLE_CALLBACK = "/oauth/google/callback",
   SEND_OTP = "/send-otp",
   VERIFY_OTP = "/verify-otp",
 }

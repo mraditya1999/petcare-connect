@@ -2,7 +2,6 @@ package com.spring.petcareConnect.entities;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.*;
@@ -25,9 +24,8 @@ public class Address {
     @Column(name = "address_id")
     private Long addressId;
 
-    @NotNull(message = "Pincode is required")
-    @Pattern(regexp = "\\d{6}", message = "Pincode must be exactly 6 digits")
-    @Column(nullable = false, length = 10)
+    @Pattern(regexp = "^(\\d{6})?$", message = "Pincode must be exactly 6 digits")
+    @Column(length = 10)
     private String pincode;
 
     @Size(max = 100, message = "City cannot exceed 100 characters")

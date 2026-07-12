@@ -47,6 +47,7 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -631,22 +632,7 @@ public class OAuthServiceImpl implements OAuthService {
             logger.info("OAuth account linked: provider={}, userId={}", provider, user.getUserId());
         }
 
-        // Build login response
-        List<String> roles = user.getRoles().stream().map(r -> r.getRoleName().name()).collect(Collectors.toList());
-
-        String jwt = jwtUtils.generateTokenFromUser(user);
-
-        return new LoginResponseDto(
-                user.getUserId(),
-                user.getFirstName(),
-                user.getLastName(),
-                user.getEmail(),
-                roles,
-                jwt,
-                provider.name(),
-                user.isProfileComplete(),
-                user.isVerified()
-        );
+        return buildLoginResponse(user, provider.name());
     }
 
     private User createUserFromProfile(OAuthProfileResponseDto profile) {
@@ -700,11 +686,12 @@ public class OAuthServiceImpl implements OAuthService {
 
     private LoginResponseDto buildLoginResponse(User user, String providerName) {
         String jwtToken = jwtUtils.generateTokenFromUser(user);
+        String refreshToken = issueRefreshToken(user);
         List<String> roles = user.getRoles().stream()
                 .map(Role::getAuthority)
                 .collect(Collectors.toList());
 
-        return new LoginResponseDto(
+        LoginResponseDto response = new LoginResponseDto(
                 user.getUserId(),
                 user.getFirstName(),
                 user.getLastName(),
@@ -715,6 +702,19 @@ public class OAuthServiceImpl implements OAuthService {
                 user.isProfileComplete(),
                 user.isVerified()
         );
+
+        response.setJwtToken(jwtToken);
+        response.setRefreshToken(refreshToken);
+        response.setTokenType("Bearer");
+        return response;
+    }
+
+    private String issueRefreshToken(User user) {
+        String refreshToken = UUID.randomUUID().toString();
+        user.setRefreshToken(refreshToken);
+        user.setRefreshTokenExpiry(LocalDateTime.now().plusDays(7));
+        userRepository.save(user);
+        return refreshToken;
     }
 }
 

@@ -12,46 +12,27 @@ const AppointmentPage = () => {
   const { appointments, loading, error } = useSelector(
     (state: RootState) => state.appointment,
   );
-  const user = useSelector((state: RootState) => state.auth.user);
-  const roles = user?.data?.roles || [];
-  const isAdmin = roles.includes("ADMIN");
-  const isSpecialist = roles.includes("SPECIALIST");
-
   useEffect(() => {
-    dispatch(fetchAppointments({ page: 0, size: 30, admin: isAdmin }));
-  }, [dispatch, isAdmin]);
+    dispatch(fetchAppointments({ page: 0, size: 30, admin: false }));
+  }, [dispatch]);
 
   return (
     <div className="container mx-auto py-8">
-      <div
-        className={
-          isAdmin || isSpecialist
-            ? "grid grid-cols-1"
-            : "grid grid-cols-1 gap-8 lg:grid-cols-2"
-        }
-      >
-        {!isAdmin && !isSpecialist && (
-          <div>
-            <Card>
-              <CardHeader>
-                <CardTitle>Book an Appointment</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <BookingForm />
-              </CardContent>
-            </Card>
-          </div>
-        )}
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
         <div>
           <Card>
             <CardHeader>
-              <CardTitle>
-                {isAdmin
-                  ? "All Appointments"
-                  : isSpecialist
-                    ? "Specialist Appointments"
-                    : "Your Appointments"}
-              </CardTitle>
+              <CardTitle>Book an Appointment</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <BookingForm />
+            </CardContent>
+          </Card>
+        </div>
+        <div>
+          <Card>
+            <CardHeader>
+              <CardTitle>Your Appointments</CardTitle>
             </CardHeader>
             <CardContent>
               {loading ? (

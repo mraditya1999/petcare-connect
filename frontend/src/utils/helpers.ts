@@ -1,13 +1,70 @@
 import { AxiosError } from "axios";
 import { IUser } from "@/types/auth-types";
+import { AuthUserPayload } from "@/types/auth-thunk-types";
 import { ZodError } from "zod";
 import { formatDistanceToNow } from "date-fns";
 
 export type Theme = "dark" | "light" | "system";
 
+export const normalizeAuthUser = (
+  payload?: AuthUserPayload | null,
+  message = "Authenticated",
+): IUser => {
+  const provider = payload?.oauthProvider?.toUpperCase();
+  const roles = (payload?.roles ?? [])
+    .map((role) => role.toUpperCase())
+    .filter(
+      (role): role is IUser["data"]["roles"][number] =>
+        role === "USER" || role === "ADMIN" || role === "SPECIALIST",
+    );
+
+  return {
+    message,
+    data: {
+      userId: payload?.userId ?? null,
+      email: payload?.email ?? null,
+      roles: roles.length > 0 ? roles : ["USER"],
+      token: payload?.token ?? payload?.accessToken ?? payload?.jwtToken ?? null,
+      refreshToken: payload?.refreshToken ?? null,
+      oauthProvider:
+        provider === "GOOGLE"
+          ? "GOOGLE"
+          : provider === "GITHUB"
+            ? "GITHUB"
+            : provider === "MOBILE"
+              ? "MOBILE"
+              : "LOCAL",
+      newUser: Boolean(payload?.newUser),
+      isProfileComplete:
+        payload?.isProfileComplete ?? payload?.profileComplete ?? true,
+      tempToken: payload?.tempToken ?? null,
+      firstName: payload?.firstName ?? null,
+      lastName: payload?.lastName ?? null,
+      verified: payload?.verified ?? false,
+    },
+  };
+};
+
 export const saveUserToStorage = (user: IUser, rememberMe: boolean) => {
   const storage = rememberMe ? localStorage : sessionStorage;
   storage.setItem("user", JSON.stringify(user));
+};
+
+export const persistUserToStorage = (user: IUser) => {
+  const hasLocalUser = localStorage.getItem("user") !== null;
+  const hasSessionUser = sessionStorage.getItem("user") !== null;
+
+  if (hasLocalUser) {
+    localStorage.setItem("user", JSON.stringify(user));
+  }
+
+  if (hasSessionUser) {
+    sessionStorage.setItem("user", JSON.stringify(user));
+  }
+
+  if (!hasLocalUser && !hasSessionUser) {
+    localStorage.setItem("user", JSON.stringify(user));
+  }
 };
 
 export const getUserFromStorage = (): IUser | null => {

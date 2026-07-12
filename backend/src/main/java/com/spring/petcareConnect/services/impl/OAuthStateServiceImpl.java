@@ -4,18 +4,18 @@ import com.spring.petcareConnect.services.OAuthStateService;
 import com.spring.petcareConnect.utils.RedisUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 public class OAuthStateServiceImpl implements OAuthStateService {
-    private final RedisTemplate<String, String> redisTemplate;
+    private final Map<String, String> stateStore = new ConcurrentHashMap<>();
     private final Logger logger = LoggerFactory.getLogger(OAuthStateServiceImpl.class);
 
-    public OAuthStateServiceImpl(RedisTemplate<String, String> redisTemplate) {
-        this.redisTemplate = redisTemplate;
+    public OAuthStateServiceImpl() {
     }
 
     // OAUTH STATE (simple mapping token -> present)
@@ -32,7 +32,7 @@ public class OAuthStateServiceImpl implements OAuthStateService {
         }
 
         try {
-            redisTemplate.opsForValue().set(oauthStateKey(state), "1", ttl);
+            stateStore.put(oauthStateKey(state), "1");
             logger.debug("Saved oauth state token={}", state);
         } catch (Exception e) {
             logger.error("Error saving OAuth state: {}", state, e);
@@ -46,7 +46,7 @@ public class OAuthStateServiceImpl implements OAuthStateService {
         }
 
         try {
-            return (String) redisTemplate.opsForValue().get(oauthStateKey(state));
+            return stateStore.get(oauthStateKey(state));
         } catch (Exception e) {
             logger.error("Error retrieving OAuth state: {}", state, e);
             throw new RuntimeException("Failed to retrieve OAuth state", e);
@@ -59,7 +59,7 @@ public class OAuthStateServiceImpl implements OAuthStateService {
         }
 
         try {
-            redisTemplate.delete(oauthStateKey(state));
+            stateStore.remove(oauthStateKey(state));
             logger.debug("Deleted OAuth state: {}", state);
         } catch (Exception e) {
             logger.error("Error deleting OAuth state: {}", state, e);

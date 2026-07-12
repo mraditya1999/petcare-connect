@@ -2,9 +2,11 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import { IUser } from "@/types/auth-types";
 import { customFetch } from "@/utils/customFetch";
-import { handleError, saveUserToStorage } from "@/utils/helpers";
+import { getUserFromStorage, handleError, normalizeAuthUser, saveUserToStorage } from "@/utils/helpers";
 import { ROUTES } from "@/utils/constants";
 import {
+  ApiResponse,
+  AuthUserPayload,
   ForgetPasswordParams,
   ForgetPasswordResponse,
   IOtpLoginResponse,
@@ -28,8 +30,14 @@ export const loginUser = createAsyncThunk<
   "auth/loginUser",
   async ({ parsedData, rememberMe }: LoginUserParams, { rejectWithValue }) => {
     try {
-      const response = await customFetch.post<IUser>("/auth/login", parsedData);
-      const user = response.data;
+      const response = await customFetch.post<ApiResponse<AuthUserPayload>>(
+        "/auth/login",
+        parsedData,
+      );
+      const user = normalizeAuthUser(
+        response.data?.data,
+        response.data?.message || "Logged in successfully!",
+      );
       saveUserToStorage(user, rememberMe);
       ShowToast({ description: "Logged in successfully!", type: "success" });
       return user;
@@ -70,14 +78,37 @@ export const logoutUser = createAsyncThunk<
 >("auth/logoutUser", async (_, { rejectWithValue }) => {
   try {
     ShowToast({ description: "Logging out...", type: "success" });
-    const response =
-      await customFetch.delete<LogoutUserResponse>("/auth/logout");
+    const storedUser = getUserFromStorage();
+    const refreshToken = storedUser?.data?.refreshToken ?? null;
+
+    if (refreshToken) {
+      await customFetch.delete<LogoutUserResponse>("/auth/logout", {
+        data: { refreshToken },
+      });
+    }
+
     localStorage.removeItem("user");
     sessionStorage.removeItem("user");
+    localStorage.removeItem("tempSignupToken");
+    sessionStorage.removeItem("tempSignupToken");
+    localStorage.removeItem("gh_oauth_state");
+    sessionStorage.removeItem("gh_oauth_state");
+    localStorage.removeItem("google_oauth_state");
+    sessionStorage.removeItem("google_oauth_state");
+
     ShowToast({ description: "Logged out successfully!", type: "success" });
-    return { message: response.data.message, data: null };
+    return { message: "Logged out successfully!", data: null };
   } catch (error) {
     const errMsg = handleError(error);
+    localStorage.removeItem("user");
+    sessionStorage.removeItem("user");
+    localStorage.removeItem("tempSignupToken");
+    sessionStorage.removeItem("tempSignupToken");
+    localStorage.removeItem("gh_oauth_state");
+    sessionStorage.removeItem("gh_oauth_state");
+    localStorage.removeItem("google_oauth_state");
+    sessionStorage.removeItem("google_oauth_state");
+
     ShowToast({ description: errMsg, type: "error" });
     return rejectWithValue(errMsg);
   }
@@ -139,7 +170,6 @@ export const resetPassword = createAsyncThunk<
   "auth/resetPassword",
   async ({ parsedData, token }: ResetPasswordParams, { rejectWithValue }) => {
     try {
-      // ShowToast({ description: "Resetting password...", type: "success" });
       const response = await customFetch.post<ResetPasswordResponse>(
         "/auth/reset-password",
         {
@@ -159,12 +189,21 @@ export const resetPassword = createAsyncThunk<
 
 export const googleLoginUser = createAsyncThunk<
   IUser,
-  { token: string; navigate: (path: string) => void },
+  { code: string; state?: string; navigate: (path: string) => void },
   { rejectValue: string }
->("auth/googleLoginUser", async ({ token, navigate }, { rejectWithValue }) => {
+>("auth/googleLoginUser", async ({ code, state, navigate }, { rejectWithValue }) => {
   try {
-    const response = await customFetch.post<IUser>("/auth/google", { token });
-    const user = response.data;
+    const payload: Record<string, string> = { code };
+    if (state) payload.state = state;
+
+    const response = await customFetch.post<ApiResponse<AuthUserPayload>>(
+      "/oauth/google",
+      payload,
+    );
+    const user = normalizeAuthUser(
+      response.data?.data,
+      response.data?.message || "Logged in successfully!",
+    );
 
     saveUserToStorage(user, true);
 
@@ -190,10 +229,16 @@ export const githubLoginUser = createAsyncThunk<
   "auth/githubLoginUser",
   async ({ code, state, navigate }, { rejectWithValue }) => {
     try {
-      const payload: any = { code };
+      const payload: Record<string, string> = { code };
       if (state) payload.state = state;
-      const response = await customFetch.post<IUser>("/auth/github", payload);
-      const user = response.data;
+      const response = await customFetch.post<ApiResponse<AuthUserPayload>>(
+        "/oauth/github",
+        payload,
+      );
+      const user = normalizeAuthUser(
+        response.data?.data,
+        response.data?.message || "Logged in successfully!",
+      );
 
       saveUserToStorage(user, true);
 
@@ -218,7 +263,7 @@ export const sendOtp = createAsyncThunk<
   { rejectValue: string }
 >("auth/sendOtp", async ({ phone }, { rejectWithValue }) => {
   try {
-    const response = await customFetch.post<SendOtpResponse>("/auth/send-otp", {
+    const response = await customFetch.post<SendOtpResponse>("/oauth/send-otp", {
       phone,
     });
     ShowToast({ description: response.data.message, type: "success" });
@@ -237,15 +282,17 @@ export const verifyOtp = createAsyncThunk<
   { rejectValue: string }
 >("auth/verifyOtp", async ({ phone, otp }, { rejectWithValue }) => {
   try {
-    const response = await customFetch.post<{
-      message: string;
-      data: IOtpLoginResponse;
-    }>("/auth/verify-otp", { phone, otp });
+    const response = await customFetch.post<ApiResponse<IOtpLoginResponse>>(
+      "/oauth/verify-otp",
+      { phone, otp },
+    );
 
     const { data, message } = response.data;
-    // Save temp token only for new users
-    if (data.newUser && data.tempToken) {
-      localStorage.setItem("tempSignupToken", data.tempToken);
+    if (data.newUser) {
+      const tempToken = data.accessToken ?? data.token ?? data.tempToken ?? null;
+      if (tempToken) {
+        localStorage.setItem("tempSignupToken", tempToken);
+      }
     }
 
     return { message, data };
@@ -254,7 +301,6 @@ export const verifyOtp = createAsyncThunk<
   }
 });
 
-// Step 2: Complete Profile (for new users)
 export const completeProfile = createAsyncThunk<
   IUser,
   { phone: string; firstName: string; lastName: string; email: string },
@@ -266,17 +312,17 @@ export const completeProfile = createAsyncThunk<
       ? { headers: { Authorization: `Bearer ${tempToken}` } }
       : {};
 
-    const response = await customFetch.post<IUser>(
-      "/auth/complete-profile",
+    const response = await customFetch.post<ApiResponse<AuthUserPayload>>(
+      "/oauth/complete-profile",
       payload,
       config,
     );
-    const respData = response.data;
+    const respData = normalizeAuthUser(
+      response.data?.data,
+      response.data?.message || "Profile completed successfully!",
+    );
 
-    // Full response now contains login info → save to storage
     saveUserToStorage(respData, true);
-
-    // Remove temp token after profile completion
     localStorage.removeItem("tempSignupToken");
 
     return respData;

@@ -2,8 +2,6 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { IProfileFormData, IUserData } from "@/types/profile-types";
 import { ROUTES } from "@/utils/constants";
-import { ApiResponse } from "@/types/api";
-import { customFetch } from "@/utils/customFetch";
 import {
   fetchExternalCities,
   fetchExternalCountries,
@@ -65,7 +63,8 @@ const AccountSetting = () => {
   const [profileForm, setProfileForm] = useState<IProfileFormData>(
     mapProfileToForm(profile),
   );
-  const [profileImage, setProfileImage] = useState<File | string | null>(
+  const [profileImage, setProfileImage] = useState<File | null>(null);
+  const [existingAvatarUrl, setExistingAvatarUrl] = useState<string | null>(
     profile?.avatarUrl || null,
   );
   const [isEditing, setIsEditing] = useState(false);
@@ -89,7 +88,8 @@ const AccountSetting = () => {
         const mappedProfile = mapProfileToForm(fetchedProfile);
 
         setProfileForm(mappedProfile);
-        setProfileImage(fetchedProfile.avatarUrl || null);
+        setExistingAvatarUrl(fetchedProfile.avatarUrl || null);
+        setProfileImage(null);
 
         originalProfileRef.current = mappedProfile;
       } catch (error) {
@@ -200,7 +200,7 @@ const AccountSetting = () => {
         );
         setPincodeOptions(pincodes);
       } catch (err) {
-        console.error("Failed to fetch pincodes from external API", err);
+        console.error("Failed to fetch pincode data from external API", err);
         setPincodeOptions([]);
       }
     };
@@ -223,7 +223,8 @@ const AccountSetting = () => {
   const handleCancel = () => {
     if (originalProfileRef.current) {
       setProfileForm(originalProfileRef.current);
-      setProfileImage(originalProfileRef.current.avatarUrl || null);
+      setExistingAvatarUrl(originalProfileRef.current.avatarUrl || null);
+      setProfileImage(null);
     }
     setIsEditing(false);
     setFormErrors({});
@@ -246,12 +247,34 @@ const AccountSetting = () => {
 
       const parsedData = profileFormSchema.parse(normalizedForm);
 
-      const formData = new FormData();
-      Object.entries(parsedData).forEach(([key, value]) => {
-        if (value === undefined || value === null) return;
-        formData.append(key, String(value));
-      });
+      const hasAddressData = [
+        parsedData.pincode,
+        parsedData.city,
+        parsedData.state,
+        parsedData.country,
+      ].some((value) => value && value.toString().trim() !== "");
 
+      const userProfilePayload = {
+        firstName: parsedData.firstName || undefined,
+        lastName: parsedData.lastName || undefined,
+        mobileNumber: parsedData.mobileNumber || undefined,
+        ...(hasAddressData
+          ? {
+              addressDto: {
+                pincode: parsedData.pincode || undefined,
+                city: parsedData.city || undefined,
+                state: parsedData.state || undefined,
+                country: parsedData.country || undefined,
+              },
+            }
+          : {}),
+      };
+
+      const formData = new FormData();
+      const userProfileBlob = new Blob([JSON.stringify(userProfilePayload)], {
+        type: "application/json",
+      });
+      formData.append("userProfile", userProfileBlob, "userProfile.json");
       if (profileImage instanceof File) {
         formData.append("profileImage", profileImage);
       }
@@ -262,7 +285,8 @@ const AccountSetting = () => {
       const mappedUpdatedProfile = mapProfileToForm(updatedProfile);
       originalProfileRef.current = mappedUpdatedProfile;
       setProfileForm(mappedUpdatedProfile);
-      setProfileImage(updatedProfile.avatarUrl || null);
+      setExistingAvatarUrl(updatedProfile.avatarUrl || null);
+      setProfileImage(null);
 
       setIsEditing(false);
       navigate(ROUTES.PROFILE);
@@ -281,23 +305,20 @@ const AccountSetting = () => {
     }
   };
 
-  const previewSrc =
-    typeof profileImage === "string"
-      ? profileImage
-      : profileImage
-        ? URL.createObjectURL(profileImage)
-        : null;
+  const previewSrc = profileImage
+    ? URL.createObjectURL(profileImage)
+    : existingAvatarUrl || null;
 
   return (
-    <Card className="mt-6 h-full bg-white text-gray-900 dark:bg-gray-900 dark:text-gray-100">
+    <Card className="mt-6 h-full border-border/60 bg-background text-foreground shadow-sm dark:border-gray-800">
       <CardContent className="pt-6">
         {isLoadingProfile ? (
           <ProfileShimmer />
         ) : (
           <>
             <label
-              className={`mx-auto flex h-32 w-32 cursor-pointer flex-col items-center justify-center rounded-full border border-dashed border-gray-300 dark:border-gray-600 ${
-                !isEditing && "cursor-not-allowed"
+              className={`mx-auto flex h-32 w-32 cursor-pointer flex-col items-center justify-center rounded-full border border-dashed border-gray-300 bg-muted/40 transition-colors dark:border-gray-600 dark:bg-gray-800/70 ${
+                !isEditing && "cursor-not-allowed opacity-80"
               }`}
             >
               {isLoadingImage && isEditing ? (
@@ -335,7 +356,7 @@ const AccountSetting = () => {
 
                   {name === "mobileNumber" ? (
                     <div className="flex items-center rounded-md border border-gray-300 dark:border-gray-700">
-                      <span className="px-2 text-sm text-gray-600 dark:text-gray-300">
+                      <span className="px-2 text-sm text-muted-foreground dark:text-gray-300">
                         +91
                       </span>
                       <Input
@@ -377,7 +398,7 @@ const AccountSetting = () => {
                       name={name}
                       value={profileForm.country}
                       onChange={handleChange}
-                      className="w-full rounded-md border border-gray-300 px-2 py-1"
+                      className="w-full rounded-md border border-input bg-background px-2 py-1 text-foreground"
                       disabled={!isEditing}
                     >
                       <option value="">Select Country</option>
@@ -393,7 +414,7 @@ const AccountSetting = () => {
                       name={name}
                       value={profileForm.state}
                       onChange={handleChange}
-                      className="w-full rounded-md border border-gray-300 px-2 py-1"
+                      className="w-full rounded-md border border-input bg-background px-2 py-1 text-foreground"
                       disabled={!isEditing || !profileForm.country}
                     >
                       <option value="">Select State</option>
@@ -409,7 +430,7 @@ const AccountSetting = () => {
                       name={name}
                       value={profileForm.city}
                       onChange={handleChange}
-                      className="w-full rounded-md border border-gray-300 px-2 py-1"
+                      className="w-full rounded-md border border-input bg-background px-2 py-1 text-foreground"
                       disabled={!isEditing || !profileForm.state}
                     >
                       <option value="">Select City</option>
@@ -420,30 +441,33 @@ const AccountSetting = () => {
                       ))}
                     </select>
                   ) : (
-                    <div className="flex gap-2">
-                      <select
-                        id={name}
-                        name={name}
-                        value={profileForm.pincode}
-                        onChange={handleChange}
-                        className="w-full rounded-md border border-gray-300 px-2 py-1"
-                        disabled={!isEditing || !profileForm.city}
-                      >
-                        <option value="">Select Pincode</option>
-                        {pincodeOptions.map((pin) => (
-                          <option key={pin} value={pin}>
-                            {pin}
-                          </option>
-                        ))}
-                      </select>
-                      <Input
-                        id="pincode"
-                        name="pincode"
-                        value={profileForm.pincode || ""}
-                        onChange={handleChange}
-                        disabled={!isEditing}
-                        placeholder="Or type pincode"
-                      />
+                    <div className="space-y-2">
+                      {isEditing && pincodeOptions.length > 0 ? (
+                        <select
+                          id={name}
+                          name={name}
+                          value={profileForm.pincode}
+                          onChange={handleChange}
+                          className="w-full rounded-md border border-input bg-background px-2 py-1 text-foreground"
+                          disabled={!isEditing || !profileForm.city}
+                        >
+                          <option value="">Select Pincode</option>
+                          {pincodeOptions.map((pin) => (
+                            <option key={pin} value={pin}>
+                              {pin}
+                            </option>
+                          ))}
+                        </select>
+                      ) : (
+                        <Input
+                          id={name}
+                          name={name}
+                          value={profileForm.pincode || ""}
+                          onChange={handleChange}
+                          placeholder="Enter pincode"
+                          disabled={!isEditing}
+                        />
+                      )}
                     </div>
                   )}
 
@@ -473,7 +497,9 @@ const AccountSetting = () => {
                 ) : (
                   <Button
                     type="button"
-                    onClick={() => setIsEditing(true)}
+                    onClick={() => {
+                      setIsEditing(true);
+                    }}
                     className="w-full max-w-32"
                   >
                     Edit Profile

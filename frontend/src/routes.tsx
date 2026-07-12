@@ -13,10 +13,6 @@ import {
   ErrorPage,
   ProfilePage,
   SingleForumPage,
-  AdminDashboardPage,
-  SpecialistDashboardPage,
-  SpecialistNotificationsPage,
-  UserDashboardPage,
   AppointmentPage,
 } from "@/pages";
 import { ROUTES } from "@/utils/constants";
@@ -28,6 +24,7 @@ import {
   ResetPassword,
   VerifyEmailPage,
   GitHubCallback,
+  GoogleCallback,
   SendOtp,
   VerifyOtp,
 } from "@/components";
@@ -35,30 +32,10 @@ import {
 const router = createBrowserRouter(
   createRoutesFromElements(
     <>
-      {/* Dashboard route (role-based UI only) */}
-      <Route
-        path={ROUTES.DASHBOARD}
-        element={
-          <ProtectedRoute
-            adminComponent={<AdminDashboardPage />}
-            specialistComponent={<SpecialistDashboardPage />}
-            userComponent={<UserDashboardPage />}
-          >
-            <LayoutPage />
-          </ProtectedRoute>
-        }
-        errorElement={<ErrorPage />}
-      />
-
-      {/* Protected routes (profile + appointments) */}
+      {/* Protected routes for authenticated users */}
       <Route
         element={
-          <ProtectedRoute
-            adminComponent={<AdminDashboardPage />}
-            specialistComponent={<SpecialistDashboardPage />}
-            userComponent={<UserDashboardPage />}
-            showDashboard={false}
-          >
+          <ProtectedRoute>
             <LayoutPage />
           </ProtectedRoute>
         }
@@ -66,10 +43,6 @@ const router = createBrowserRouter(
       >
         <Route path={ROUTES.PROFILE} element={<ProfilePage />} />
         <Route path={ROUTES.APPOINTMENTS} element={<AppointmentPage />} />
-        <Route
-          path={ROUTES.NOTIFICATIONS}
-          element={<SpecialistNotificationsPage />}
-        />
       </Route>
 
       {/* Public Route */}
@@ -92,6 +65,7 @@ const router = createBrowserRouter(
         <Route path={ROUTES.FORGET_PASSWORD} element={<ForgetPassword />} />
         <Route path={ROUTES.RESET_PASSWORD} element={<ResetPassword />} />
         <Route path={ROUTES.GITHUB_CALLBACK} element={<GitHubCallback />} />
+        <Route path={ROUTES.GOOGLE_CALLBACK} element={<GoogleCallback />} />
         <Route path={ROUTES.SEND_OTP} element={<SendOtp />} />
         <Route path={ROUTES.VERIFY_OTP} element={<VerifyOtp />} />
       </Route>

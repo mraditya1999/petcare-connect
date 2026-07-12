@@ -4,18 +4,16 @@ import com.spring.petcareConnect.dtos.forum.request.ForumCreateRequestDto;
 import com.spring.petcareConnect.dtos.forum.request.ForumUpdateRequestDto;
 import com.spring.petcareConnect.dtos.forum.response.ForumListResponseDto;
 import com.spring.petcareConnect.dtos.forum.response.ForumResponseDto;
-import com.spring.petcareConnect.dtos.pet.response.PetListResponseDto;
-import com.spring.petcareConnect.dtos.pet.response.PetResponseDto;
 import com.spring.petcareConnect.entities.Forum;
-import com.spring.petcareConnect.entities.Pet;
 import com.spring.petcareConnect.entities.User;
 import com.spring.petcareConnect.exceptions.APIException;
 import com.spring.petcareConnect.exceptions.ResourceNotFoundException;
 import com.spring.petcareConnect.repositories.jpa.UserRepository;
+import com.spring.petcareConnect.repositories.mongo.CommentRepository;
 import com.spring.petcareConnect.repositories.mongo.ForumRepository;
+import com.spring.petcareConnect.repositories.mongo.LikeRepository;
 import com.spring.petcareConnect.services.ForumService;
 import com.spring.petcareConnect.utils.AuthUtils;
-import org.jspecify.annotations.NonNull;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,7 +24,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 
@@ -36,11 +33,15 @@ public class ForumServiceImpl implements ForumService {
     private static final Logger logger = LoggerFactory.getLogger(PetServiceImpl.class);
 
     private final UserRepository userRepository;
+    private final CommentRepository commentRepository;
+    private final LikeRepository likeRepository;
     private final ForumRepository forumRepository;
     private final ModelMapper modelMapper;
 
-    public ForumServiceImpl(UserRepository userRepository, ForumRepository forumRepository, ModelMapper modelMapper) {
+    public ForumServiceImpl(UserRepository userRepository, CommentRepository commentRepository, LikeRepository likeRepository, ForumRepository forumRepository, ModelMapper modelMapper) {
         this.userRepository = userRepository;
+        this.commentRepository = commentRepository;
+        this.likeRepository = likeRepository;
         this.forumRepository = forumRepository;
         this.modelMapper = modelMapper;
     }
@@ -106,13 +107,6 @@ public class ForumServiceImpl implements ForumService {
         if (dto.getCategory() != null) forum.setCategory(dto.getCategory());
         if (dto.getTags() != null) forum.setTags(dto.getTags());
         if (dto.getIsPinned() != null) forum.setIsPinned(dto.getIsPinned());
-//        if (dto.getIsFeatured() != null) {
-//            if (user.isAdmin()) {
-//                forum.setIsFeatured(dto.getIsFeatured());
-//            } else {
-//                throw new APIException("Only admins can set featured status");
-//            }
-//        }
         if (dto.getPublished() != null) forum.setPublished(dto.getPublished());
 
         forum.setUpdatedAt(Instant.now());
@@ -122,6 +116,72 @@ public class ForumServiceImpl implements ForumService {
 
         return convertToForumDTO(forum);
     }
+
+    @Override
+    public ForumResponseDto getForumById(String forumId) {
+        Forum forum = forumRepository.findById(forumId)
+                .orElseThrow(() -> new ResourceNotFoundException("Forum", "id", forumId));
+        return convertToForumDTO(forum);
+    }
+
+    @Override
+    public void deleteForumForUser(String forumId) {
+        logger.info("Creating forum for user with email lookup...");
+
+        String email = AuthUtils.loggedInEmail().orElseThrow(() -> {
+            logger.error("No logged-in user found during forum creation");
+            return new APIException("No logged-in user");
+        });
+        User user = getUserByEmailOrThrow(email);
+
+        Forum forum = forumRepository.findByForumIdAndUserId(forumId, user.getUserId())
+                .orElseThrow(() -> new ResourceNotFoundException("Forum", "id", forumId));
+
+        commentRepository.deleteAllByForumId(forumId);
+        likeRepository.deleteAllByForumId(forumId);
+        forumRepository.delete(forum);
+        logger.info("Successfully deleted forum with id {} and its related comments/likes", forum.getForumId());
+    }
+
+    @Override
+    public ForumListResponseDto searchForums(String keyword, List<String> tags, Integer pageNumber, Integer pageSize, String sortBy, String sortOrder) {
+        Pageable pageable = buildPageable(pageNumber, pageSize, sortBy, sortOrder);
+        Page<Forum> forumPage;
+
+        if (keyword != null && !keyword.isBlank() && tags != null && !tags.isEmpty()) {
+            // Case: keyword + tags
+            forumPage = forumRepository
+                    .findByTitleContainingIgnoreCaseOrContentContainingIgnoreCaseAndTagsIn(
+                            keyword.trim(), keyword.trim(), tags, pageable);
+
+        } else if (keyword != null && !keyword.isBlank()) {
+            // Case: keyword only
+            forumPage = forumRepository
+                    .findByTitleContainingIgnoreCaseOrContentContainingIgnoreCase(
+                            keyword.trim(), keyword.trim(), pageable);
+
+        } else if (tags != null && !tags.isEmpty()) {
+            // Case: tags only
+            forumPage = forumRepository.findByTagsIn(tags, pageable);
+
+        } else {
+            // Fallback: all forums
+            forumPage = forumRepository.findAll(pageable);
+        }
+
+        return buildResponse(forumPage);
+    }
+
+    @Override
+    public ForumListResponseDto getTopFeaturedForums(Integer pageNumber, Integer pageSize) {
+        Pageable pageable = PageRequest.of(pageNumber, pageSize,
+                Sort.by(Sort.Order.desc("isPinned"), Sort.Order.desc("createdAt")));
+
+        Page<Forum> forumPage = forumRepository.findByIsFeaturedTrue(pageable);
+        logger.debug("Found {} featured forums", forumPage.getTotalElements());
+        return buildResponse(forumPage);
+    }
+
 
     private static Forum getForum(ForumCreateRequestDto forumCreateRequestDto, User user) {
         Forum forum = new Forum();
@@ -166,9 +226,8 @@ public class ForumServiceImpl implements ForumService {
         return forumDTO;
     }
 
-
     private ForumListResponseDto buildResponse(Page<Forum> forumPage) {
-        List<ForumResponseDto> forums = forumPage.getContent().stream().map(this::convertToDto).toList();
+        List<ForumResponseDto> forums = forumPage.getContent().stream().map(this::convertToForumDTO).toList();
         return new ForumListResponseDto(forums, forumPage.getNumber(), forumPage.getSize(), forumPage.getTotalElements(), forumPage.getTotalPages(), forumPage.isLast());
     }
 
@@ -177,10 +236,6 @@ public class ForumServiceImpl implements ForumService {
                 ? Sort.by(sortBy).ascending()
                 : Sort.by(sortBy).descending();
         return PageRequest.of(pageNumber, pageSize, sortByAndOrder);
-    }
-
-    private ForumResponseDto convertToDto(Forum forum) {
-        return modelMapper.map(forum, ForumResponseDto.class);
     }
 
     private User getUserByEmailOrThrow(String email) {

@@ -15,7 +15,7 @@ public class AddressDto {
 
     private Long addressId;
 
-    @Pattern(regexp = "\\d{6}", message = "Pincode must be exactly 6 digits")
+    @Pattern(regexp = "^(\\d{6})?$", message = "Pincode must be exactly 6 digits")
     private String pincode;
 
     @Size(max = 100, message = "City cannot exceed 100 characters")

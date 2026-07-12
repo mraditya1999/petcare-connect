@@ -4,8 +4,30 @@ import {
   ILoginCredentials,
   IRegisterCredentials,
   IResetPasswordCredentials,
-  IUser,
 } from "./auth-types";
+
+export interface ApiResponse<T> {
+  message: string;
+  data: T;
+}
+
+export interface AuthUserPayload {
+  userId?: string | number | null;
+  email?: string | null;
+  roles?: Array<"USER" | "ADMIN" | "SPECIALIST">;
+  token?: string | null;
+  refreshToken?: string | null;
+  jwtToken?: string | null;
+  accessToken?: string | null;
+  oauthProvider?: string | null;
+  newUser?: boolean;
+  profileComplete?: boolean;
+  isProfileComplete?: boolean;
+  tempToken?: string | null;
+  firstName?: string | null;
+  lastName?: string | null;
+  verified?: boolean;
+}
 
 export interface LoginUserParams {
   parsedData: ILoginCredentials;
@@ -29,10 +51,6 @@ export interface ResetPasswordParams {
   parsedData: IResetPasswordCredentials;
   token: string | null;
   email: string | null;
-}
-
-export interface LoginUserResponse {
-  user: IUser;
 }
 
 export interface RegisterUserResponse {
@@ -66,37 +84,18 @@ export interface SendOtpParams {
   phone: string;
 }
 
-export interface SendOtpResponse {
-  message: string;
-  data: {
-    phone: string;
-  };
-}
+export interface SendOtpResponse extends ApiResponse<{ phone: string }> {}
 
 export interface VerifyOtpParams {
   phone: string;
   otp: string;
 }
 
-export interface UserLoginResponseDTO {
-  message: string;
-  token: string;
-  refreshToken?: string;
-  data: IUser["data"];
-}
+export interface VerifyOtpResponse extends ApiResponse<IOtpLoginResponse> {}
 
-export interface VerifyOtpResponse {
-  message: string;
-  data: UserLoginResponseDTO;
-}
-
-export interface IOtpLoginResponse {
-  userId: string | number | null;
-  email: string | null;
-  roles: Array<"USER" | "ADMIN" | "SPECIALIST">;
-  token: string | null;
-  oauthProvider: "GOOGLE" | "LOCAL" | "GITHUB" | "MOBILE" | null;
-  newUser: boolean;
-  isProfileComplete: boolean;
+export interface IOtpLoginResponse extends AuthUserPayload {
+  newUser?: boolean;
   tempToken?: string | null;
+  accessToken?: string | null;
+  token?: string | null;
 }

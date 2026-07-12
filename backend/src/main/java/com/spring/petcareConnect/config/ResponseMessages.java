@@ -31,25 +31,40 @@ public final class ResponseMessages {
     public static final String GITHUB_OAUTH_URL = "Google OAuth URL generated.";
 
     // Pet
-    public static final String PET_CREATED = "Pet created successfully";
-    public static final String PET_UPDATED = "Pet updated successfully";
-    public static final String ALL_PETS_FETCHED = "All Pets retrieved successfully";
-    public static final String PET_FETCHED = "Pet retrieved successfully";
-    public static final String PET_DELETED = "Pet deleted successfully";
+    public static final String PET_CREATED = "Pet has been created successfully.";
+    public static final String PET_UPDATED = "Pet details updated successfully.";
+    public static final String ALL_PETS_FETCHED = "All pets retrieved successfully.";
+    public static final String PET_FETCHED = "Pet retrieved successfully.";
+    public static final String PET_DELETED = "Pet deleted successfully.";
 
     // Appointment
-    public static final String APPOINTMENT_CREATED = "Appointment created successfully";
-    public static final String APPOINTMENT_UPDATED = "Appointment updated successfully";
-    public static final String APPOINTMENT_CANCELLED = "Appointment cancelled successfully";
-    public static final String APPOINTMENTS_FETCHED = "All Appointments retrieved successfully";
-    public static final String APPOINTMENT_FETCHED = "Appointment retrieved successfully";
-    public static final String APPOINTMENT_RESCHEDULED = "Appointment rescheduled";
+    public static final String APPOINTMENT_CREATED = "Appointment has been created successfully.";
+    public static final String APPOINTMENT_UPDATED = "Appointment updated successfully.";
+    public static final String APPOINTMENT_CANCELLED = "Appointment cancelled successfully.";
+    public static final String APPOINTMENTS_FETCHED = "All appointments retrieved successfully.";
+    public static final String APPOINTMENT_FETCHED = "Appointment retrieved successfully.";
+    public static final String APPOINTMENT_RESCHEDULED = "Appointment rescheduled successfully.";
 
     // Forum
-    public static final String FORUMS_FETCHED = "All Forum retrieved successfully";
-    public static final String FORUM_FETCHED = "Forum retrieved successfully";
-    public static final String FORUM_CREATED = "Forum created successfully";
-    public static final String FORUM_UPDATED = "Forum updated successfully";
+    public static final String FORUMS_FETCHED = "All forums retrieved successfully.";
+    public static final String FORUM_FETCHED = "Forum retrieved successfully.";
+    public static final String FORUM_CREATED = "Forum has been created successfully.";
+    public static final String FORUM_UPDATED = "Forum updated successfully.";
+    public static final String FORUM_DELETED = "Forum deleted successfully.";
+    public static final String FEATURED_FORUMS_FETCHED = "Top featured forums fetched successfully";
+
+    // Comment
+    public static final String COMMENT_CREATED = "Comment has been added successfully.";
+    public static final String COMMENTS_FETCHED = "Comments retrieved successfully.";
+    public static final String COMMENT_UPDATED = "Comment updated successfully.";
+    public static final String COMMENT_DELETED = "Comment deleted successfully.";
+
+    // Like
+    public static final String FORUM_LIKED = "You have liked the forum successfully.";
+    public static final String FORUM_UNLIKED = "You have removed your like from the forum.";
+    public static final String COMMENT_LIKED = "You have liked the comment successfully.";
+    public static final String COMMENT_UNLIKED = "You have removed your like from the comment.";
+
 
 
 }

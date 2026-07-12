@@ -17,12 +17,8 @@ const links: Link[] = [
 ];
 
 const authenticatedLinks: Link[] = [
-  { id: 6, url: ROUTES.DASHBOARD, text: "Dashboard" },
-  { id: 7, url: ROUTES.PROFILE, text: "Profile" },
-];
-
-const userLinks: Link[] = [
-  { id: 5, url: ROUTES.APPOINTMENTS, text: "Appointments" },
+  { id: 6, url: ROUTES.PROFILE, text: "Profile" },
+  { id: 7, url: ROUTES.APPOINTMENTS, text: "Appointments" },
 ];
 
 const NavLinks: React.FC<{ mobile?: boolean }> = ({ mobile = false }) => {
@@ -57,11 +53,6 @@ const NavLinks: React.FC<{ mobile?: boolean }> = ({ mobile = false }) => {
     }
   };
 
-  const roles = user?.data?.roles || [];
-  const isAdmin = roles.includes("ADMIN");
-  const isSpecialist = roles.includes("SPECIALIST");
-  const isUser = roles.includes("USER") && !isAdmin && !isSpecialist;
-
   return (
     <>
       {links.map(({ id, url, text }) => (
@@ -69,14 +60,6 @@ const NavLinks: React.FC<{ mobile?: boolean }> = ({ mobile = false }) => {
           {renderLink(url, text)}
         </LinkWrapper>
       ))}
-
-      {user &&
-        isUser &&
-        userLinks.map(({ id, url, text }) => (
-          <LinkWrapper key={id} className={mobile ? "text-lg" : "relative"}>
-            {renderLink(url, text)}
-          </LinkWrapper>
-        ))}
 
       {user &&
         authenticatedLinks.map(({ id, url, text }) => (
