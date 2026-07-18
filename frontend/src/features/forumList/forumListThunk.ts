@@ -19,7 +19,7 @@ export const fetchForums = createAsyncThunk<
 >("forumList/fetchForums", async (params, { rejectWithValue }) => {
   const { page, size, sortBy, sortDir, searchTerm, tagSearchTerm } = params;
   try {
-    let url = `/forums?page=${page}&size=${size}&sortBy=${sortBy}&sortDir=${sortDir}`;
+    let url = `/forums?pageNumber=${page}&pageSize=${size}&sortBy=${sortBy}&sortOrder=${sortDir}`;
 
     if (tagSearchTerm.trim()) {
       const tags = tagSearchTerm
@@ -30,15 +30,25 @@ export const fetchForums = createAsyncThunk<
         .map((tag) => `tags=${encodeURIComponent(tag)}`)
         .join("&");
 
-      url = `/forums/search-by-tags?${tagsQuery}&page=${page}&size=${size}&sortBy=${sortBy}&sortDir=${sortDir}`;
+      url = `/forums/search?${tagsQuery}&pageNumber=${page}&pageSize=${size}&sortBy=${sortBy}&sortOrder=${sortDir}`;
     } else if (searchTerm.trim()) {
       url = `/forums/search?keyword=${encodeURIComponent(
         searchTerm,
-      )}&page=${page}&size=${size}&sortBy=${sortBy}&sortDir=${sortDir}`;
+      )}&pageNumber=${page}&pageSize=${size}&sortBy=${sortBy}&sortOrder=${sortDir}`;
     }
 
     const res = await customFetch.get<IFetchForumsResponse>(url);
-    return res.data;
+    return {
+      message: res.data.message,
+      data: {
+        forums: res.data.data?.forums ?? [],
+        pageNumber: res.data.data?.pageNumber ?? page,
+        pageSize: res.data.data?.pageSize ?? size,
+        totalElements: res.data.data?.totalElements ?? 0,
+        totalPages: res.data.data?.totalPages ?? 1,
+        lastPage: res.data.data?.lastPage ?? true,
+      },
+    };
   } catch (err) {
     return rejectWithValue(handleError(err));
   }
@@ -52,9 +62,12 @@ export const fetchFeaturedForums = createAsyncThunk<
 >("forumList/fetchFeaturedForums", async (_, { rejectWithValue }) => {
   try {
     const res = await customFetch.get<IFetchFeaturedForumsResponse>(
-      "forums/top-featured",
+      "/forums/top-featured?pageNumber=0&pageSize=5",
     );
-    return res.data;
+    return {
+      message: res.data.message,
+      data: res.data.data ?? [],
+    };
   } catch (err) {
     return rejectWithValue(handleError(err));
   }
@@ -97,9 +110,19 @@ export const fetchMyForums = createAsyncThunk<
 >("forumList/fetchMyForums", async ({ page, size }, { rejectWithValue }) => {
   try {
     const res = await customFetch.get<IFetchMyForumsResponse>(
-      `/forums/my-forums?page=${page}&size=${size}`,
+      `/forums/my-forums?pageNumber=${page}&pageSize=${size}`,
     );
-    return res.data;
+    return {
+      message: res.data.message,
+      data: {
+        forums: res.data.data?.forums ?? [],
+        pageNumber: res.data.data?.pageNumber ?? page,
+        pageSize: res.data.data?.pageSize ?? size,
+        totalElements: res.data.data?.totalElements ?? 0,
+        totalPages: res.data.data?.totalPages ?? 1,
+        lastPage: res.data.data?.lastPage ?? true,
+      },
+    } as IFetchMyForumsResponse;
   } catch (err) {
     return rejectWithValue(handleError(err));
   }

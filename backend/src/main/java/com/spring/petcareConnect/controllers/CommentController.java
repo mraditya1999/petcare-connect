@@ -5,6 +5,7 @@ import com.spring.petcareConnect.config.ResponseMessages;
 import com.spring.petcareConnect.dtos.CustomApiResponse;
 import com.spring.petcareConnect.dtos.forum.request.CommentCreateRequestDto;
 import com.spring.petcareConnect.dtos.forum.request.CommentUpdateRequestDto;
+import com.spring.petcareConnect.dtos.forum.response.CommentListResponseDto;
 import com.spring.petcareConnect.dtos.forum.response.CommentResponseDto;
 import com.spring.petcareConnect.services.CommentService;
 import jakarta.validation.Valid;
@@ -43,12 +44,12 @@ public class CommentController {
 
 
     @GetMapping
-    public ResponseEntity<CustomApiResponse<CommentResponseDto>> getCommentsByForum(@PathVariable String forumId, @RequestParam(name = "pageNumber", defaultValue = AppConstants.PAGE_NUMBER, required = false) Integer pageNumber,
+    public ResponseEntity<CustomApiResponse<CommentListResponseDto>> getCommentsByForum(@PathVariable String forumId, @RequestParam(name = "pageNumber", defaultValue = AppConstants.PAGE_NUMBER, required = false) Integer pageNumber,
                                                                                     @RequestParam(name = "pageSize", defaultValue = AppConstants.PAGE_SIZE, required = false)   Integer pageSize,
                                                                                     @RequestParam(name = "sortBy", defaultValue = AppConstants.SORT_FORUM_BY, required = false) String sortBy,
                                                                                     @RequestParam(name = "sortOrder", defaultValue = AppConstants.SORT_ORDER, required = false) String sortOrder) {
-        CommentResponseDto commentResponseDto = commentService.getCommentsByForum(forumId,pageNumber, pageSize, sortBy, sortOrder);
-        CustomApiResponse<CommentResponseDto> response = new CustomApiResponse<>(true, ResponseMessages.COMMENTS_FETCHED, commentResponseDto);
+        CommentListResponseDto commentListResponseDto = commentService.getCommentsByForum(forumId,pageNumber, pageSize, sortBy, sortOrder);
+        CustomApiResponse<CommentListResponseDto> response = new CustomApiResponse<>(true, ResponseMessages.COMMENTS_FETCHED, commentListResponseDto);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 

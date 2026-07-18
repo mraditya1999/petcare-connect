@@ -261,7 +261,7 @@ const SingleForumPage = () => {
       }
       try {
         await dispatch(
-          updateComment({ commentId, text: result.data.text }),
+          updateComment({ forumId: forumId!, commentId, text: result.data.text }),
         ).unwrap();
         setEditingCommentId(null);
         setUpdateCommentError(null);
@@ -281,8 +281,8 @@ const SingleForumPage = () => {
     async (commentId: string) => {
       if (!forumId) return;
       try {
-        await dispatch(deleteComment({ commentId })).unwrap();
-        const updatedCount = Math.max((forum?.commentsCount || 1) - 1, 0);
+        await dispatch(deleteComment({ forumId: forumId!, commentId })).unwrap();
+        const updatedCount = Math.max((forum?.commentCount ?? forum?.commentsCount ?? 1) - 1, 0);
         const newTotalPages = Math.max(
           Math.ceil(updatedCount / COMMENTS_PER_PAGE),
           1,
@@ -301,7 +301,7 @@ const SingleForumPage = () => {
         ShowToast({ description: "Failed to delete comment", type: "error" });
       }
     },
-    [dispatch, forumId, forum?.commentsCount, commentPage],
+    [dispatch, forumId, forum?.commentCount, forum?.commentsCount, commentPage],
   );
 
   const handleLike = useCallback(async () => {
@@ -498,7 +498,7 @@ const SingleForumPage = () => {
               <FaRegHeart className="h-4 w-4 text-muted-foreground transition-colors duration-200" />
             )}
             <span className="ml-1 text-muted-foreground">
-              {forum?.likesCount || 0}
+              {forum?.likeCount ?? forum?.likesCount ?? 0}
             </span>
           </Button>
 
@@ -510,7 +510,7 @@ const SingleForumPage = () => {
             title={!user ? "Log in to comment this forum" : undefined}
           >
             <span className="text-muted-foreground">
-              {forum?.commentsCount || 0}
+              {forum?.commentCount ?? forum?.commentsCount ?? 0}
             </span>
             <FaRegMessage className="h-4 w-4 text-muted-foreground" />
           </Button>

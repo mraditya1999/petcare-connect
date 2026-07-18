@@ -2,6 +2,7 @@ package com.spring.petcareConnect.services.impl;
 
 import com.spring.petcareConnect.dtos.forum.request.CommentCreateRequestDto;
 import com.spring.petcareConnect.dtos.forum.request.CommentUpdateRequestDto;
+import com.spring.petcareConnect.dtos.forum.response.CommentListResponseDto;
 import com.spring.petcareConnect.dtos.forum.response.CommentResponseDto;
 import com.spring.petcareConnect.entities.Comment;
 import com.spring.petcareConnect.entities.Forum;
@@ -85,15 +86,19 @@ public class CommentServiceImpl implements CommentService {
 
 
     @Override
-    public CommentResponseDto getCommentsByForum(String forumId, Integer pageNumber, Integer pageSize, String sortBy, String sortOrder) {
+    public CommentListResponseDto getCommentsByForum(String forumId, Integer pageNumber, Integer pageSize, String sortBy, String sortOrder) {
         Pageable pageable = buildPageable(pageNumber, pageSize, sortBy, sortOrder);
-        Page<Comment> commentPage = commentRepository.findAllByForumId(forumId,pageable);
+        Page<Comment> commentPage = commentRepository.findAllByForumId(forumId, pageable);
 
         if (commentPage.isEmpty()) {
-            throw new ResourceNotFoundException("Comment", "forumId", forumId);
+            return new CommentListResponseDto(List.of(), pageNumber, pageSize, 0L, 1, true);
         }
-        Comment comment = (Comment) commentPage.get(); // currently returns first comment
-        return convertToCommentDTO(comment);
+
+        List<CommentResponseDto> content = commentPage.getContent().stream()
+                .map(this::convertToCommentDTO)
+                .toList();
+
+        return new CommentListResponseDto(content, commentPage.getNumber(), commentPage.getSize(), commentPage.getTotalElements(), commentPage.getTotalPages(), commentPage.isLast());
     }
 
     @Override

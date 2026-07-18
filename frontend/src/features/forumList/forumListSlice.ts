@@ -71,24 +71,9 @@ const forumListSlice = createSlice({
       })
       .addCase(fetchForums.fulfilled, (state, action) => {
         state.loading = false;
-        state.forums = action.payload.data.content;
-
-        const totalElements =
-          (action.payload.data as unknown as { totalElements?: number; page?: { totalElements?: number } })
-            .totalElements ??
-          (action.payload.data as unknown as { page?: { totalElements?: number } }).page
-            ?.totalElements ??
-          0;
-
-        const totalPages =
-          (action.payload.data as unknown as { totalPages?: number; page?: { totalPages?: number } })
-            .totalPages ??
-          (action.payload.data as unknown as { page?: { totalPages?: number } }).page
-            ?.totalPages ??
-          1;
-
-        state.totalElements = totalElements;
-        state.totalPages = totalElements > state.size ? totalPages : 1;
+        state.forums = action.payload.data.forums;
+        state.totalElements = action.payload.data.totalElements ?? 0;
+        state.totalPages = action.payload.data.totalPages ?? 1;
       })
       .addCase(fetchForums.rejected, (state, action) => {
         state.loading = false;
@@ -133,24 +118,9 @@ const forumListSlice = createSlice({
       })
       .addCase(fetchMyForums.fulfilled, (state, action) => {
         state.loading = false;
-        state.myForums = action.payload.data.content;
-
-        const totalElements =
-          (action.payload.data as unknown as { totalElements?: number; page?: { totalElements?: number } })
-            .totalElements ??
-          (action.payload.data as unknown as { page?: { totalElements?: number } }).page
-            ?.totalElements ??
-          0;
-
-        const totalPages =
-          (action.payload.data as unknown as { totalPages?: number; page?: { totalPages?: number } })
-            .totalPages ??
-          (action.payload.data as unknown as { page?: { totalPages?: number } }).page
-            ?.totalPages ??
-          1;
-
-        state.myForumsTotalElements = totalElements;
-        state.myForumsTotalPages = totalElements > state.size ? totalPages : 1;
+        state.myForums = action.payload.data.forums;
+        state.myForumsTotalElements = action.payload.data.totalElements ?? 0;
+        state.myForumsTotalPages = action.payload.data.totalPages ?? 1;
       })
       .addCase(fetchMyForums.rejected, (state, action) => {
         state.loading = false;

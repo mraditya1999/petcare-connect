@@ -46,7 +46,7 @@ export const fetchComments = createAsyncThunk<
   async ({ forumId, page = 0, size = 5 }, { rejectWithValue }) => {
     try {
       const res = await customFetch.get<IFetchCommentsResponse>(
-        `/comments/forums/${forumId}?page=${page}&size=${size}`,
+        `/forums/${forumId}/comments?pageNumber=${page}&pageSize=${size}`,
       );
       return res.data;
     } catch (err) {
@@ -64,7 +64,7 @@ export const createComment = createAsyncThunk<
   async ({ forumId, text }, { rejectWithValue }) => {
     try {
       const res = await customFetch.post<ICreateCommentResponse>(
-        `/comments/forums/${forumId}`,
+        `/forums/${forumId}/comments`,
         { text },
       );
       return res.data;
@@ -76,14 +76,14 @@ export const createComment = createAsyncThunk<
 
 export const updateComment = createAsyncThunk<
   IUpdateCommentResponse,
-  IUpdateCommentParams,
+  IUpdateCommentParams & { forumId: string },
   { rejectValue: string }
 >(
   "forumDetail/updateComment",
-  async ({ commentId, text }, { rejectWithValue }) => {
+  async ({ forumId, commentId, text }, { rejectWithValue }) => {
     try {
       const res = await customFetch.put<IUpdateCommentResponse>(
-        `/comments/${commentId}`,
+        `/forums/${forumId}/comments/${commentId}`,
         { text },
       );
       return res.data;
@@ -95,12 +95,12 @@ export const updateComment = createAsyncThunk<
 
 export const deleteComment = createAsyncThunk<
   IDeleteCommentResponse,
-  IDeleteCommentParams,
+  IDeleteCommentParams & { forumId: string },
   { rejectValue: string }
->("forumDetail/deleteComment", async ({ commentId }, { rejectWithValue }) => {
+>("forumDetail/deleteComment", async ({ forumId, commentId }, { rejectWithValue }) => {
   try {
     const res = await customFetch.delete<IDeleteCommentResponse>(
-      `/comments/${commentId}`,
+      `/forums/${forumId}/comments/${commentId}`,
     );
     return res.data;
   } catch (err) {
@@ -114,10 +114,13 @@ export const checkLike = createAsyncThunk<
   { rejectValue: string }
 >("forumDetail/checkLike", async ({ forumId }, { rejectWithValue }) => {
   try {
-    const res = await customFetch.get<ICheckLikeResponse>(
-      `/likes/forums/${forumId}/check`,
+    const res = await customFetch.get<IFetchSingleForumResponse>(
+      `/forums/${forumId}`,
     );
-    return res.data;
+    return {
+      message: res.data.message,
+      data: { isLiked: res.data.data?.likedByCurrentUser ?? false },
+    };
   } catch (err) {
     return rejectWithValue(handleError(err));
   }
@@ -130,7 +133,7 @@ export const toggleLike = createAsyncThunk<
 >("forumDetail/toggleLike", async ({ forumId }, { rejectWithValue }) => {
   try {
     const res = await customFetch.post<IToggleLikeResponse>(
-      `/likes/forums/${forumId}`,
+      `/likes/forum/${forumId}`,
     );
     return res.data;
   } catch (err) {

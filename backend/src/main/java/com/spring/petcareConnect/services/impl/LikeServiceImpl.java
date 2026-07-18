@@ -110,7 +110,7 @@ public class LikeServiceImpl implements LikeService {
         User user = getUserByEmailOrThrow(email);
         Long userId = user.getUserId();
 
-        Forum forum = forumRepository.findByForumIdAndUserId(forumId,userId)
+        Forum forum = forumRepository.findById(forumId)
                 .orElseThrow(() -> new ResourceNotFoundException("Forum", "id", forumId));
 
         // Check if user already liked this forum
