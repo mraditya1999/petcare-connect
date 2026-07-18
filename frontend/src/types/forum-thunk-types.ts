@@ -1,4 +1,4 @@
-import { SpringPage, ApiResponse } from "./api";
+import { ApiResponse } from "./api";
 import { IForum } from "./forum-types";
 
 // ---------- Request Params ----------
@@ -58,11 +58,14 @@ export interface ISingleForum {
   firstName: string;
   lastName: string;
   email: string;
-  likesCount: number;
-  commentsCount: number;
+  likeCount: number;
+  commentCount: number;
+  likesCount?: number;
+  commentsCount?: number;
   createdAt: string;
   updatedAt: string;
   userId: number;
+  likedByCurrentUser?: boolean;
 }
 
 export interface IFetchSingleForumResponse {
@@ -76,29 +79,28 @@ export interface IComment {
   userId: number;
   text: string;
   createdAt: string;
+  updatedAt?: string;
   firstName: string;
   lastName: string;
   email: string;
   parentId: string | null;
-  likedByUsers: number[];
-  replies: IComment[];
-}
-
-export interface ICommentPageInfo {
-  size: number;
-  number: number;
-  totalElements: number;
-  totalPages: number;
+  childCount?: number;
+  likeCount?: number;
+  isEdited?: boolean;
 }
 
 export interface ICommentListData {
   content: IComment[];
-  page: ICommentPageInfo;
+  pageNumber: number;
+  pageSize: number;
+  totalElements: number;
+  totalPages: number;
+  lastPage: boolean;
 }
 
 export interface IFetchCommentsResponse {
   message: string;
-  data: SpringPage<IComment>;
+  data: ICommentListData;
 }
 
 export interface ICreateCommentResponse {
@@ -112,10 +114,14 @@ export interface IUpdatedComment {
   userId: number;
   text: string;
   createdAt: string;
+  updatedAt?: string;
   firstName: string;
   lastName: string;
   email: string;
   parentId: string | null;
+  childCount?: number;
+  likeCount?: number;
+  isEdited?: boolean;
 }
 
 export interface IUpdateCommentResponse {
@@ -137,9 +143,18 @@ export interface IToggleLikeResponse {
   data: null;
 }
 
+export interface IForumListData {
+  forums: IForum[];
+  pageNumber: number;
+  pageSize: number;
+  totalElements: number;
+  totalPages: number;
+  lastPage: boolean;
+}
+
 export interface IFetchForumsResponse {
   message: string;
-  data: SpringPage<IForum>;
+  data: IForumListData;
 }
 
 export interface IFetchFeaturedForumsResponse {

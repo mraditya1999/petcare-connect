@@ -75,27 +75,8 @@ const forumDetailSlice = createSlice({
         (state, action: PayloadAction<IFetchCommentsResponse>) => {
           state.loading = false;
           state.comments = action.payload.data.content ?? [];
-
-          const totalElements =
-            (action.payload.data as unknown as {
-              totalElements?: number;
-              page?: { totalElements?: number };
-            }).totalElements ??
-            (action.payload.data as unknown as { page?: { totalElements?: number } }).page
-              ?.totalElements ??
-            0;
-
-          const totalPages =
-            (action.payload.data as unknown as {
-              totalPages?: number;
-              page?: { totalPages?: number };
-            }).totalPages ??
-            (action.payload.data as unknown as { page?: { totalPages?: number } }).page
-              ?.totalPages ??
-            1;
-
-          state.totalCommentElements = totalElements;
-          state.totalCommentPages = Math.max(totalPages, 1);
+          state.totalCommentElements = action.payload.data.totalElements ?? 0;
+          state.totalCommentPages = Math.max(action.payload.data.totalPages ?? 1, 1);
         },
       )
       .addCase(fetchComments.rejected, (state, action) => {
@@ -110,7 +91,11 @@ const forumDetailSlice = createSlice({
         createComment.fulfilled,
         (state, action: PayloadAction<ICreateCommentResponse>) => {
           state.loading = false;
-          if (state.forum) state.forum.commentsCount++;
+          if (state.forum) {
+            const currentCommentCount = state.forum.commentCount ?? state.forum.commentsCount ?? 0;
+            state.forum.commentCount = currentCommentCount + 1;
+            state.forum.commentsCount = currentCommentCount + 1;
+          }
 
           if (action.payload.data) {
             state.comments = [action.payload.data, ...state.comments].slice(
@@ -149,10 +134,9 @@ const forumDetailSlice = createSlice({
         );
 
         if (state.forum) {
-          state.forum.commentsCount = Math.max(
-            state.forum.commentsCount - 1,
-            0,
-          );
+          const currentCommentCount = state.forum.commentCount ?? state.forum.commentsCount ?? 0;
+          state.forum.commentCount = Math.max(currentCommentCount - 1, 0);
+          state.forum.commentsCount = Math.max(currentCommentCount - 1, 0);
         }
       },
     );
@@ -170,10 +154,14 @@ const forumDetailSlice = createSlice({
 
           if (msg.includes("unlike")) {
             state.isLiked = false;
-            state.forum.likesCount = Math.max(state.forum.likesCount - 1, 0);
+            const currentLikeCount = state.forum.likeCount ?? state.forum.likesCount ?? 0;
+            state.forum.likeCount = Math.max(currentLikeCount - 1, 0);
+            state.forum.likesCount = Math.max(currentLikeCount - 1, 0);
           } else if (msg.includes("like")) {
             state.isLiked = true;
-            state.forum.likesCount++;
+            const currentLikeCount = state.forum.likeCount ?? state.forum.likesCount ?? 0;
+            state.forum.likeCount = currentLikeCount + 1;
+            state.forum.likesCount = currentLikeCount + 1;
           }
         },
       )

@@ -1,4 +1,4 @@
-import { SpringPage } from "./api";
+import { ApiResponse } from "./api";
 
 export interface IForum {
   forumId: string;
@@ -8,11 +8,14 @@ export interface IForum {
   firstName: string;
   lastName: string;
   email: string;
-  likesCount: number;
-  commentsCount: number;
+  likeCount: number;
+  commentCount: number;
+  likesCount?: number;
+  commentsCount?: number;
   createdAt: string;
   updatedAt: string;
   userId: number;
+  likedByCurrentUser?: boolean;
 }
 
 export interface IPaginationInfo {
@@ -28,12 +31,14 @@ export interface IComment {
   userId: number;
   text: string;
   createdAt: string;
+  updatedAt?: string;
   firstName: string;
   lastName: string;
   email: string;
   parentId: string | null;
-  likedByUsers: number[];
-  replies: IComment[];
+  childCount?: number;
+  likeCount?: number;
+  isEdited?: boolean;
 }
 
 export interface IForumListState {
@@ -71,7 +76,13 @@ export interface IForumDetailState {
   isLiked: boolean;
 }
 
-export interface IFetchMyForumsResponse {
-  message: string;
-  data: SpringPage<IForum>;
+export interface IForumListPayload {
+  forums: IForum[];
+  pageNumber: number;
+  pageSize: number;
+  totalElements: number;
+  totalPages: number;
+  lastPage: boolean;
 }
+
+export type IFetchMyForumsResponse = ApiResponse<IForumListPayload>;

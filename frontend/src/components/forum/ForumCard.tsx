@@ -54,7 +54,7 @@ const ForumCard = ({ forums }: ForumCardProps) => {
                     className="flex w-auto items-center gap-1 p-0 hover:bg-transparent dark:hover:text-gray-200"
                   >
                     <FaRegHeart className="h-4 w-4" />
-                    {forum.likesCount || 0}
+                    {forum.likeCount ?? forum.likesCount ?? 0}
                   </Button>
 
                   <Button
@@ -62,7 +62,7 @@ const ForumCard = ({ forums }: ForumCardProps) => {
                     className="flex w-auto items-center gap-1 p-0 hover:bg-transparent dark:hover:text-gray-200"
                   >
                     <FaRegMessage className="h-4 w-4" />
-                    {forum.commentsCount || 0}
+                    {forum.commentCount ?? forum.commentsCount ?? 0}
                   </Button>
 
                   <span className="flex items-center gap-1">
