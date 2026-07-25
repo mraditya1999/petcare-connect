@@ -24,7 +24,7 @@ public final class RedisUtils {
      */
     public static String otpKey(String phone) {
         validateNotBlank(phone, "Phone cannot be null or blank");
-        return OTP_PREFIX + phone;
+        return OTP_PREFIX + phone.trim();
     }
 
     /**
@@ -32,7 +32,7 @@ public final class RedisUtils {
      */
     public static String tempUserKey(String token) {
         validateNotBlank(token, "Token cannot be null or blank");
-        return TEMP_USER_PREFIX + token;
+        return TEMP_USER_PREFIX + token.trim();
     }
 
     /**
@@ -40,7 +40,7 @@ public final class RedisUtils {
      */
     public static String sessionKey(String userId) {
         validateNotBlank(userId, "User ID cannot be null or blank");
-        return SESSION_PREFIX + userId;
+        return SESSION_PREFIX + userId.trim();
     }
 
     /**
@@ -48,7 +48,7 @@ public final class RedisUtils {
      */
     public static String cacheKey(String key) {
         validateNotBlank(key, "Cache key cannot be null or blank");
-        return CACHE_PREFIX + key;
+        return CACHE_PREFIX + key.trim();
     }
 
     /**
@@ -56,7 +56,7 @@ public final class RedisUtils {
      */
     public static String verifyTokenKey(String token) {
         validateNotBlank(token, "Token cannot be null or blank");
-        return VERIFY_TOKEN_PREFIX + token;
+        return VERIFY_TOKEN_PREFIX + token.trim();
     }
 
     /**
@@ -64,7 +64,7 @@ public final class RedisUtils {
      */
     public static String resetTokenKey(String token) {
         validateNotBlank(token, "Token cannot be null or blank");
-        return RESET_TOKEN_PREFIX + token;
+        return RESET_TOKEN_PREFIX + token.trim();
     }
 
     /**
@@ -72,7 +72,7 @@ public final class RedisUtils {
      */
     public static String oauthStateKey(String state) {
         validateNotBlank(state, "State cannot be null or blank");
-        return OAUTH_STATE_PREFIX + state;
+        return OAUTH_STATE_PREFIX + state.trim();
     }
 
     /**

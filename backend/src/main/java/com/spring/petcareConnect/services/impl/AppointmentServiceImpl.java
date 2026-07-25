@@ -19,15 +19,13 @@ import com.spring.petcareConnect.repositories.jpa.SpecialistRepository;
 import com.spring.petcareConnect.repositories.jpa.UserRepository;
 import com.spring.petcareConnect.services.AppointmentService;
 import com.spring.petcareConnect.services.NotificationService;
+import com.spring.petcareConnect.services.ServiceMappingSupport;
 import com.spring.petcareConnect.utils.AuthUtils;
 import jakarta.transaction.Transactional;
-import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -44,19 +42,19 @@ public class AppointmentServiceImpl implements AppointmentService {
     private final UserRepository userRepository;
     private final AppointmentRepository appointmentRepository;
     private final NotificationService notificationService;
-    private final ModelMapper modelMapper;
+    private final ServiceMappingSupport mappingSupport;
 
     public AppointmentServiceImpl(PetRepository petRepository,
                                   SpecialistRepository specialistRepository,
                                   UserRepository userRepository,
                                   AppointmentRepository appointmentRepository, NotificationService notificationService,
-                                  ModelMapper modelMapper) {
+                                  ServiceMappingSupport mappingSupport) {
         this.petRepository = petRepository;
         this.specialistRepository = specialistRepository;
         this.userRepository = userRepository;
         this.appointmentRepository = appointmentRepository;
         this.notificationService = notificationService;
-        this.modelMapper = modelMapper;
+        this.mappingSupport = mappingSupport;
     }
 
     @Override
@@ -107,7 +105,7 @@ public class AppointmentServiceImpl implements AppointmentService {
 
         notificationService.sendAppointmentCreated(saved);
 
-        AppointmentResponseDto responseDto = modelMapper.map(saved, AppointmentResponseDto.class);
+        AppointmentResponseDto responseDto = mappingSupport.mapToDto(saved, AppointmentResponseDto.class);
         responseDto.setPetName(pet.getPetName());
         responseDto.setSpecialistFirstName(specialist.getUser().getFirstName());
         responseDto.setSpecialistLastName(specialist.getUser().getLastName());
@@ -135,7 +133,7 @@ public class AppointmentServiceImpl implements AppointmentService {
         Appointment saved = appointmentRepository.save(appointment);
         notificationService.sendAppointmentUpdated(saved);
 
-        AppointmentResponseDto responseDto = modelMapper.map(saved, AppointmentResponseDto.class);
+        AppointmentResponseDto responseDto = mappingSupport.mapToDto(saved, AppointmentResponseDto.class);
         responseDto.setPetName(appointment.getPet().getPetName());
         responseDto.setSpecialistFirstName(appointment.getSpecialist().getUser().getFirstName());
         responseDto.setSpecialistLastName(appointment.getSpecialist().getUser().getLastName());
@@ -186,7 +184,7 @@ public class AppointmentServiceImpl implements AppointmentService {
         Appointment saved = appointmentRepository.save(appointment);
         notificationService.sendAppointmentRescheduled(saved);
 
-        AppointmentResponseDto responseDto = modelMapper.map(saved, AppointmentResponseDto.class);
+        AppointmentResponseDto responseDto = mappingSupport.mapToDto(saved, AppointmentResponseDto.class);
         responseDto.setPetName(appointment.getPet().getPetName());
         responseDto.setSpecialistFirstName(specialist.getUser().getFirstName());
         responseDto.setSpecialistLastName(specialist.getUser().getLastName());
@@ -212,7 +210,7 @@ public class AppointmentServiceImpl implements AppointmentService {
 
         notificationService.sendAppointmentCancelled(saved);
 
-        AppointmentResponseDto responseDto = modelMapper.map(saved, AppointmentResponseDto.class);
+        AppointmentResponseDto responseDto = mappingSupport.mapToDto(saved, AppointmentResponseDto.class);
         responseDto.setPetName(appointment.getPet().getPetName());
         responseDto.setSpecialistFirstName(specialist.getUser().getFirstName());
         responseDto.setSpecialistLastName(specialist.getUser().getLastName());
@@ -230,7 +228,7 @@ public class AppointmentServiceImpl implements AppointmentService {
         });
         User user = getUserByEmailOrThrow(email);
 
-        Pageable pageable = buildPageable(pageNumber, pageSize, sortBy, sortOrder);
+        Pageable pageable = mappingSupport.buildPageable(pageNumber, pageSize, sortBy, sortOrder);
         Page<Appointment> appointmentPage = appointmentRepository.findAllByPetOwner(user, pageable);
         logger.debug("Found {} appointments for user {}", appointmentPage.getTotalElements(), email);
         return buildResponse(appointmentPage);
@@ -250,28 +248,7 @@ public class AppointmentServiceImpl implements AppointmentService {
             return new ResourceNotFoundException("Appointment", "id", appointmentId);
         });
         logger.info("Successfully fetched appointment '{}' with id {}", appointment.getPet().getPetName(), appointment.getAppointmentId());
-        return convertToDto(appointment);
-    }
-
-    private AppointmentListResponseDto buildResponse(Page<Appointment> appointmentPage) {
-        List<AppointmentResponseDto> appointments = appointmentPage.getContent().stream().map(this::convertToDto).toList();
-        return new AppointmentListResponseDto(appointments, appointmentPage.getNumber(), appointmentPage.getSize(), appointmentPage.getTotalElements(), appointmentPage.getTotalPages(), appointmentPage.isLast());
-    }
-
-    private User getUserByEmailOrThrow(String email) {
-        return userRepository.findByEmail(email)
-                .orElseThrow(() -> ResourceNotFoundException.byField("User", "email", email));
-    }
-
-    private Pageable buildPageable(Integer pageNumber, Integer pageSize, String sortBy, String sortOrder) {
-        Sort sortByAndOrder = sortOrder.equalsIgnoreCase("asc")
-                ? Sort.by(sortBy).ascending()
-                : Sort.by(sortBy).descending();
-        return PageRequest.of(pageNumber, pageSize, sortByAndOrder);
-    }
-
-    private AppointmentResponseDto convertToDto(Appointment appointment) {
-        AppointmentResponseDto dto = modelMapper.map(appointment, AppointmentResponseDto.class);
+        AppointmentResponseDto dto = mappingSupport.mapToDto(appointment, AppointmentResponseDto.class);
 
         if (appointment.getSpecialist() != null && appointment.getSpecialist().getUser() != null) {
             dto.setSpecialistFirstName(appointment.getSpecialist().getUser().getFirstName());
@@ -284,5 +261,29 @@ public class AppointmentServiceImpl implements AppointmentService {
         }
 
         return dto;
+    }
+
+    private AppointmentListResponseDto buildResponse(Page<Appointment> appointmentPage) {
+        List<AppointmentResponseDto> appointments = appointmentPage.getContent().stream().map(appointment -> {
+            AppointmentResponseDto dto = mappingSupport.mapToDto(appointment, AppointmentResponseDto.class);
+
+            if (appointment.getSpecialist() != null && appointment.getSpecialist().getUser() != null) {
+                dto.setSpecialistFirstName(appointment.getSpecialist().getUser().getFirstName());
+                dto.setSpecialistLastName(appointment.getSpecialist().getUser().getLastName());
+            }
+
+            if (appointment.getPetOwner() != null) {
+                dto.setPetOwnerFirstName(appointment.getPetOwner().getFirstName());
+                dto.setPetOwnerLastName(appointment.getPetOwner().getLastName());
+            }
+
+            return dto;
+        }).toList();
+        return new AppointmentListResponseDto(appointments, appointmentPage.getNumber(), appointmentPage.getSize(), appointmentPage.getTotalElements(), appointmentPage.getTotalPages(), appointmentPage.isLast());
+    }
+
+    private User getUserByEmailOrThrow(String email) {
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> ResourceNotFoundException.byField("User", "email", email));
     }
 }

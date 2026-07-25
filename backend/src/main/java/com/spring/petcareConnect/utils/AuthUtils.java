@@ -3,6 +3,7 @@ package com.spring.petcareConnect.utils;
 import com.spring.petcareConnect.security.service.UserDetailsImpl;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.util.StringUtils;
 
 import java.util.Optional;
 
@@ -22,6 +23,8 @@ public final class AuthUtils {
     }
 
     public static Optional<String> loggedInEmail() {
-        return loggedInUser().map(UserDetailsImpl::getEmail);
+        return loggedInUser()
+                .map(UserDetailsImpl::getEmail)
+                .filter(StringUtils::hasText);
     }
 }

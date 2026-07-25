@@ -15,15 +15,13 @@ import com.spring.petcareConnect.repositories.jpa.BreedRepository;
 import com.spring.petcareConnect.repositories.jpa.PetRepository;
 import com.spring.petcareConnect.repositories.jpa.UserRepository;
 import com.spring.petcareConnect.services.PetService;
+import com.spring.petcareConnect.services.ServiceMappingSupport;
 import com.spring.petcareConnect.utils.AuthUtils;
 import jakarta.transaction.Transactional;
-import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -37,15 +35,15 @@ public class PetServiceImpl implements PetService {
     private final UserRepository userRepository;
     private final BreedRepository breedRepository;
     private final PetRepository petRepository;
-    private final ModelMapper modelMapper;
+    private final ServiceMappingSupport mappingSupport;
     private final PetProfileImageHandler petProfileImageHandler;
 
 
-    public PetServiceImpl(UserRepository userRepository, BreedRepository breedRepository, PetRepository petRepository, ModelMapper modelMapper,  PetProfileImageHandler petProfileImageHandler) {
+    public PetServiceImpl(UserRepository userRepository, BreedRepository breedRepository, PetRepository petRepository, ServiceMappingSupport mappingSupport, PetProfileImageHandler petProfileImageHandler) {
         this.userRepository = userRepository;
         this.breedRepository = breedRepository;
         this.petRepository = petRepository;
-        this.modelMapper = modelMapper;
+        this.mappingSupport = mappingSupport;
         this.petProfileImageHandler = petProfileImageHandler;
     }
 
@@ -72,7 +70,7 @@ public class PetServiceImpl implements PetService {
                 });
         String petName = petRequestDTO.getPetName();
         petRequestDTO.setPetName(petName);
-        Pet pet = modelMapper.map(petRequestDTO, Pet.class);
+        Pet pet = mappingSupport.mapToEntity(petRequestDTO, Pet.class);
         pet.setPetOwner(user);
         pet.setBreed(breed);
 
@@ -83,7 +81,7 @@ public class PetServiceImpl implements PetService {
 
         Pet savedPet = petRepository.save(pet);
         logger.info("Successfully created pet '{}' with id {}", savedPet.getPetName(), savedPet.getPetId());
-        return modelMapper.map(savedPet, PetResponseDto.class);
+        return mappingSupport.mapToDto(savedPet, PetResponseDto.class);
     }
 
     @Override
@@ -133,7 +131,7 @@ public class PetServiceImpl implements PetService {
 
         Pet updatedPet = petRepository.save(existingPet);
         logger.info("Successfully updated pet '{}' with id {}", updatedPet.getPetName(), updatedPet.getPetId());
-        return modelMapper.map(updatedPet, PetResponseDto.class);
+        return mappingSupport.mapToDto(updatedPet, PetResponseDto.class);
     }
 
     @Override
@@ -146,7 +144,7 @@ public class PetServiceImpl implements PetService {
         });
         User user = getUserByEmailOrThrow(email);
 
-        Pageable pageable = buildPageable(pageNumber, pageSize, sortBy, sortOrder);
+        Pageable pageable = mappingSupport.buildPageable(pageNumber, pageSize, sortBy, sortOrder);
         Page<Pet> petPage = petRepository.findAllByPetOwner(user, pageable);
         logger.debug("Found {} pets for user {}", petPage.getTotalElements(), email);
         return buildResponse(petPage);
@@ -198,14 +196,7 @@ public class PetServiceImpl implements PetService {
                 .orElseThrow(() -> ResourceNotFoundException.byField("User", "email", email));
     }
 
-    private Pageable buildPageable(Integer pageNumber, Integer pageSize, String sortBy, String sortOrder) {
-        Sort sortByAndOrder = sortOrder.equalsIgnoreCase("asc")
-                ? Sort.by(sortBy).ascending()
-                : Sort.by(sortBy).descending();
-        return PageRequest.of(pageNumber, pageSize, sortByAndOrder);
-    }
-
     private PetResponseDto convertToDto(Pet pet) {
-        return modelMapper.map(pet, PetResponseDto.class);
+        return mappingSupport.mapToDto(pet, PetResponseDto.class);
     }
 }

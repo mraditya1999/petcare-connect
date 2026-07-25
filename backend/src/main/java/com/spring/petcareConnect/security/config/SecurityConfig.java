@@ -3,6 +3,8 @@ package com.spring.petcareConnect.security.config;
 import com.spring.petcareConnect.security.jwt.AuthEntryPointJwt;
 import com.spring.petcareConnect.security.jwt.AuthTokenFilter;
 import com.spring.petcareConnect.security.service.UserDetailsServiceImpl;
+import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -23,17 +25,28 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import java.util.Arrays;
 import java.util.List;
-
-import static org.springframework.security.config.Customizer.withDefaults;
 
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
 public class SecurityConfig {
 
+    private static final String[] PUBLIC_ENDPOINTS = {
+            "/auth/**",
+            "/oauth/**",
+            "/v3/api-docs/**",
+            "/swagger-ui/**",
+            "/images/**",
+            "/test/**"
+    };
+
     private final AuthEntryPointJwt authEntryPointJwt;
     private final UserDetailsServiceImpl userDetailsService;
+
+    @Value("${app.cors.allowed-origins:http://localhost:5173}")
+    private String allowedOrigins;
 
     public SecurityConfig(AuthEntryPointJwt authEntryPointJwt, UserDetailsServiceImpl userDetailsService) {
         this.authEntryPointJwt = authEntryPointJwt;
@@ -60,24 +73,23 @@ public class SecurityConfig {
     @Bean
     SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http, AuthTokenFilter authTokenFilter) {
         http.csrf(AbstractHttpConfigurer::disable);
-        http.exceptionHandling(exception -> exception.authenticationEntryPoint(authEntryPointJwt));
+        http.exceptionHandling(exception -> exception
+                .authenticationEntryPoint(authEntryPointJwt)
+                .accessDeniedHandler((request, response, accessDeniedException) ->
+                        response.sendError(HttpServletResponse.SC_FORBIDDEN)));
         http.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
-        http.authorizeHttpRequests((authorizeRequest) -> authorizeRequest
+        http.authorizeHttpRequests(authorizeRequest -> authorizeRequest
+                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/forums/**").permitAll()
                 .requestMatchers(HttpMethod.POST, "/forums/**").authenticated()
                 .requestMatchers(HttpMethod.PUT, "/forums/**").authenticated()
                 .requestMatchers(HttpMethod.DELETE, "/forums/**").authenticated()
-                .requestMatchers("/auth/**").permitAll()
-                .requestMatchers("/oauth/**").permitAll()
-                .requestMatchers("/v3/api-docs/**").permitAll()
-                .requestMatchers("/swagger-ui/**").permitAll()
-                .requestMatchers("/test/**").permitAll()
-                .requestMatchers("/images/**").permitAll()
-//                .requestMatchers("/admin/**").permitAll()
+                .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
+                .requestMatchers("/admin/**").hasRole("ADMIN")
                 .anyRequest().authenticated());
         http.authenticationProvider(authenticationProvider());
         http.addFilterBefore(authTokenFilter, UsernamePasswordAuthenticationFilter.class);
-        http.cors(withDefaults());
+        http.cors(cors -> cors.configurationSource(corsConfigurationSource()));
         return http.build();
     }
 
@@ -95,11 +107,12 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of(
-                "http://localhost:5173",
-                "https://petcareconnect.netlify.app"
-        ));
-        configuration.setAllowedMethods(List.of("GET","POST","PUT","DELETE","OPTIONS"));
+        List<String> origins = Arrays.stream(allowedOrigins.split(","))
+                .map(String::trim)
+                .filter(origin -> !origin.isEmpty())
+                .toList();
+        configuration.setAllowedOrigins(origins);
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
 

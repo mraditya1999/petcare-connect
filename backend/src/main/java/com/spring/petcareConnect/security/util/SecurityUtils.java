@@ -2,6 +2,7 @@ package com.spring.petcareConnect.security.util;
 
 import java.security.SecureRandom;
 import java.util.Base64;
+import java.util.Objects;
 
 /**
  * Security-related utility methods for secure token, password and OTP generation.
@@ -29,6 +30,8 @@ public final class SecurityUtils {
      */
     public static String generateRandomPassword(int length) {
         if (length <= 0) throw new IllegalArgumentException("length must be > 0");
+        if (length < 8) throw new IllegalArgumentException("length must be at least 8");
+
         StringBuilder sb = new StringBuilder(length);
         for (int i = 0; i < length; i++) {
             int idx = secureRandom.nextInt(PASSWORD_CHARS.length());
@@ -42,6 +45,8 @@ public final class SecurityUtils {
      */
     public static String generateNumericOtp(int length) {
         if (length <= 0) throw new IllegalArgumentException("length must be > 0");
+        if (length > 9) throw new IllegalArgumentException("length must be <= 9");
+
         int min = (int) Math.pow(10, length - 1);
         int max = (int) Math.pow(10, length) - 1;
         int val = secureRandom.nextInt((max - min) + 1) + min;

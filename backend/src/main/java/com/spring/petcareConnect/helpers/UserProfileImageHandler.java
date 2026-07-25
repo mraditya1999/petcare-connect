@@ -1,34 +1,35 @@
 package com.spring.petcareConnect.helpers;
 
-import com.spring.petcareConnect.dtos.upload.response.ImageUploadResponseDto;
 import com.spring.petcareConnect.entities.User;
 import com.spring.petcareConnect.enums.ProfileType;
 import com.spring.petcareConnect.services.UploadImageService;
 import org.springframework.stereotype.Component;
-import org.springframework.web.multipart.MultipartFile;
 
 @Component
-public class UserProfileImageHandler {
-    private final UploadImageService uploadImageService;
+public class UserProfileImageHandler extends ProfileImageHandler<User> {
 
     public UserProfileImageHandler(UploadImageService uploadImageService) {
-        this.uploadImageService = uploadImageService;
+        super(uploadImageService);
     }
 
-    public void replace(User user, MultipartFile file) {
-        delete(user);
-        ImageUploadResponseDto imageInfo = uploadImageService.uploadProfileImage(
-                file, ProfileType.USER, null);
-        user.setAvatarUrl(imageInfo.getUrl());
-        user.setAvatarPublicId(imageInfo.getPublicId());
+    @Override
+    protected ProfileType getProfileType() {
+        return ProfileType.USER;
     }
 
-    public void delete(User user) {
-        if (user.getAvatarPublicId() != null) {
-            uploadImageService.deleteProfileImage(user.getAvatarPublicId());
-            user.setAvatarUrl(null);
-            user.setAvatarPublicId(null);
-        }
+    @Override
+    protected String getAvatarPublicId(User entity) {
+        return entity.getAvatarPublicId();
+    }
+
+    @Override
+    protected void setAvatarUrl(User entity, String avatarUrl) {
+        entity.setAvatarUrl(avatarUrl);
+    }
+
+    @Override
+    protected void setAvatarPublicId(User entity, String publicId) {
+        entity.setAvatarPublicId(publicId);
     }
 }
 

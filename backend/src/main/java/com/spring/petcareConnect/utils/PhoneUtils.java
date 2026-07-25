@@ -17,8 +17,14 @@ public final class PhoneUtils {
             return null;
         }
 
+        String trimmed = raw.trim();
+        if (trimmed.isEmpty()) {
+            logger.warn("Phone normalization failed: input is empty");
+            return null;
+        }
+
         // Remove all non-digit characters
-        String digits = raw.replaceAll("\\D", "");
+        String digits = trimmed.replaceAll("\\D", "");
         logger.debug("Normalized input={} to digits={}", raw, digits);
 
         // Case 1: 10-digit mobile number (India local format)

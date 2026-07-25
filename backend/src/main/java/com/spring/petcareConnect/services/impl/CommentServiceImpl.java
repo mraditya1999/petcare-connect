@@ -13,12 +13,10 @@ import com.spring.petcareConnect.repositories.jpa.UserRepository;
 import com.spring.petcareConnect.repositories.mongo.CommentRepository;
 import com.spring.petcareConnect.repositories.mongo.ForumRepository;
 import com.spring.petcareConnect.services.CommentService;
+import com.spring.petcareConnect.services.ServiceMappingSupport;
 import com.spring.petcareConnect.utils.AuthUtils;
-import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -30,13 +28,13 @@ public class CommentServiceImpl implements CommentService {
     private final UserRepository userRepository;
     private final ForumRepository forumRepository;
     private final CommentRepository commentRepository;
-    private final ModelMapper modelMapper;
+    private final ServiceMappingSupport mappingSupport;
 
-    public CommentServiceImpl(UserRepository userRepository, ForumRepository forumRepository, CommentRepository commentRepository, ModelMapper modelMapper) {
+    public CommentServiceImpl(UserRepository userRepository, ForumRepository forumRepository, CommentRepository commentRepository, ServiceMappingSupport mappingSupport) {
         this.userRepository = userRepository;
         this.forumRepository = forumRepository;
         this.commentRepository = commentRepository;
-        this.modelMapper = modelMapper;
+        this.mappingSupport = mappingSupport;
     }
 
     @Override
@@ -84,10 +82,9 @@ public class CommentServiceImpl implements CommentService {
         return convertToCommentDTO(comment);
     }
 
-
     @Override
     public CommentListResponseDto getCommentsByForum(String forumId, Integer pageNumber, Integer pageSize, String sortBy, String sortOrder) {
-        Pageable pageable = buildPageable(pageNumber, pageSize, sortBy, sortOrder);
+        Pageable pageable = mappingSupport.buildPageable(pageNumber, pageSize, sortBy, sortOrder);
         Page<Comment> commentPage = commentRepository.findAllByForumId(forumId, pageable);
 
         if (commentPage.isEmpty()) {
@@ -123,14 +120,6 @@ public class CommentServiceImpl implements CommentService {
     }
 
     private CommentResponseDto convertToCommentDTO(Comment comment) {
-        CommentResponseDto dto = modelMapper.map(comment, CommentResponseDto.class);
-        return dto;
-    }
-
-    private Pageable buildPageable(Integer pageNumber, Integer pageSize, String sortBy, String sortOrder) {
-        Sort sortByAndOrder = sortOrder.equalsIgnoreCase("asc")
-                ? Sort.by(sortBy).ascending()
-                : Sort.by(sortBy).descending();
-        return PageRequest.of(pageNumber, pageSize, sortByAndOrder);
+        return mappingSupport.mapToDto(comment, CommentResponseDto.class);
     }
 }
