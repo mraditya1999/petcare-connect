@@ -25,9 +25,7 @@ public class PetController {
     }
 
     @PostMapping(consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
-    public ResponseEntity<CustomApiResponse<PetResponseDto>> createPetForUser(
-            @RequestPart("petRequest") @Valid PetRequestDto petRequestDTO,
-            @RequestPart(value = "profileImage", required = false) MultipartFile profileImage) {
+    public ResponseEntity<CustomApiResponse<PetResponseDto>> createPetForUser(@RequestPart("petRequest") @Valid PetRequestDto petRequestDTO,@RequestPart(value = "profileImage", required = false) MultipartFile profileImage) {
 
         PetResponseDto petResponseDTO = petService.createPetForUser(petRequestDTO, profileImage);
         CustomApiResponse<PetResponseDto> response =
@@ -37,10 +35,7 @@ public class PetController {
     }
 
     @PutMapping(value = "/{petId}", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
-    public ResponseEntity<CustomApiResponse<PetResponseDto>> updatePetForUser(
-            @PathVariable Long petId,
-            @RequestPart("petRequest") @Valid PetRequestDto petRequestDTO,
-            @RequestPart(value = "profileImage", required = false) MultipartFile profileImage) {
+    public ResponseEntity<CustomApiResponse<PetResponseDto>> updatePetForUser(@PathVariable Long petId,@RequestPart("petRequest") @Valid PetRequestDto petRequestDTO,@RequestPart(value = "profileImage", required = false) MultipartFile profileImage) {
 
         PetResponseDto petResponseDTO = petService.updatePetForUser(petId, petRequestDTO, profileImage);
         CustomApiResponse<PetResponseDto> response =

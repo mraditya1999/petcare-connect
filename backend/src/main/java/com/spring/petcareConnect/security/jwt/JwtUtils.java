@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Value;
 import com.spring.petcareConnect.config.AppConstants;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import javax.crypto.SecretKey;
 import java.security.Key;
@@ -30,8 +31,13 @@ public class JwtUtils {
 
     public String getJwtFromHeaders(HttpServletRequest request) {
         String bearerToken = request.getHeader("Authorization");
-        if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
-            return bearerToken.substring(7);
+        if (!StringUtils.hasText(bearerToken)) {
+            return null;
+        }
+
+        String trimmedToken = bearerToken.trim();
+        if (trimmedToken.startsWith("Bearer ")) {
+            return trimmedToken.substring(7).trim();
         }
         return null;
     }
@@ -88,6 +94,10 @@ public class JwtUtils {
 
     // Validate token structure and signature
     public boolean validateJwtToken(String authToken) {
+        if (!StringUtils.hasText(authToken)) {
+            return false;
+        }
+
         try {
             parseToken(authToken); // will throw if invalid
             return true;
@@ -105,6 +115,9 @@ public class JwtUtils {
 
     // Extract username (subject) from token
     public String getUsernameFromJwtToken(String token) {
+        if (!StringUtils.hasText(token)) {
+            return null;
+        }
         return parseToken(token).getSubject();
     }
 
@@ -131,6 +144,10 @@ public class JwtUtils {
 
 
     public Claims parseToken(String token) {
+        if (!StringUtils.hasText(token)) {
+            throw new IllegalArgumentException("JWT token is empty");
+        }
+
         return Jwts.parser()
                 .verifyWith((SecretKey) key())
                 .build()
@@ -139,6 +156,10 @@ public class JwtUtils {
     }
 
     public boolean validateTokenPurpose(String token, String expectedPurpose) {
+        if (!StringUtils.hasText(token) || !StringUtils.hasText(expectedPurpose)) {
+            return false;
+        }
+
         try {
             Claims claims = parseToken(token);
             return expectedPurpose.equals(claims.get("purpose", String.class)) && !isTokenExpired(token);

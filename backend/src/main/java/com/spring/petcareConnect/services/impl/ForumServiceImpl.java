@@ -13,8 +13,8 @@ import com.spring.petcareConnect.repositories.mongo.CommentRepository;
 import com.spring.petcareConnect.repositories.mongo.ForumRepository;
 import com.spring.petcareConnect.repositories.mongo.LikeRepository;
 import com.spring.petcareConnect.services.ForumService;
+import com.spring.petcareConnect.services.ServiceMappingSupport;
 import com.spring.petcareConnect.utils.AuthUtils;
-import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -36,14 +36,14 @@ public class ForumServiceImpl implements ForumService {
     private final CommentRepository commentRepository;
     private final LikeRepository likeRepository;
     private final ForumRepository forumRepository;
-    private final ModelMapper modelMapper;
+    private final ServiceMappingSupport mappingSupport;
 
-    public ForumServiceImpl(UserRepository userRepository, CommentRepository commentRepository, LikeRepository likeRepository, ForumRepository forumRepository, ModelMapper modelMapper) {
+    public ForumServiceImpl(UserRepository userRepository, CommentRepository commentRepository, LikeRepository likeRepository, ForumRepository forumRepository, ServiceMappingSupport mappingSupport) {
         this.userRepository = userRepository;
         this.commentRepository = commentRepository;
         this.likeRepository = likeRepository;
         this.forumRepository = forumRepository;
-        this.modelMapper = modelMapper;
+        this.mappingSupport = mappingSupport;
     }
 
 
@@ -57,7 +57,7 @@ public class ForumServiceImpl implements ForumService {
         });
         User user = getUserByEmailOrThrow(email);
 
-        Pageable pageable = buildPageable(pageNumber, pageSize, sortBy, sortOrder);
+        Pageable pageable = mappingSupport.buildPageable(pageNumber, pageSize, sortBy, sortOrder);
         Page<Forum> forumPage = forumRepository.findAllByUserId(user.getUserId(), pageable);
         logger.debug("Found {} forums for user {}", forumPage.getTotalElements(), email);
         return buildResponse(forumPage);
@@ -65,7 +65,7 @@ public class ForumServiceImpl implements ForumService {
 
     @Override
     public ForumListResponseDto getAllForums(Integer pageNumber, Integer pageSize, String sortBy, String sortOrder) {
-        Pageable pageable = buildPageable(pageNumber, pageSize, sortBy, sortOrder);
+        Pageable pageable = mappingSupport.buildPageable(pageNumber, pageSize, sortBy, sortOrder);
         Page<Forum> forumPage = forumRepository.findAll(pageable);
         logger.debug("Found {} forums", forumPage.getTotalElements());
         return buildResponse(forumPage);
@@ -145,7 +145,7 @@ public class ForumServiceImpl implements ForumService {
 
     @Override
     public ForumListResponseDto searchForums(String keyword, List<String> tags, Integer pageNumber, Integer pageSize, String sortBy, String sortOrder) {
-        Pageable pageable = buildPageable(pageNumber, pageSize, sortBy, sortOrder);
+        Pageable pageable = mappingSupport.buildPageable(pageNumber, pageSize, sortBy, sortOrder);
         Page<Forum> forumPage;
 
         if (keyword != null && !keyword.isBlank() && tags != null && !tags.isEmpty()) {
@@ -209,7 +209,7 @@ public class ForumServiceImpl implements ForumService {
     }
 
     public ForumResponseDto convertToForumDTO(Forum forum) {
-        ForumResponseDto forumDTO = modelMapper.map(forum, ForumResponseDto.class);
+        ForumResponseDto forumDTO = mappingSupport.mapToDto(forum, ForumResponseDto.class);
 
         User user = userRepository.findById(forum.getUserId())
                 .orElseThrow(() -> new ResourceNotFoundException("User", "id", forum.getUserId()));
@@ -229,13 +229,6 @@ public class ForumServiceImpl implements ForumService {
     private ForumListResponseDto buildResponse(Page<Forum> forumPage) {
         List<ForumResponseDto> forums = forumPage.getContent().stream().map(this::convertToForumDTO).toList();
         return new ForumListResponseDto(forums, forumPage.getNumber(), forumPage.getSize(), forumPage.getTotalElements(), forumPage.getTotalPages(), forumPage.isLast());
-    }
-
-    private Pageable buildPageable(Integer pageNumber, Integer pageSize, String sortBy, String sortOrder) {
-        Sort sortByAndOrder = sortOrder.equalsIgnoreCase("asc")
-                ? Sort.by(sortBy).ascending()
-                : Sort.by(sortBy).descending();
-        return PageRequest.of(pageNumber, pageSize, sortByAndOrder);
     }
 
     private User getUserByEmailOrThrow(String email) {

@@ -31,9 +31,7 @@ public class UserProfileController {
     }
 
     @PutMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<CustomApiResponse<UserProfileResponseDto>> updateUserProfile(
-            @Valid @RequestPart("userProfile") UserProfileRequestDto userProfileRequestDto,
-            @RequestPart(value = "profileImage", required = false) MultipartFile profileImage) {
+    public ResponseEntity<CustomApiResponse<UserProfileResponseDto>> updateUserProfile(@Valid @RequestPart("userProfile") UserProfileRequestDto userProfileRequestDto,@RequestPart(value = "profileImage", required = false) MultipartFile profileImage) {
 
         UserProfileResponseDto responseDto = userProfileService.updateUserProfile(userProfileRequestDto, profileImage);
         CustomApiResponse<UserProfileResponseDto> response =

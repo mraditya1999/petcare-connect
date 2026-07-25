@@ -29,8 +29,14 @@ public class FileValidator {
         }
 
         String contentType = file.getContentType();
-        if (contentType == null || !AppConstants.ALLOWED_FILE_FORMATS.contains(contentType.toLowerCase())) {
-            logger.error("File validation failed: invalid format={} allowed={}", contentType, AppConstants.ALLOWED_FILE_FORMATS);
+        if (contentType == null) {
+            logger.error("File validation failed: content type is null");
+            throw new ValidationException("Invalid file format. Allowed types: JPEG, PNG, WEBP, PDF");
+        }
+
+        String normalizedContentType = contentType.toLowerCase();
+        if (!AppConstants.ALLOWED_FILE_FORMATS.contains(normalizedContentType)) {
+            logger.error("File validation failed: invalid format={} allowed={}", normalizedContentType, AppConstants.ALLOWED_FILE_FORMATS);
             throw new ValidationException("Invalid file format. Allowed types: JPEG, PNG, WEBP, PDF");
         }
 
