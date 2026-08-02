@@ -26,7 +26,7 @@ const SpecialistDashboard = () => {
       try {
         const response = await customFetch.get<
           ApiResponse<SpecialistDashboardDTO>
-        >("/dashboard/specialist");
+        >("/specialists/dashboard");
         setData(response.data.data);
       } catch (err) {
         setError("Unable to load dashboard stats. Please try again.");

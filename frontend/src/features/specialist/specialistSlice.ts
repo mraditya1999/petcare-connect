@@ -2,9 +2,16 @@ import { createSlice } from "@reduxjs/toolkit";
 import { fetchSpecialists } from "./specialistThunk";
 
 interface Specialist {
-  id: number;
-  fullName: string;
-  specialization: string;
+  specialistId: number;
+  userId?: number;
+  firstName?: string;
+  lastName?: string;
+  fullName?: string;
+  specialization?: string;
+  available?: boolean;
+  consultationFee?: string;
+  location?: string;
+  experienceYears?: number;
 }
 
 export interface SpecialistState {
@@ -35,7 +42,12 @@ const specialistSlice = createSlice({
       })
       .addCase(fetchSpecialists.fulfilled, (state, action) => {
         state.loading = false;
-        state.specialists = action.payload.data.content;
+        state.specialists = (action.payload?.data?.content || []).map((item) => ({
+          ...item,
+          id: item.specialistId,
+          fullName: item.fullName || `${item.firstName || ""} ${item.lastName || ""}`.trim(),
+          specialization: item.specialization || "General Veterinary Care",
+        }));
       })
       .addCase(fetchSpecialists.rejected, (state, action) => {
         state.loading = false;
