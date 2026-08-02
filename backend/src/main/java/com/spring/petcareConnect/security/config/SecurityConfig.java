@@ -34,7 +34,6 @@ import java.util.List;
 public class SecurityConfig {
 
     private static final String[] PUBLIC_ENDPOINTS = {
-            "/auth/**",
             "/oauth/**",
             "/v3/api-docs/**",
             "/swagger-ui/**",
@@ -80,12 +79,17 @@ public class SecurityConfig {
         http.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
         http.authorizeHttpRequests(authorizeRequest -> authorizeRequest
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                .requestMatchers("/auth/login", "/auth/register", "/auth/verify-email", "/auth/refresh", "/auth/forget-password", "/auth/reset-password").permitAll()
                 .requestMatchers(HttpMethod.GET, "/forums/**").permitAll()
                 .requestMatchers(HttpMethod.POST, "/forums/**").authenticated()
                 .requestMatchers(HttpMethod.PUT, "/forums/**").authenticated()
                 .requestMatchers(HttpMethod.DELETE, "/forums/**").authenticated()
+                .requestMatchers(HttpMethod.GET, "/specialists/**").permitAll()
+                .requestMatchers("/specialists/dashboard").hasRole("SPECIALIST")
+                .requestMatchers("/auth/specialists", "/auth/admin/specialists").hasRole("ADMIN")
                 .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
                 .requestMatchers("/admin/**").hasRole("ADMIN")
+                .requestMatchers("/appointments/**").authenticated()
                 .anyRequest().authenticated());
         http.authenticationProvider(authenticationProvider());
         http.addFilterBefore(authTokenFilter, UsernamePasswordAuthenticationFilter.class);

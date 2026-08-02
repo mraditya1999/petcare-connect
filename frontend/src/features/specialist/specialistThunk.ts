@@ -3,9 +3,16 @@ import { createAsyncThunk } from "@reduxjs/toolkit";
 import { customFetch } from "@/utils/customFetch";
 
 interface Specialist {
-  id: number;
-  fullName: string;
-  specialization: string;
+  specialistId: number;
+  userId?: number;
+  firstName?: string;
+  lastName?: string;
+  fullName?: string;
+  specialization?: string;
+  available?: boolean;
+  consultationFee?: string;
+  location?: string;
+  experienceYears?: number;
 }
 
 const getErrorMessage = (error: unknown): string => {

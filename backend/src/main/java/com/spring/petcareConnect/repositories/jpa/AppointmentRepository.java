@@ -41,4 +41,6 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
                                               @Param("end") LocalDateTime end);
 
     Page<Appointment> findAllByPetOwner(User user, Pageable pageable);
+
+    List<Appointment> findBySpecialistSpecialistId(Long specialistId);
 }

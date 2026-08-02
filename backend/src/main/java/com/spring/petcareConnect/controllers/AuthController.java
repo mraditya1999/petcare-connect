@@ -3,6 +3,7 @@ package com.spring.petcareConnect.controllers;
 import com.spring.petcareConnect.dtos.CustomApiResponse;
 import com.spring.petcareConnect.dtos.auth.request.*;
 import com.spring.petcareConnect.dtos.auth.response.*;
+import com.spring.petcareConnect.dtos.specialist.request.AdminSpecialistCreateRequest;
 import com.spring.petcareConnect.dtos.specialist.request.SpecialistCreationDto;
 import com.spring.petcareConnect.dtos.specialist.response.SpecialistResponseDto;
 import com.spring.petcareConnect.services.AuthService;
@@ -80,6 +81,29 @@ public class AuthController {
     @PostMapping("/specialists")
     public ResponseEntity<CustomApiResponse<SpecialistResponseDto>> createSpecialist(@RequestParam Long adminId, @Valid @RequestBody SpecialistCreationDto dto) {
         SpecialistResponseDto responseDto = authService.createSpecialist(adminId, dto);
+        CustomApiResponse<SpecialistResponseDto> response = new CustomApiResponse<>(true,
+                "Specialist created successfully.", responseDto);
+        return new ResponseEntity<>(response, HttpStatus.CREATED);
+    }
+
+    @PostMapping("/admin/specialists")
+    public ResponseEntity<CustomApiResponse<SpecialistResponseDto>> createAdminSpecialist(@RequestParam Long adminId, @Valid @RequestBody AdminSpecialistCreateRequest dto) {
+        SpecialistCreationDto creationDto = new SpecialistCreationDto();
+        creationDto.setFirstName(dto.getFirstName());
+        creationDto.setLastName(dto.getLastName());
+        creationDto.setEmail(dto.getEmail());
+        creationDto.setPassword(dto.getPassword());
+        creationDto.setAbout(dto.getAbout());
+        creationDto.setSlotDuration(30);
+        creationDto.setSpecialization(dto.getSpeciality());
+        creationDto.setExperienceYears(3);
+        creationDto.setConsultationFee(new java.math.BigDecimal("500"));
+        creationDto.setWorkingHoursStart(java.time.LocalTime.of(9, 0));
+        creationDto.setWorkingHoursEnd(java.time.LocalTime.of(17, 0));
+        creationDto.setDaysAvailable(java.util.Set.of(com.spring.petcareConnect.enums.AvailableDay.MONDAY, com.spring.petcareConnect.enums.AvailableDay.WEDNESDAY, com.spring.petcareConnect.enums.AvailableDay.FRIDAY));
+        creationDto.setLocation(dto.getCity() != null ? dto.getCity() + ", " + dto.getState() : dto.getCountry());
+
+        SpecialistResponseDto responseDto = authService.createSpecialist(adminId, creationDto);
         CustomApiResponse<SpecialistResponseDto> response = new CustomApiResponse<>(true,
                 "Specialist created successfully.", responseDto);
         return new ResponseEntity<>(response, HttpStatus.CREATED);

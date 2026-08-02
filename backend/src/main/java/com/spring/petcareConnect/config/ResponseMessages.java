@@ -66,6 +66,10 @@ public final class ResponseMessages {
     public static final String COMMENT_UNLIKED = "You have removed your like from the comment.";
 
 
-
+    // Specialist
+    public static final String ALL_SPECIALISTS_FETCHED = "All Specialists retrieved successfully.";
+    public static final String SPECIALIST_FETCHED = "Specialist retrieved successfully.";
+    public static final String SPECIALIST_UPDATED = "Specialist updated successfully.";
+    public static final String SPECIALIST_DASHBOARD_FETCHED = "Specialist dashboard retrieved successfully.";
 }
 
